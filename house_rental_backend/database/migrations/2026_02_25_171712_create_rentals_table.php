@@ -20,7 +20,6 @@ return new class extends Migration
             $table->integer('rental_duration');
             $table->decimal('monthly_rent', 10, 2);
             $table->enum('status', ['active', 'inactive'])->default('inactive');
-            $table->boolean('delete_flg')->default(false);
             $table->date('deleted_at')->nullable();
             $table->timestamps();
         });

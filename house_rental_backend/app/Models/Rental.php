@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Rental extends Model
 {
+    use SoftDeletes;
     protected $fillable = [
         'house_id',
         'tenant_id',
@@ -14,7 +16,6 @@ class Rental extends Model
         'rental_duration',
         'monthly_rent',
         'status',
-        'delete_flg',
         'deleted_at'
     ];
 

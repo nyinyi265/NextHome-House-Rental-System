@@ -28,7 +28,6 @@ return new class extends Migration
             $table->decimal('price', '10', '2');
             $table->boolean('is_available');
             $table->date('available_from');
-            $table->boolean('delete_flg')->default(false);
             $table->date('deleted_at')->nullable();
             $table->foreignId('landlord_profile_id')->constrained()->onDelete('cascade');
             $table->timestamps();
