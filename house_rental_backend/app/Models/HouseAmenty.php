@@ -10,14 +10,4 @@ class HouseAmenty extends Model
         'house_id',
         'amenty_id'
     ];
-
-    public function house()
-    {
-        return $this->belongsTo(House::class);
-    }
-
-    public function amenty()
-    {
-        return $this->belongsTo(Amenty::class);
-    }
 }

@@ -8,6 +8,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
@@ -30,6 +31,9 @@ class HousesTable
                 TextColumn::make('township')->label('Township'),
                 TextColumn::make('city')->label('City'),
                 TextColumn::make('price')->label('Price'),
+                TextColumn::make('amenties.name')->badge()->separator(', ')->label('Amenties'),
+                TextColumn::make('furnitures.name')->badge()->separator(', ')->label('Furnitures'),
+                ImageColumn::make('housePhotos.photo_path')->label('Photos'),
                 IconColumn::make('is_available')->label('Available')->boolean(),
                 TextColumn::make('available_from')->label('Available From')->date('Y-m-d'),
                 TextColumn::make('deleted_at')->label('Deleted At')->dateTime('Y-m-d H:i:s'),

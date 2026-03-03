@@ -11,8 +11,8 @@ class Amenty extends Model
         'name'
     ];
 
-    public function houseAmenties()
+    public function houses()
     {
-        return $this->hasMany(HouseAmenty::class);
+        return $this->belongsToMany(House::class, 'house_amenties', 'amenty_id', 'house_id');
     }
 }

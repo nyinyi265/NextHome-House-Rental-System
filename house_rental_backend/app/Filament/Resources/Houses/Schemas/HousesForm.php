@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\Houses\Schemas;
 
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ToggleButtons;
@@ -28,6 +30,15 @@ class HousesForm
                 TextInput::make('price')->label('Price')->numeric()->required(),
                 Toggle::make('is_available')->label('Is Available')->required(),
                 DatePicker::make('available_from')->label('Available From')->native(false)->required(),
+                Repeater::make('housePhotos')
+                    ->relationship()
+                    ->schema([
+                        FileUpload::make('photo_path')
+                            ->image()
+                            ->directory('house-photos')
+                            ->required(),
+                    ])
+                    ->columnSpanFull()
             ]);
     }
 }

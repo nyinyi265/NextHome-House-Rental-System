@@ -39,14 +39,14 @@ class House extends Model
         return $this->hasMany(HousePhoto::class);
     }
 
-    public function houseAmenties()
+    public function amenties()
     {
-        return $this->hasMany(HouseAmenty::class);
+        return $this->belongsToMany(Amenty::class, 'house_amenties', 'house_id', 'amenty_id');
     }
 
-    public function houseFurnitures()
+    public function furnitures()
     {
-        return $this->hasMany(HouseFurniture::class);
+        return $this->belongsToMany(Furniture::class, 'house_furnitures', 'house_id', 'furniture_id');
     }
 
     public function rentals()

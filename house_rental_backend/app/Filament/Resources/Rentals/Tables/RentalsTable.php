@@ -19,7 +19,7 @@ class RentalsTable
         return $table
             ->columns([
                 TextColumn::make('house.title')->label('House Title')->searchable(),
-                TextColumn::make('tenant_profile.name')->label('Tenant Name')->searchable(),
+                TextColumn::make('tenantProfile.user.name')->label('Tenant Name')->searchable(),
                 TextColumn::make('rental_start_date')->label('Start Date')->date(),
                 TextColumn::make('rental_end_date')->label('End Date')->date(),
                 TextColumn::make('rental_duration')->label('Duration (months)'),

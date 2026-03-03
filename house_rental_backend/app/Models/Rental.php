@@ -24,8 +24,8 @@ class Rental extends Model
         return $this->belongsTo(House::class);
     }
 
-    public function tenant()
+    public function tenantProfile()
     {
-        return $this->belongsTo(User::class, 'tenant_id');
+        return $this->belongsTo(TenantProfile::class, 'tenant_profile_id');
     }
 }

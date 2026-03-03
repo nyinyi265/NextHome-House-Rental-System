@@ -18,7 +18,7 @@ class RentalApplicationsResource extends Resource
 {
     protected static ?string $model = RentalApplication::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::ClipboardDocumentCheck;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::DocumentText;
 
     public static function form(Schema $schema): Schema
     {

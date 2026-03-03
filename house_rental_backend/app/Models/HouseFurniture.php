@@ -10,14 +10,4 @@ class HouseFurniture extends Model
         'house_id',
         'furniture_id'
     ];
-
-    public function house()
-    {
-        return $this->belongsTo(House::class);
-    }
-
-    public function furniture()
-    {
-        return $this->belongsTo(Furniture::class);
-    }
 }

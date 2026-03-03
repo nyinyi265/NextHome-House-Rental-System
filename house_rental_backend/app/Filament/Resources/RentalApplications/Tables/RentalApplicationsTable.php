@@ -15,19 +15,19 @@ class RentalApplicationsTable
     {
         return $table
             ->columns([
-                TextColumn::make('tenant_profile.name')->label('Tenant Name')->searchable(),
-                TextColumn::make('house_id.title')->label('House Title')->searchable(),
-                TextColumn::make('proposed_start_date')->label('Proposed Start Date')->date(),
-                TextColumn::make('proposed_end_date')->label('Proposed End Date')->date(),
+                TextColumn::make('house.title')->label('House Title')->searchable(),
+                TextColumn::make('tenantProfile.user.name')->label('Tenant Name')->searchable(),
+                TextColumn::make('landlordProfile.user.name')->label('Landlord Name')->searchable(),
+                TextColumn::make('application_date')->label('Application Date')->date(),
                 TextColumn::make('message')->label('Message'),
                 IconColumn::make('status')->label('Status')->boolean(),
-                TextColumn::make('applied_at')->label('Applied At')->dateTime(),
+                TextColumn::make('created_at')->label('Applied At')->date(),
             ])
             ->filters([
                 //
             ])
             ->recordActions([
-                EditAction::make(),
+                // EditAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

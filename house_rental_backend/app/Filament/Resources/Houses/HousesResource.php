@@ -46,8 +46,8 @@ class HousesResource extends Resource
     {
         return [
             'index' => ListHouses::route('/'),
-            // 'create' => CreateHouses::route('/create'),
-            // 'edit' => EditHouses::route('/{record}/edit'),
+            'create' => CreateHouses::route('/create'),
+            'edit' => EditHouses::route('/{record}/edit'),
         ];
     }
 

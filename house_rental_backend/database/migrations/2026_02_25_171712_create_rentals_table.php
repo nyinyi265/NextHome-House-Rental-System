@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('tenant_profile_id')->constrained()->onDelete('cascade');
             $table->date('rental_start_date');
             $table->date('rental_end_date')->nullable();
-            $table->integer('rental_duration');
+            $table->integer('rental_duration')->nullable();
             $table->decimal('monthly_rent', 10, 2);
             $table->enum('status', ['active', 'inactive'])->default('inactive');
             $table->date('deleted_at')->nullable();

@@ -10,8 +10,8 @@ class Furniture extends Model
         'name'
     ];
 
-    public function houseFurnitures()
+    public function houses()
     {
-        return $this->hasMany(HouseFurniture::class);
+        return $this->belongsToMany(House::class, 'house_furnitures', 'furniture_id', 'house_id');
     }
 }

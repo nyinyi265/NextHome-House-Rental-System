@@ -7,6 +7,7 @@ use App\Filament\Resources\Rentals\Pages\EditRentals;
 use App\Filament\Resources\Rentals\Pages\ListRentals;
 use App\Filament\Resources\Rentals\Schemas\RentalsForm;
 use App\Filament\Resources\Rentals\Tables\RentalsTable;
+use App\Models\Rental;
 use App\Models\Rentals;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -18,9 +19,9 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class RentalsResource extends Resource
 {
-    protected static ?string $model = Rentals::class;
+    protected static ?string $model = Rental::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::ClipboardDocumentList;
 
     public static function form(Schema $schema): Schema
     {
