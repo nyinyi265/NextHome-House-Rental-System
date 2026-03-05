@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Houses\Pages;
 
 use App\Filament\Resources\Houses\HousesResource;
-use App\Trait\RedirectToIndex;
+use App\Traits\RedirectToIndex;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\RestoreAction;

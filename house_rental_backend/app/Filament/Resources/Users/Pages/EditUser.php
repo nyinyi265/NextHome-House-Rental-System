@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Users\Pages;
 
 use App\Filament\Resources\Users\UserResource;
-use App\Trait\RedirectToIndex;
+use App\Traits\RedirectToIndex;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 
