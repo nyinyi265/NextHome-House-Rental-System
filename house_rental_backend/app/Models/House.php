@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\LandlordProfile;
 
 class House extends Model
 {
@@ -26,12 +27,12 @@ class House extends Model
         'is_available',
         'available_from',
         'deleted_at',
-        'landlord_id'
+        'landlord_profile_id',
     ];
 
-    public function landlord()
+    public function landlordProfile()
     {
-        return $this->belongsTo(User::class, 'landlord_id');
+        return $this->belongsTo(LandlordProfile::class, 'landlord_profile_id');
     }
 
     public function housePhotos()

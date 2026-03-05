@@ -1,3 +1,16 @@
+# House Rental System Frontend
+
+This repository holds the React landing page for the **House Rental System**. It implements a modern homepage with a hero section, features and navigation using a standard component/page folder structure.
+
+**Usage:**
+
+```bash
+npm install
+npm start
+```
+
+---
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).

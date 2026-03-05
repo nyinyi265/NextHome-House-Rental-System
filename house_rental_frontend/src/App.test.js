@@ -1,8 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders learn react link', () => {
+test('landing page shows hero and features', () => {
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+  // heading from hero
+  expect(screen.getByText(/find your perfect home/i)).toBeInTheDocument();
+  // features section
+  expect(screen.getByText(/Why choose us\?/i)).toBeInTheDocument();
 });
