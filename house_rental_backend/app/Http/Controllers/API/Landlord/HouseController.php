@@ -47,8 +47,11 @@ class HouseController extends Controller
                 $photoData['photo_path'] = $file->store('house_photos', 'public');
                 $this->photoService->create($house->id, $landlordProfileId, $photoData);
             }
-            // reload relationship
-            $house->load('housePhotos');
+            // reload relationships
+            $house->load(['housePhotos', 'amenties', 'furnitures']);
+        } else {
+            // in case no new photos, still load related resources
+            $house->load(['housePhotos', 'amenties', 'furnitures']);
         }
 
         return $this->success(true, HouseResponse::created($house), 'House created', 201);
@@ -73,7 +76,9 @@ class HouseController extends Controller
                 $photoData['photo_path'] = $file->store('house_photos', 'public');
                 $this->photoService->create($house->id, $landlordProfileId, $photoData);
             }
-            $house->load('housePhotos');
+            $house->load(['housePhotos', 'amenties', 'furnitures']);
+        } else {
+            $house->load(['housePhotos', 'amenties', 'furnitures']);
         }
 
         return $this->success(true, HouseResponse::updated($house), 'House updated', 200);

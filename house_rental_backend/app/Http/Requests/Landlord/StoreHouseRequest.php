@@ -32,6 +32,10 @@ class StoreHouseRequest extends FormRequest
             'available_from' => 'nullable|date',
             'photos' => 'nullable|array',
             'photos.*' => 'image|mimes:jpg,jpeg,png,gif|max:4096',
+            'amenty_ids' => 'nullable|array',
+            'amenty_ids.*' => 'integer|exists:amenties,id',
+            'furniture_ids' => 'nullable|array',
+            'furniture_ids.*' => 'integer|exists:furnitures,id',
         ];
     }
 }

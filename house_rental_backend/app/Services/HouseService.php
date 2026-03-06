@@ -15,7 +15,7 @@ class HouseService
      */
     public function listByLandlord(int $landlordProfileId)
     {
-        return House::with('housePhotos')
+        return House::with(['housePhotos', 'amenties', 'furnitures'])
             ->where('landlord_profile_id', $landlordProfileId)
             ->get();
     }
@@ -30,7 +30,16 @@ class HouseService
     public function create(array $data, int $landlordProfileId): House
     {
         $data['landlord_profile_id'] = $landlordProfileId;
-        return House::create($data);
+        $house = House::create($data);
+
+        if (! empty($data['amenty_ids'])) {
+            $house->amenties()->sync($data['amenty_ids']);
+        }
+        if (! empty($data['furniture_ids'])) {
+            $house->furnitures()->sync($data['furniture_ids']);
+        }
+
+        return $house;
     }
 
     /**
@@ -43,7 +52,7 @@ class HouseService
      */
     public function findForLandlord(int $id, int $landlordProfileId): House
     {
-        return House::with('housePhotos')
+        return House::with(['housePhotos', 'amenties', 'furnitures'])
             ->where('landlord_profile_id', $landlordProfileId)
             ->findOrFail($id);
     }
@@ -60,6 +69,14 @@ class HouseService
     {
         $house = $this->findForLandlord($id, $landlordProfileId);
         $house->update($data);
+
+        if (array_key_exists('amenty_ids', $data)) {
+            $house->amenties()->sync($data['amenty_ids'] ?? []);
+        }
+        if (array_key_exists('furniture_ids', $data)) {
+            $house->furnitures()->sync($data['furniture_ids'] ?? []);
+        }
+
         return $house;
     }
 
