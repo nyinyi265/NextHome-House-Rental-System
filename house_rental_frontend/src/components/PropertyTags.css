@@ -1,0 +1,20 @@
+ .property-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin: 24px 0;
+}
+
+.tag-button {
+  background-color: #e9ecef;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.tag-button:hover {
+  background-color: #dee2e6;
+}
