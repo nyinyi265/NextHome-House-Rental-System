@@ -1,0 +1,22 @@
+.explore-search {
+  padding: 32px 0;
+  background-color: #f8f9fa;
+  text-align: center;
+}
+
+.explore-content {
+  display: flex;
+  gap: 24px;
+  padding: 24px 0;
+}
+
+.explore-listings {
+  flex: 1;
+}
+
+.listings-count {
+  font-size: 0.95rem;
+  margin-bottom: 12px;
+}
+
+/* reuse .cards-grid defined in App.css */
