@@ -4,14 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Permission\Traits\HasRoles;
 
 class Rental extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, HasRoles;
 
     protected $fillable = [
         'house_id',
         'tenant_profile_id',
+        'landlord_profile_id',
         'rental_start_date',
         'rental_end_date',
         'rental_duration',
@@ -34,5 +36,10 @@ class Rental extends Model
     public function tenantProfile()
     {
         return $this->belongsTo(TenantProfile::class, 'tenant_profile_id');
+    }
+
+    public function landlordProfile()
+    {
+        return $this->belongsTo(LandlordProfile::class, 'landlord_profile_id');
     }
 }

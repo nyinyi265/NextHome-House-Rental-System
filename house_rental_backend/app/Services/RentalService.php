@@ -13,10 +13,9 @@ class RentalService
      */
     public function listByLandlord(int $landlordProfileId)
     {
+        // now that rentals store landlord_profile_id directly, we can filter on it
         return Rental::with(['house', 'tenantProfile'])
-            ->whereHas('house', function ($q) use ($landlordProfileId) {
-                $q->where('landlord_profile_id', $landlordProfileId);
-            })
+            ->where('landlord_profile_id', $landlordProfileId)
             ->get();
     }
 
@@ -33,9 +32,7 @@ class RentalService
     public function findForLandlord(int $id, int $landlordProfileId): Rental
     {
         return Rental::with(['house', 'tenantProfile'])
-            ->whereHas('house', function ($q) use ($landlordProfileId) {
-                $q->where('landlord_profile_id', $landlordProfileId);
-            })
+            ->where('landlord_profile_id', $landlordProfileId)
             ->findOrFail($id);
     }
 
@@ -48,6 +45,12 @@ class RentalService
 
     public function create(array $data): Rental
     {
+        // automatically set landlord_profile_id based on house
+        if (isset($data['house_id'])) {
+            $house = House::findOrFail($data['house_id']);
+            $data['landlord_profile_id'] = $house->landlord_profile_id;
+        }
+
         return Rental::create($data);
     }
 
