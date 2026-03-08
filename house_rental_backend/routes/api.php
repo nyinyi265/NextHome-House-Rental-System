@@ -7,13 +7,19 @@ use App\Http\Controllers\API\Landlord\AmentyController;
 use App\Http\Controllers\API\Landlord\FurnitureController;
 use App\Http\Controllers\API\Landlord\HouseController;
 use App\Http\Controllers\API\Landlord\HousePhotoController;
+use App\Http\Controllers\API\Tenant\HouseController as TenantHouseController;
 
 Route::prefix('auth')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
-    Route::post('login', [AuthController::class, 'login']);
+    // name login so unauthenticated middleware can redirect without error
+    Route::post('login', [AuthController::class, 'login'])->name('login');
     Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
     Route::get('me', [AuthController::class, 'me'])->middleware('auth:sanctum');
 });
+
+// public browsing routes for houses (available to guests and tenants)
+Route::get('houses', [TenantHouseController::class, 'index']);
+Route::get('houses/{house}', [TenantHouseController::class, 'show']);
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -25,6 +31,10 @@ Route::prefix('tenant')->middleware(['auth:sanctum', 'role:tenant'])->group(func
         ->only(['index', 'store', 'show', 'update', 'destroy']);
 
     Route::apiResource('rentals', App\Http\Controllers\API\Tenant\RentalController::class)
+        ->only(['index', 'show']);
+
+    // tenants can only browse houses
+    Route::apiResource('houses', TenantHouseController::class)
         ->only(['index', 'show']);
 });
 

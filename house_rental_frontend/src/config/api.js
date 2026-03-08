@@ -2,9 +2,20 @@ import env from '../environment/environment';
 
 const API_BASE_URL = env.API_BASE_URL;
 
-export default {
+const base = (path) => `${API_BASE_URL}${path}`;
+
+const endpoints = {
   baseUrl: API_BASE_URL,
-  houses: () => `${API_BASE_URL}/landlord/houses`,
-  auth: () => `${API_BASE_URL}/auth`,
+  houses: () => base('/houses'),          // public/tenant browsing
+  tenantHouses: () => base('/tenant/houses'),
+  landlordHouses: () => base('/landlord/houses'),
+  auth: {
+    login: () => base('/auth/login'),
+    register: () => base('/auth/register'),
+    me: () => base('/auth/me'),
+    logout: () => base('/auth/logout'),
+  },
   // add other endpoints as needed
 };
+
+export default endpoints;

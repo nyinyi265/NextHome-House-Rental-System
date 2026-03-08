@@ -21,6 +21,27 @@ class HouseService
     }
 
     /**
+     * Return all houses (for public/tenant browsing).
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function listAll()
+    {
+        return House::with(['housePhotos', 'amenties', 'furnitures'])->get();
+    }
+
+    /**
+     * Find any house by id (used by tenant viewer).
+     *
+     * @param int $id
+     * @return House
+     */
+    public function find(int $id): House
+    {
+        return House::with(['housePhotos', 'amenties', 'furnitures'])->findOrFail($id);
+    }
+
+    /**
      * Create a new house record for landlord profile.
      *
      * @param array $data
@@ -92,4 +113,5 @@ class HouseService
         $house = $this->findForLandlord($id, $landlordProfileId);
         $house->delete();
     }
+
 }

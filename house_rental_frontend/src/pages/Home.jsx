@@ -1,5 +1,5 @@
 import React from 'react';
-import Navbar from '../components/Navbar';
+import Navbar from '../components/Navbar/Navbar';
 import SearchBar from '../components/SearchBar';
 import PropertyTags from '../components/PropertyTags';
 import PropertyCard from '../components/PropertyCard';
