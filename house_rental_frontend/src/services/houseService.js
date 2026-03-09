@@ -25,7 +25,7 @@ async function list(token, role) {
     const err = await response.json();
     throw err;
   }
-  return response.json(); // expects { houses: [...] }
+  return response.json();
 }
 
 async function get(id, token, role) {

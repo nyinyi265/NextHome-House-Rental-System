@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useContext } from 'react';
 import Navbar from '../components/Navbar/Navbar';
 import SearchBar from '../components/SearchBar';
@@ -6,7 +5,6 @@ import FilterSidebar from '../components/FilterSidebar';
 import PropertyCard from '../components/PropertyCard';
 import houseService from '../services/houseService';
 import { AuthContext } from '../context/AuthContext';
-import './Explore.css';
 
 export default function Explore() {
   const [properties, setProperties] = useState([]);
@@ -25,8 +23,10 @@ export default function Explore() {
     setLoading(true);
     houseService
       .list(token, role)
-      .then((data) => {
-        setProperties(data.houses || []);
+      .then((response) => {
+        // API returns { status, statusCode, data: { houses }, message }
+        const housesData = response.data?.houses || response.houses || [];
+        setProperties(housesData);
         setError(null);
       })
       .catch((err) => {
@@ -37,20 +37,20 @@ export default function Explore() {
   }, [token, role]);
 
   return (
-    <div className="explore-page">
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <header className="explore-search">
+      <header className="py-8 bg-gray-100 text-center">
         <SearchBar />
       </header>
-      <div className="explore-content">
+      <div className="flex gap-6 max-w-7xl mx-auto px-4 py-6">
         <FilterSidebar />
-        <div className="explore-listings">
-          {loading && <div>Loading properties...</div>}
-          {error && <div className="error">{error}</div>}
+        <div className="flex-1">
+          {loading && <div className="text-center py-8">Loading properties...</div>}
+          {error && <div className="text-red-500 py-4">{error}</div>}
           {!loading && !error && (
             <>
-              <div className="listings-count">{properties.length} properties found</div>
-              <div className="cards-grid">
+              <div className="text-sm mb-3 text-gray-600">{properties.length} properties found</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {properties.map((p) => (
                   <PropertyCard key={p.id} {...p} />
                 ))}
