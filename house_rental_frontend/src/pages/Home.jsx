@@ -3,6 +3,7 @@ import Navbar from '../components/Navbar/Navbar';
 import SearchBar from '../components/SearchBar';
 import PropertyTags from '../components/PropertyTags';
 import PropertyCard from '../components/PropertyCard';
+import { PropertyGridSkeleton } from '../components/Loading';
 import { Facebook, Instagram, Twitter, Globe } from 'lucide-react';
 import houseService from '../services/houseService';
 import { AuthContext } from '../context/AuthContext';
@@ -160,11 +161,11 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <h2 className="text-2xl font-semibold text-gray-900 mb-6">Featured Properties</h2>
         {loading ? (
-          <div className="text-center py-8 text-gray-500">Loading properties...</div>
+          <PropertyGridSkeleton count={4} />
         ) : error ? (
-          <div className="text-red-500 py-4">{error}</div>
+          <div className="text-red-500 py-4 text-center">{error}</div>
         ) : featuredProperties.length === 0 ? (
-          <div className="text-gray-400 py-4">No featured properties available.</div>
+          <div className="text-gray-400 py-4 text-center">No featured properties available.</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {featuredProperties.map((p) => (
@@ -178,11 +179,11 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <h2 className="text-2xl font-semibold text-gray-900 mb-6">All Listings</h2>
         {loading ? (
-          <div className="text-center py-8 text-gray-500">Loading properties...</div>
+          <PropertyGridSkeleton count={8} />
         ) : error ? (
-          <div className="text-red-500 py-4">{error}</div>
+          <div className="text-red-500 py-4 text-center">{error}</div>
         ) : properties.length === 0 ? (
-          <div className="text-gray-400 py-4">No listings available.</div>
+          <div className="text-gray-400 py-4 text-center">No listings available.</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {properties.map((p) => (

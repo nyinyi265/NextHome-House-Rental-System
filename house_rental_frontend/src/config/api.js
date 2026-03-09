@@ -9,6 +9,7 @@ const endpoints = {
   houses: () => base('/houses'),          // public/tenant browsing
   tenantHouses: () => base('/tenant/houses'),
   landlordHouses: () => base('/landlord/houses'),
+  amenties: () => base('/amenties'),
   auth: {
     login: () => base('/auth/login'),
     register: () => base('/auth/register'),

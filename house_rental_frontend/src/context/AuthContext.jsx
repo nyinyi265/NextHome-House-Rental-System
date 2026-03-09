@@ -19,10 +19,18 @@ export function AuthProvider({ children }) {
 
   async function login(credentials) {
     const res = await authService.login(credentials);
-    setToken(res.token);
-    setUser(res.user || res);
-    localStorage.setItem('token', res.data.token);
-    localStorage.setItem('user', JSON.stringify(res.user || res));
+    // API response structure: { status, statusCode, data: { user, token, role }, message }
+    const userData = res.data?.user || res.user || res;
+    const tokenData = res.data?.token || res.token;
+    const roleData = res.data?.role || res.role;
+    
+    setToken(tokenData);
+    setUser(userData);
+    localStorage.setItem('token', tokenData);
+    localStorage.setItem('user', JSON.stringify(userData));
+    
+    // Return user data with role for navigation
+    return { ...userData, role: roleData };
   }
 
   function logout() {

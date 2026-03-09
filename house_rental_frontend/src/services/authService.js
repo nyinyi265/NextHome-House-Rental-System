@@ -35,5 +35,19 @@ async function me(token) {
   return response.json();
 }
 
-const authService = { login, register, me };
+async function logout() {
+  const token = localStorage.getItem('token');
+  if (token) {
+    try {
+      await fetch(api.auth.logout(), {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } catch (error) {
+      console.error('Logout API call failed', error);
+    }
+  }
+}
+
+const authService = { login, register, me, logout };
 export default authService;

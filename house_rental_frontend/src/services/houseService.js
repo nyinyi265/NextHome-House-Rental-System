@@ -6,8 +6,9 @@ import api from '../config/api';
  *
  * @param {string|null} token
  * @param {string|null} role  one of 'landlord' | 'tenant' or null
+ * @param {object} filters - optional filters
  */
-async function list(token, role) {
+async function list(token, role, filters = {}) {
   const headers = { Accept: 'application/json' };
   let url;
   if (token && role === 'landlord') {
@@ -18,6 +19,23 @@ async function list(token, role) {
     headers.Authorization = `Bearer ${token}`;
   } else {
     url = api.houses();
+  }
+
+  // Add filter query params
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== '' && value !== null && value !== undefined) {
+      if (Array.isArray(value)) {
+        value.forEach(v => params.append(key + '[]', v));
+      } else {
+        params.append(key, value);
+      }
+    }
+  });
+  
+  const queryString = params.toString();
+  if (queryString) {
+    url += `?${queryString}`;
   }
 
   const response = await fetch(url, { headers });
@@ -50,6 +68,19 @@ async function get(id, token, role) {
   return response.json();
 }
 
+/**
+ * Fetch all amenities
+ */
+async function getAmenties() {
+  const headers = { Accept: 'application/json' };
+  const response = await fetch(api.amenties(), { headers });
+  if (!response.ok) {
+    const err = await response.json();
+    throw err;
+  }
+  return response.json();
+}
 
-const houseService = { list, get };
+
+const houseService = { list, get, getAmenties };
 export default houseService;

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import { Star, Bed, Bath, Users, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import Navbar from '../components/Navbar/Navbar';
+import Loading from '../components/Loading';
 import houseService from '../services/houseService';
 import { AuthContext } from '../context/AuthContext';
 
@@ -50,9 +51,7 @@ export default function HouseDetail() {
     return (
       <div className="min-h-screen bg-white">
         <Navbar />
-        <div className="flex items-center justify-center h-96">
-          <div className="text-gray-500">Loading...</div>
-        </div>
+        <Loading size="large" text="Loading property details..." />
       </div>
     );
   }

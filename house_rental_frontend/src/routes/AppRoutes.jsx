@@ -5,6 +5,8 @@ import Explore from '../pages/Explore';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import HouseDetail from '../pages/HouseDetail';
+import LandlordDashboard from '../pages/LandlordDashboard';
+import ProtectedRoute from '../components/ProtectedRoute';
 
 export default function AppRoutes() {
   return (
@@ -14,6 +16,14 @@ export default function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/houses/:id" element={<HouseDetail />} />
+      <Route 
+        path="/landlord" 
+        element={
+          <ProtectedRoute requiredRole="landlord">
+            <LandlordDashboard />
+          </ProtectedRoute>
+        } 
+      />
     </Routes>
   );
 }
