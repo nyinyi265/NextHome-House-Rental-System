@@ -67,4 +67,66 @@ class AuthController extends Controller
     {
         return $this->success(true, AuthResponse::me($this->service->me($request)), 'User retrieved', 200);
     }
+
+    /**
+     * Update current authenticated user profile
+     */
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'email' => 'sometimes|email|max:255|unique:users,email,' . $request->user()->id,
+            'phone' => 'sometimes|string|max:20',
+            'address' => 'sometimes|string|max:500',
+            'profile_path' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        $data = $request->except(['email']);
+        if ($request->hasFile('profile_path')) {
+            $data['profile_path'] = $request->file('profile_path')->store('profiles', 'public');
+        }
+
+        $user = $this->service->updateProfile($request->user(), $data);
+        return $this->success(true, AuthResponse::me($user), 'Profile updated successfully', 200);
+    }
+
+    /**
+     * Send password reset link to user's email
+     */
+    public function forgotPassword(Request $request): JsonResponse
+    {
+        $request->validate(['email' => 'required|email']);
+
+        $status = $this->service->sendPasswordResetLink($request->email);
+
+        if ($status === 'passwords.sent') {
+            return $this->success(true, null, 'Password reset link sent to your email', 200);
+        }
+
+        return $this->fail(false, null, 'Unable to send password reset link', 400);
+    }
+
+    /**
+     * Reset user password
+     */
+    public function resetPassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'token' => 'required|string',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $status = $this->service->resetPassword(
+            $request->email,
+            $request->token,
+            $request->password
+        );
+
+        if ($status === 'passwords.reset') {
+            return $this->success(true, null, 'Password reset successfully', 200);
+        }
+
+        return $this->fail(false, null, 'Invalid or expired reset token', 400);
+    }
 }

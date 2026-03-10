@@ -15,6 +15,10 @@ Route::prefix('auth')->group(function () {
     Route::post('login', [AuthController::class, 'login'])->name('login');
     Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
     Route::get('me', [AuthController::class, 'me'])->middleware('auth:sanctum');
+    Route::put('profile', [AuthController::class, 'updateProfile'])->middleware('auth:sanctum');
+    // Password reset routes (public)
+    Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
+    Route::post('reset-password', [AuthController::class, 'resetPassword']);
 });
 
 // public browsing routes for houses (available to guests and tenants)

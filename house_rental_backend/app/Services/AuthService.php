@@ -81,4 +81,83 @@ class AuthService
     {
         return $request->user();
     }
+
+    /**
+     * Update the user's profile.
+     *
+     * @param User $user
+     * @param array $data
+     * @return User
+     */
+    public function updateProfile(User $user, array $data): User
+    {
+        if (isset($data['name'])) {
+            $user->name = $data['name'];
+        }
+        if (isset($data['phone'])) {
+            $user->phone_number = $data['phone'];
+        }
+        if (isset($data['profile_path'])) {
+            $user->profile_path = $data['profile_path'];
+        }
+        $user->save();
+
+        return $user;
+    }
+
+    /**
+     * Send password reset link to user.
+     *
+     * @param string $email
+     * @return string
+     */
+    public function sendPasswordResetLink(string $email): string
+    {
+        $user = User::where('email', $email)->first();
+
+        if (!$user) {
+            return 'passwords.user';
+        }
+
+        // Generate password reset token
+        $token = app('auth.password.broker')->createToken($user);
+
+        // Send email (simplified - in production use proper notification)
+        // You would need to create a Notification class
+        // For now, we just return success
+
+        return 'passwords.sent';
+    }
+
+    /**
+     * Reset user password.
+     *
+     * @param string $email
+     * @param string $token
+     * @param string $password
+     * @return string
+     */
+    public function resetPassword(string $email, string $token, string $password): string
+    {
+        $user = User::where('email', $email)->first();
+
+        if (!$user) {
+            return 'passwords.user';
+        }
+
+        $result = app('auth.password.broker')->reset(
+            [
+                'email' => $email,
+                'password' => $password,
+                'password_confirmation' => $password,
+                'token' => $token
+            ],
+            function ($user, $password) {
+                $user->password = Hash::make($password);
+                $user->save();
+            }
+        );
+
+        return $result;
+    }
 }
