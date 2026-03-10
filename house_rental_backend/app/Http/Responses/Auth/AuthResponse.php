@@ -28,11 +28,15 @@ class AuthResponse
         return [
             'user' => $user,
             'token' => $token,
+            'role' => $user->getRoleNames()->first() ?? null,
         ];
     }
 
     public static function me(User $user): array
     {
-        return ['user' => $user];
+        return [
+            'user' => $user,
+            'role' => $user->getRoleNames()->first() ?? null,
+        ];
     }
 }

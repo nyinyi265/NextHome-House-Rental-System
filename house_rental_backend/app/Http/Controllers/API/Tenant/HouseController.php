@@ -7,9 +7,11 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Services\HouseService;
 use App\Http\Responses\Landlord\HouseResponse; // reusing existing response
+use App\Traits\HttpResponse;
 
 class HouseController extends Controller
 {
+    use HttpResponse;
     protected HouseService $service;
 
     public function __construct(HouseService $service)
@@ -22,8 +24,21 @@ class HouseController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $houses = $this->service->listAll();
-        return response()->json(HouseResponse::list($houses), 200);
+        $filters = $request->only([
+            'min_price',
+            'max_price',
+            'type',
+            'bedrooms',
+            'bathrooms',
+            'min_area',
+            'max_area',
+            'city',
+            'township',
+            'amenties'
+        ]);
+
+        $houses = $this->service->listAll($filters);
+        return $this->success(true, HouseResponse::list($houses), 'House Retrieved Successfully!', 200);
     }
 
     /**
@@ -32,6 +47,12 @@ class HouseController extends Controller
     public function show(Request $request, $id): JsonResponse
     {
         $house = $this->service->find($id);
-        return response()->json(HouseResponse::single($house), 200);
+        return $this->success(true, HouseResponse::single($house), 'House Retrieved Successfully!', 200);
+    }
+
+    public function getHousesByType(Request $request, $type): JsonResponse
+    {
+        $houses = $this->service->getHousesByType($type);
+        return $this->success(true, HouseResponse::list($houses), 'House retrieved by type!', 200);
     }
 }

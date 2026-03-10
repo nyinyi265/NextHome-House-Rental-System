@@ -21,6 +21,9 @@ Route::prefix('auth')->group(function () {
 Route::get('houses', [TenantHouseController::class, 'index']);
 Route::get('houses/{house}', [TenantHouseController::class, 'show']);
 
+// public amenities route
+Route::get('amenties', [AmentyController::class, 'index']);
+
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');

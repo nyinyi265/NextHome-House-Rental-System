@@ -23,11 +23,48 @@ class HouseService
     /**
      * Return all houses (for public/tenant browsing).
      *
+     * @param array $filters
      * @return \Illuminate\Database\Eloquent\Collection
      */
-    public function listAll()
+    public function listAll(array $filters = [])
     {
-        return House::with(['housePhotos', 'amenties', 'furnitures'])->get();
+        $query = House::with(['housePhotos', 'amenties', 'furnitures']);
+
+        // Apply filters
+        if (!empty($filters['min_price'])) {
+            $query->where('price', '>=', $filters['min_price']);
+        }
+        if (!empty($filters['max_price'])) {
+            $query->where('price', '<=', $filters['max_price']);
+        }
+        if (!empty($filters['type'])) {
+            $query->where('type', $filters['type']);
+        }
+        if (!empty($filters['bedrooms'])) {
+            $query->where('bedrooms', '>=', $filters['bedrooms']);
+        }
+        if (!empty($filters['bathrooms'])) {
+            $query->where('bathrooms', '>=', $filters['bathrooms']);
+        }
+        if (!empty($filters['min_area'])) {
+            $query->where('area', '>=', $filters['min_area']);
+        }
+        if (!empty($filters['max_area'])) {
+            $query->where('area', '<=', $filters['max_area']);
+        }
+        if (!empty($filters['city'])) {
+            $query->where('city', 'like', '%' . $filters['city'] . '%');
+        }
+        if (!empty($filters['township'])) {
+            $query->where('township', 'like', '%' . $filters['township'] . '%');
+        }
+        if (!empty($filters['amenties'])) {
+            $query->whereHas('amenties', function ($q) use ($filters) {
+                $q->whereIn('amenties.id', $filters['amenties']);
+            });
+        }
+
+        return $query->get();
     }
 
     /**
@@ -112,6 +149,10 @@ class HouseService
     {
         $house = $this->findForLandlord($id, $landlordProfileId);
         $house->delete();
+    }
+
+    public function getHousesByType(string $type){
+        return House::with(['housePhotos', 'amenties', 'furnitures'])->where('type', $type)->get();
     }
 
 }
