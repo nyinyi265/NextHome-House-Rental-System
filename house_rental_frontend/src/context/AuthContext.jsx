@@ -9,11 +9,22 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
-    if (storedToken) {
+    const storedUser = localStorage.getItem('user');
+    if (storedToken && storedUser) {
       setToken(storedToken);
-      authService.me(storedToken)
-        .then((res) => setUser(res.user || res))
-        .catch(() => logout());
+      try {
+        const userData = JSON.parse(storedUser);
+        setUser(userData);
+      } catch (e) {
+        // If parsing fails, try to fetch user from API
+        authService.me(storedToken)
+          .then((res) => {
+            const userData = res.data?.user || res.user || res;
+            const roleData = res.data?.role || res.role;
+            setUser({ ...userData, role: roleData });
+          })
+          .catch(() => logout());
+      }
     }
   }, []);
 
@@ -24,13 +35,16 @@ export function AuthProvider({ children }) {
     const tokenData = res.data?.token || res.token;
     const roleData = res.data?.role || res.role;
     
+    // Include role in user data
+    const userWithRole = { ...userData, role: roleData };
+    
     setToken(tokenData);
-    setUser(userData);
+    setUser(userWithRole);
     localStorage.setItem('token', tokenData);
-    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('user', JSON.stringify(userWithRole));
     
     // Return user data with role for navigation
-    return { ...userData, role: roleData };
+    return userWithRole;
   }
 
   function logout() {

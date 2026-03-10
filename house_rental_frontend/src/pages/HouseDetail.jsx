@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useParams } from 'react-router-dom';
-import { Star, Bed, Bath, Users, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Star, Bed, Bath, Users, Check, ChevronLeft, ChevronRight, X, MessageSquare } from 'lucide-react';
 import Navbar from '../components/Navbar/Navbar';
 import Loading from '../components/Loading';
 import houseService from '../services/houseService';
@@ -8,6 +8,7 @@ import { AuthContext } from '../context/AuthContext';
 
 export default function HouseDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { token, user } = useContext(AuthContext);
 
   const role = (() => {
@@ -20,6 +21,10 @@ export default function HouseDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [showReservationModal, setShowReservationModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [reservationSuccess, setReservationSuccess] = useState(false);
+  const [reservationMessage, setReservationMessage] = useState('');
 
   useEffect(() => {
     setLoading(true);
@@ -45,6 +50,38 @@ export default function HouseDetail() {
   const prevPhoto = () => {
     const photos = property?.house_photos || property?.photos || [];
     setCurrentPhotoIndex((prev) => (prev - 1 + photos.length) % photos.length);
+  };
+
+  const handleReserveClick = () => {
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+    setShowReservationModal(true);
+  };
+
+  const handleSubmitReservation = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    try {
+      // Call the API to submit rental application
+      // house_id is automatically passed via the URL/property id
+      await houseService.applyRental(token, parseInt(id), reservationMessage);
+      setReservationSuccess(true);
+      
+      // Close modal after showing success
+      setTimeout(() => {
+        setShowReservationModal(false);
+        setReservationSuccess(false);
+        setReservationMessage('');
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to submit reservation', err);
+      alert(err.message || 'Failed to submit application. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (loading) {
@@ -286,7 +323,10 @@ export default function HouseDetail() {
                 </div>
               </div>
 
-              <button className="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold text-lg hover:bg-emerald-700 transition-colors">
+              <button 
+                onClick={handleReserveClick}
+                className="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold text-lg hover:bg-emerald-700 transition-colors"
+              >
                 Reserve
               </button>
 
@@ -317,6 +357,91 @@ export default function HouseDetail() {
           </div>
         </div>
       </div>
+
+      {/* Reservation Modal */}
+      {showReservationModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowReservationModal(false)}
+          />
+          
+          {/* Modal Content */}
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-2xl font-bold">Request to Book</h2>
+              <button 
+                onClick={() => setShowReservationModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {reservationSuccess ? (
+              // Success State
+              <div className="p-12 text-center">
+                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Check className="w-8 h-8 text-emerald-600" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">Request Submitted!</h3>
+                <p className="text-gray-600">Your reservation request has been sent to the host. You'll be notified once they respond.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmitReservation} className="p-6">
+                {/* Property Summary */}
+                <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                  <h3 className="font-semibold text-lg mb-2">{title}</h3>
+                  <p className="text-gray-600 text-sm">{location}</p>
+                  <p className="font-bold text-emerald-600 mt-2">${price}/month</p>
+                </div>
+
+                {/* Message to Host */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Message to host (optional)
+                  </label>
+                  <div className="relative">
+                    <MessageSquare className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                    <textarea
+                      value={reservationMessage}
+                      onChange={(e) => setReservationMessage(e.target.value)}
+                      rows={4}
+                      className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                      placeholder="Tell the host a bit about yourself and why you're staying..."
+                    />
+                  </div>
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold text-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Submitting...
+                    </>
+                  ) : (
+                    'Confirm and Request'
+                  )}
+                </button>
+
+                <p className="text-center text-gray-500 text-sm mt-4">
+                  You won't be charged yet. The host has 24 hours to accept your request.
+                </p>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

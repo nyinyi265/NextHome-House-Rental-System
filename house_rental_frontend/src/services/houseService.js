@@ -81,6 +81,37 @@ async function getAmenties() {
   return response.json();
 }
 
+/**
+ * Submit a rental application for a house
+ * @param {string} token - Authentication token
+ * @param {number} houseId - House ID to apply for
+ * @param {string} message - Optional message to the host
+ */
+async function applyRental(token, houseId, message = '') {
+  const headers = { 
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`
+  };
+  
+  const body = JSON.stringify({
+    house_id: houseId,
+    message: message
+  });
+  
+  const response = await fetch(api.tenant.rentalApplications(), {
+    method: 'POST',
+    headers,
+    body
+  });
+  
+  if (!response.ok) {
+    const err = await response.json();
+    throw err;
+  }
+  return response.json();
+}
 
-const houseService = { list, get, getAmenties };
+
+const houseService = { list, get, getAmenties, applyRental };
 export default houseService;

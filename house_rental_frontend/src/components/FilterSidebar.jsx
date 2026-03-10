@@ -201,11 +201,11 @@ export default function FilterSidebar({ filters, onFilterChange }) {
         </button>
 
         {/* Show more */}
-        <div className="mt-4 pt-4 border-t">
+        {/* <div className="mt-4 pt-4 border-t">
           <button className="text-sm underline hover:no-underline">
             Show more
           </button>
-        </div>
+        </div> */}
       </div>
     </div>
   );

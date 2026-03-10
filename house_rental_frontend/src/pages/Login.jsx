@@ -7,16 +7,22 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
+    setError('');
     try {
       const user = await login({ email, password });
       
+      // Debug: Log the user to see what we're getting
+      console.log('Login successful, user:', user);
+      
       // The login returns user object with role property
       const role = user?.role || null;
+      console.log('User role:', role);
       
       // Redirect based on role
       if (role === 'landlord') {
@@ -25,7 +31,10 @@ export default function Login() {
         navigate('/');
       }
     } catch (err) {
-      alert(err.message || 'Login failed');
+      console.error('Login error:', err);
+      // Show more detailed error
+      const errorMessage = err.message || err.error || 'Login failed. Please check your credentials.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -35,6 +44,13 @@ export default function Login() {
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-lg text-center">
         <h2 className="text-2xl font-bold mb-6 text-gray-800">Sign In</h2>
+        
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <input 
             type="email" 

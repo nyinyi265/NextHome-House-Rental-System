@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useContext } from 'react';
 import Navbar from '../components/Navbar/Navbar';
-import SearchBar from '../components/SearchBar';
 import FilterSidebar from '../components/FilterSidebar';
 import PropertyCard from '../components/PropertyCard';
 import { PropertyGridSkeleton } from '../components/Loading';
+import { Search, MapPin } from 'lucide-react';
 import houseService from '../services/houseService';
 import { AuthContext } from '../context/AuthContext';
 
@@ -12,6 +12,7 @@ export default function Explore() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({});
+  const [searchQuery, setSearchQuery] = useState('');
   const { token, user } = useContext(AuthContext);
 
   const role = (() => {
@@ -38,18 +39,49 @@ export default function Explore() {
       .finally(() => setLoading(false));
   }, [token, role, filters]);
 
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setFilters({ ...filters, city: searchQuery });
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
       
-      {/* Search Section */}
-      <div className="sticky top-0 bg-white z-40 pt-4 pb-2 shadow-sm">
-        <SearchBar />
+      {/* Search and Filter Bar */}
+      <div className="sticky top-0 bg-white z-40 border-b">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between gap-4">
+            {/* Search Input */}
+            <form onSubmit={handleSearch} className="flex-1 flex items-center bg-gray-100 rounded-full px-4 py-2.5 hover:shadow-md transition-shadow">
+              <MapPin className="w-5 h-5 text-gray-500 mr-2" />
+              <input 
+                type="text" 
+                placeholder="Search by city or location..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 bg-transparent outline-none text-gray-700 placeholder-gray-400"
+              />
+              <button type="submit" className="bg-emerald-600 text-white p-2 rounded-full hover:bg-emerald-700 transition-colors">
+                <Search className="w-4 h-4" />
+              </button>
+            </form>
+
+            {/* Filter Toggle Button */}
+            {/* <button 
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 px-4 py-2.5 border rounded-full hover:shadow-md transition-shadow whitespace-nowrap"
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              <span className="text-sm font-medium">Filters</span>
+            </button> */}
+          </div>
+        </div>
       </div>
 
-      {/* Filter Toggle */}
+      {/* Results Count */}
       <div className="border-b py-3">
-        <div className="max-w-7xl mx-auto px-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4">
           <div className="text-sm text-gray-600">
             {properties.length} properties found
           </div>
@@ -59,8 +91,10 @@ export default function Explore() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex gap-6">
-          {/* Filter Sidebar */}
-          <FilterSidebar filters={filters} onFilterChange={setFilters} />
+          {/* Filter Sidebar - Always visible on desktop */}
+          <div className="hidden lg:block">
+            <FilterSidebar filters={filters} onFilterChange={setFilters} />
+          </div>
           
           {/* Properties Grid */}
           <div className="flex-1">
