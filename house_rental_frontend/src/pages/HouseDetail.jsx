@@ -306,7 +306,7 @@ export default function HouseDetail() {
                 </div>
               </div>
               
-              <div className="border rounded-lg overflow-hidden mb-4">
+              {/* <div className="border rounded-lg overflow-hidden mb-4">
                 <div className="grid grid-cols-2 border-b">
                   <div className="p-3 border-r">
                     <p className="text-xs text-gray-500 font-medium">CHECK-IN</p>
@@ -321,7 +321,7 @@ export default function HouseDetail() {
                   <p className="text-xs text-gray-500 font-medium">GUESTS</p>
                   <p className="font-medium">{maxGuests} guests</p>
                 </div>
-              </div>
+              </div> */}
 
               <button 
                 onClick={handleReserveClick}
@@ -330,9 +330,9 @@ export default function HouseDetail() {
                 Reserve
               </button>
 
-              <p className="text-center text-gray-500 text-sm mt-4">
+              {/* <p className="text-center text-gray-500 text-sm mt-4">
                 You won't be charged yet
-              </p>
+              </p> */}
 
               {/* Price Breakdown */}
               <div className="mt-6 space-y-3">

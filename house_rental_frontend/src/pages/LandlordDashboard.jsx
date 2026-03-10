@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   Building2, 
@@ -10,49 +10,155 @@ import {
   LogOut,
   Menu,
   X,
-  DollarSign
+  DollarSign,
+  Plus,
+  Trash2,
+  Edit
 } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
+import houseService from '../services/houseService';
+import AddHouseModal from '../components/AddHouseModal';
 
 export default function LandlordDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const { user, logout } = useContext(AuthContext);
+  const [showAddHouse, setShowAddHouse] = useState(false);
+  const [houses, setHouses] = useState([]);
+  const [housesLoading, setHousesLoading] = useState(false);
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const [rentalApplications, setRentalApplications] = useState([]);
+  const [rentalAppsLoading, setRentalAppsLoading] = useState(false);
+  const [rentalAppsRefetch, setRentalAppsRefetch] = useState(0);
+  const [dashboardStats, setDashboardStats] = useState({
+    totalProperties: 0,
+    totalRentals: 0,
+    totalRevenue: 0,
+    pendingApplications: 0
+  });
+  const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [recentApplications, setRecentApplications] = useState([]);
+  const { user, token, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  // Mock data for dashboard
+  // Fetch houses when properties tab is active
+  useEffect(() => {
+    const fetchHouses = async () => {
+      setHousesLoading(true);
+      try {
+        const response = await houseService.list(token, 'landlord');
+        const housesData = response.data?.houses || response.houses || [];
+        setHouses(housesData);
+      } catch (err) {
+        console.error('Failed to fetch houses', err);
+      } finally {
+        setHousesLoading(false);
+      }
+    };
+
+    if (activeTab === 'properties' && token) {
+      fetchHouses();
+    }
+  }, [activeTab, token, refetchTrigger]);
+
+  const handleHouseCreated = () => {
+    setRefetchTrigger(prev => prev + 1);
+    // Update stats for overview
+  };
+
+  // Fetch rental applications when reservations tab is active
+  useEffect(() => {
+    const fetchRentalApplications = async () => {
+      setRentalAppsLoading(true);
+      try {
+        const response = await houseService.getLandlordRentalApplications(token);
+        const appsData = response.data?.rental_applications || response.rental_applications || [];
+        setRentalApplications(appsData);
+      } catch (err) {
+        console.error('Failed to fetch rental applications', err);
+      } finally {
+        setRentalAppsLoading(false);
+      }
+    };
+
+    if (activeTab === 'reservations' && token) {
+      fetchRentalApplications();
+    }
+  }, [activeTab, token, rentalAppsRefetch]);
+
+  // Fetch dashboard data for overview
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      setDashboardLoading(true);
+      try {
+        // Fetch houses
+        const housesResponse = await houseService.list(token, 'landlord');
+        const housesData = housesResponse.data?.houses || housesResponse.houses || [];
+        
+        // Fetch rentals
+        const rentalsResponse = await houseService.getLandlordRentals(token);
+        const rentalsData = rentalsResponse.data?.rentals || rentalsResponse.rentals || [];
+        
+        // Fetch rental applications
+        const appsResponse = await houseService.getLandlordRentalApplications(token);
+        const appsData = appsResponse.data?.rental_applications || appsResponse.rental_applications || [];
+        setRentalApplications(appsData);
+        
+        // Calculate total revenue from active rentals
+        const totalRevenue = rentalsData
+          .filter(r => r.status === 'active')
+          .reduce((sum, r) => sum + (parseFloat(r.total_amount) || 0), 0);
+        
+        // Count pending applications
+        const pendingApplications = appsData.filter(a => a.status === 'pending').length;
+        
+        // Store recent applications (last 5)
+        const sortedApps = [...appsData].sort((a, b) => 
+          new Date(b.created_at) - new Date(a.created_at)
+        );
+        setRecentApplications(sortedApps.slice(0, 5));
+        
+        setDashboardStats({
+          totalProperties: housesData.length,
+          totalRentals: rentalsData.length,
+          totalRevenue: totalRevenue,
+          pendingApplications: pendingApplications
+        });
+      } catch (err) {
+        console.error('Failed to fetch dashboard data', err);
+      } finally {
+        setDashboardLoading(false);
+      }
+    };
+
+    if (activeTab === 'overview' && token) {
+      fetchDashboardData();
+    }
+  }, [activeTab, token, refetchTrigger, rentalAppsRefetch]);
+
+  const handleUpdateApplicationStatus = async (applicationId, status) => {
+    try {
+      await houseService.updateRentalApplicationStatus(token, applicationId, status);
+      setRentalAppsRefetch(prev => prev + 1);
+    } catch (err) {
+      console.error('Failed to update application status', err);
+      alert('Failed to update application status');
+    }
+  };
+
+  // Dynamic stats based on real data
   const stats = [
-    { title: 'Total Properties', value: '12', icon: Building2, color: 'bg-blue-500' },
-    { title: 'Total Bookings', value: '156', icon: CalendarDays, color: 'bg-green-500' },
-    { title: 'Total Revenue', value: '$12,450', icon: DollarSign, color: 'bg-yellow-500' },
-    { title: 'Total Reviews', value: '89', icon: Star, color: 'bg-purple-500' },
-  ];
-
-  // Mock recent bookings
-  const recentBookings = [
-    { id: 1, property: 'Sunset Villa', guest: 'John Smith', date: '2026-03-15', status: 'Confirmed', amount: '$450' },
-    { id: 2, property: 'Ocean View Apartment', guest: 'Sarah Johnson', date: '2026-03-14', status: 'Pending', amount: '$320' },
-    { id: 3, property: 'Mountain Cabin', guest: 'Mike Wilson', date: '2026-03-13', status: 'Confirmed', amount: '$280' },
-    { id: 4, property: 'City Center Loft', guest: 'Emily Brown', date: '2026-03-12', status: 'Completed', amount: '$195' },
-    { id: 5, property: 'Lakeside Resort', guest: 'David Lee', date: '2026-03-11', status: 'Confirmed', amount: '$520' },
-  ];
-
-  // Mock bookings per month for chart
-  const bookingsPerMonth = [
-    { month: 'Jan', bookings: 45 },
-    { month: 'Feb', bookings: 52 },
-    { month: 'Mar', bookings: 48 },
-    { month: 'Apr', bookings: 65 },
-    { month: 'May', bookings: 72 },
-    { month: 'Jun', bookings: 85 },
+    { title: 'Total Properties', value: dashboardStats.totalProperties, icon: Building2, color: 'bg-blue-500' },
+    { title: 'Active Rentals', value: dashboardStats.totalRentals, icon: CalendarDays, color: 'bg-green-500' },
+    { title: 'Total Revenue', value: `${dashboardStats.totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'bg-yellow-500' },
+    { title: 'Pending Applications', value: dashboardStats.pendingApplications, icon: Star, color: 'bg-purple-500' },
   ];
 
   const menuItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'properties', label: 'Properties', icon: Building2 },
-    { id: 'bookings', label: 'Bookings', icon: CalendarDays },
+    { id: 'reservations', label: 'Reservations', icon: CalendarDays },
     { id: 'reviews', label: 'Reviews', icon: Star },
     { id: 'wallet', label: 'Wallet', icon: Wallet },
     { id: 'settings', label: 'Settings', icon: Settings },
@@ -69,8 +175,6 @@ export default function LandlordDashboard() {
     }
   };
 
-  const maxBookings = Math.max(...bookingsPerMonth.map(b => b.bookings));
-
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
@@ -82,7 +186,7 @@ export default function LandlordDashboard() {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="p-6 border-b">
-            <h1 className="text-xl font-bold text-emerald-600">Host Dashboard</h1>
+            <h1 className="text-xl font-bold text-emerald-600">Landlord Dashboard</h1>
           </div>
 
           {/* User Info */}
@@ -174,80 +278,272 @@ export default function LandlordDashboard() {
                 ))}
               </div>
 
-              {/* Chart Section */}
+              {/* Reservations Overview */}
               <div className="bg-white rounded-xl p-6 shadow-sm border">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Bookings Overview</h3>
-                <div className="flex items-end justify-between h-64 gap-4">
-                  {bookingsPerMonth.map((item, index) => (
-                    <div key={index} className="flex-1 flex flex-col items-center">
-                      <div 
-                        className="w-full bg-emerald-500 rounded-t-lg transition-all duration-300"
-                        style={{ height: `${(item.bookings / maxBookings) * 100}%` }}
-                      ></div>
-                      <p className="text-sm text-gray-500 mt-2">{item.month}</p>
-                      <p className="text-xs font-medium text-gray-700">{item.bookings}</p>
-                    </div>
-                  ))}
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Reservations Overview</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-600">Pending</p>
+                    <p className="text-2xl font-bold text-blue-800">
+                      {rentalApplications.filter(a => a.status === 'pending').length}
+                    </p>
+                  </div>
+                  <div className="p-4 bg-green-50 rounded-lg">
+                    <p className="text-sm text-green-600">Approved</p>
+                    <p className="text-2xl font-bold text-green-800">
+                      {rentalApplications.filter(a => a.status === 'approved').length}
+                    </p>
+                  </div>
+                  <div className="p-4 bg-red-50 rounded-lg">
+                    <p className="text-sm text-red-600">Rejected</p>
+                    <p className="text-2xl font-bold text-red-800">
+                      {rentalApplications.filter(a => a.status === 'rejected').length}
+                    </p>
+                  </div>
                 </div>
               </div>
 
               {/* Recent Bookings Table */}
               <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
                 <div className="p-6 border-b">
-                  <h3 className="text-lg font-semibold text-gray-800">Recent Bookings</h3>
+                  <h3 className="text-lg font-semibold text-gray-800">Recent Reservations</h3>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Property</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Guest</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {recentBookings.map((booking) => (
-                        <tr key={booking.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 text-sm font-medium text-gray-900">{booking.property}</td>
-                          <td className="px-6 py-4 text-sm text-gray-600">{booking.guest}</td>
-                          <td className="px-6 py-4 text-sm text-gray-600">{booking.date}</td>
-                          <td className="px-6 py-4">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              booking.status === 'Confirmed' ? 'bg-green-100 text-green-800' :
-                              booking.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}>
-                              {booking.status}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-sm font-medium text-gray-900">{booking.amount}</td>
+                {recentApplications.length === 0 ? (
+                  <div className="p-6 text-center text-gray-500">
+                    No recent reservations
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Property</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tenant</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {recentApplications.map((app) => (
+                          <tr key={app.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                              {app.house?.title || '-'}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-600">
+                              {app.tenant?.name || '-'}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-600">
+                              {app.created_at ? new Date(app.created_at).toLocaleDateString() : '-'}
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                app.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                app.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                app.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {app.status || 'pending'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                              ${app.house?.price_per_month || app.house?.price || '-'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
           {activeTab === 'properties' && (
-            <div className="bg-white rounded-xl p-6 shadow-sm border">
-              <div className="flex items-center justify-between mb-6">
+            <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+              <div className="p-6 border-b flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-800">My Properties</h3>
-                <button className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+                <button 
+                  onClick={() => setShowAddHouse(true)}
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
                   Add Property
                 </button>
               </div>
-              <p className="text-gray-500">Manage your properties here.</p>
+              
+              {housesLoading ? (
+                <div className="p-6 text-center text-gray-500">Loading properties...</div>
+              ) : houses.length === 0 ? (
+                <div className="p-6 text-center text-gray-500">
+                  <Building2 className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                  <p>No properties yet</p>
+                  <p className="text-sm">Click "Add Property" to create your first listing</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Property</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {houses.map((house) => (
+                        <tr key={house.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-12 h-12 rounded-lg bg-gray-200 overflow-hidden flex-shrink-0">
+                                {house.house_photos && house.house_photos.length > 0 ? (
+                                  <img 
+                                    src={house.house_photos[0]?.photo_url} 
+                                    alt={house.title}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-emerald-100 flex items-center justify-center">
+                                    <Building2 className="w-6 h-6 text-emerald-600" />
+                                  </div>
+                                )}
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-900">{house.title}</p>
+                                <p className="text-sm text-gray-500">{house.bedrooms} bed · {house.bathrooms} bath</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">
+                            {house.city}, {house.township}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600 capitalize">
+                            {house.property_type || house.type || '-'}
+                          </td>
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                            ${house.price_per_month || house.price}/mo
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              house.is_available ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {house.is_available ? 'Available' : 'Unavailable'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                                <Edit className="w-4 h-4 text-gray-600" />
+                              </button>
+                              <button className="p-2 hover:bg-red-50 rounded-lg transition-colors">
+                                <Trash2 className="w-4 h-4 text-red-600" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 
-          {activeTab === 'bookings' && (
-            <div className="bg-white rounded-xl p-6 shadow-sm border">
-              <h3 className="text-lg font-semibold text-gray-800 mb-6">All Bookings</h3>
-              <p className="text-gray-500">View and manage all your bookings here.</p>
+          {activeTab === 'reservations' && (
+            <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+              <div className="p-6 border-b">
+                <h3 className="text-lg font-semibold text-gray-800">Rental Applications</h3>
+                <p className="text-sm text-gray-500 mt-1">Manage tenant rental applications for your properties</p>
+              </div>
+              
+              {rentalAppsLoading ? (
+                <div className="p-6 text-center text-gray-500">Loading applications...</div>
+              ) : rentalApplications.length === 0 ? (
+                <div className="p-6 text-center text-gray-500">
+                  <CalendarDays className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                  <p>No rental applications yet</p>
+                  <p className="text-sm">Applications from tenants will appear here</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tenant</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Property</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Message</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Applied Date</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {rentalApplications.map((app) => (
+                        <tr key={app.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                                <span className="text-emerald-600 font-semibold">
+                                  {app.tenant?.name?.charAt(0) || 'T'}
+                                </span>
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-900">{app.tenant?.name || 'Tenant'}</p>
+                                <p className="text-sm text-gray-500">{app.tenant?.email || '-'}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="text-sm text-gray-900">{app.house?.title || '-'}</p>
+                            <p className="text-sm text-gray-500">{app.house?.city || ''}, {app.house?.township || ''}</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="text-sm text-gray-600 max-w-xs truncate">
+                              {app.message || '-'}
+                            </p>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">
+                            {app.created_at ? new Date(app.created_at).toLocaleDateString() : '-'}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              app.status === 'approved' ? 'bg-green-100 text-green-800' :
+                              app.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                              app.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {app.status || 'pending'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            {app.status === 'pending' ? (
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  onClick={() => handleUpdateApplicationStatus(app.id, 'approved')}
+                                  className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  onClick={() => handleUpdateApplicationStatus(app.id, 'rejected')}
+                                  className="px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
+                                >
+                                  Deny
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-sm text-gray-400">No actions</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 
@@ -288,6 +584,14 @@ export default function LandlordDashboard() {
           onClick={() => setSidebarOpen(false)}
         ></div>
       )}
+
+      {/* Add House Modal */}
+      <AddHouseModal 
+        isOpen={showAddHouse} 
+        onClose={() => setShowAddHouse(false)} 
+        token={token}
+        onSuccess={handleHouseCreated}
+      />
     </div>
   );
 }

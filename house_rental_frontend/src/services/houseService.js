@@ -112,6 +112,134 @@ async function applyRental(token, houseId, message = '') {
   return response.json();
 }
 
+/**
+ * Fetch amenities for landlord
+ */
+async function getLandlordAmenties(token) {
+  const headers = { 
+    Accept: 'application/json',
+    Authorization: `Bearer ${token}`
+  };
+  const response = await fetch(api.landlord.amenties(), { headers });
+  if (!response.ok) {
+    const err = await response.json();
+    throw err;
+  }
+  return response.json();
+}
 
-const houseService = { list, get, getAmenties, applyRental };
+/**
+ * Fetch furnitures for landlord
+ */
+async function getLandlordFurnitures(token) {
+  const headers = { 
+    Accept: 'application/json',
+    Authorization: `Bearer ${token}`
+  };
+  const response = await fetch(api.landlord.furnitures(), { headers });
+  if (!response.ok) {
+    const err = await response.json();
+    throw err;
+  }
+  return response.json();
+}
+
+/**
+ * Create a new house listing (landlord)
+ * @param {string} token - Authentication token
+ * @param {FormData} formData - House data including photos, amenities, furniture
+ */
+async function createHouse(token, formData) {
+  const headers = { 
+    Accept: 'application/json',
+    Authorization: `Bearer ${token}`
+    // Note: Don't set Content-Type for FormData - browser will set it with boundary
+  };
+  
+  const response = await fetch(api.landlord.houses(), {
+    method: 'POST',
+    headers,
+    body: formData
+  });
+  
+  if (!response.ok) {
+    const err = await response.json();
+    throw err;
+  }
+  return response.json();
+}
+
+/**
+ * Fetch rental applications for landlord's properties
+ * @param {string} token - Authentication token
+ */
+async function getLandlordRentalApplications(token) {
+  const headers = { 
+    Accept: 'application/json',
+    Authorization: `Bearer ${token}`
+  };
+  const response = await fetch(api.landlord.rentalApplications(), { headers });
+  if (!response.ok) {
+    const err = await response.json();
+    throw err;
+  }
+  return response.json();
+}
+
+/**
+ * Update rental application status (approve/deny)
+ * @param {string} token - Authentication token
+ * @param {number} applicationId - Application ID
+ * @param {string} status - 'approved' or 'rejected'
+ */
+async function updateRentalApplicationStatus(token, applicationId, status) {
+  const headers = { 
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`
+  };
+  
+  const response = await fetch(`${api.landlord.rentalApplications()}/${applicationId}`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify({ status })
+  });
+  
+  if (!response.ok) {
+    const err = await response.json();
+    throw err;
+  }
+  return response.json();
+}
+
+/**
+ * Fetch rentals for landlord's properties
+ * @param {string} token - Authentication token
+ */
+async function getLandlordRentals(token) {
+  const headers = { 
+    Accept: 'application/json',
+    Authorization: `Bearer ${token}`
+  };
+  const response = await fetch(api.landlord.rentals(), { headers });
+  if (!response.ok) {
+    const err = await response.json();
+    throw err;
+  }
+  return response.json();
+}
+
+
+const houseService = { 
+  list, 
+  get, 
+  getAmenties, 
+  applyRental,
+  getLandlordAmenties,
+  getLandlordFurnitures,
+  createHouse,
+  getLandlordRentalApplications,
+  updateRentalApplicationStatus,
+  getLandlordRentals
+};
 export default houseService;

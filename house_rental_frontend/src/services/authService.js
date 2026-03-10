@@ -63,5 +63,73 @@ async function logout() {
   }
 }
 
-const authService = { login, register, me, logout };
+async function updateProfile(data) {
+  const token = localStorage.getItem('token');
+  const headers = { 
+    Accept: 'application/json',
+    Authorization: `Bearer ${token}`
+  };
+  
+  // If there's a profile image, use FormData
+  if (data.profileImage) {
+    const formData = new FormData();
+    if (data.name) formData.append('name', data.name);
+    if (data.phone) formData.append('phone', data.phone);
+    formData.append('profile_path', data.profileImage);
+    
+    const response = await fetch(api.auth.updateProfile(), {
+      method: 'PUT',
+      headers,
+      body: formData
+    });
+    
+    if (!response.ok) {
+      const err = await response.json();
+      throw err;
+    }
+    return response.json();
+  }
+  
+  // Otherwise use JSON
+  headers['Content-Type'] = 'application/json';
+  const response = await fetch(api.auth.updateProfile(), {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(data)
+  });
+  
+  if (!response.ok) {
+    const err = await response.json();
+    throw err;
+  }
+  return response.json();
+}
+
+async function forgotPassword(email) {
+  const response = await fetch(api.auth.forgotPassword(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+  if (!response.ok) {
+    const err = await response.json();
+    throw err;
+  }
+  return response.json();
+}
+
+async function resetPassword(data) {
+  const response = await fetch(api.auth.resetPassword(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const err = await response.json();
+    throw err;
+  }
+  return response.json();
+}
+
+const authService = { login, register, me, logout, updateProfile, forgotPassword, resetPassword };
 export default authService;
