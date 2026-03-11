@@ -16,6 +16,8 @@ Route::prefix('auth')->group(function () {
     Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
     Route::get('me', [AuthController::class, 'me'])->middleware('auth:sanctum');
     Route::put('profile', [AuthController::class, 'updateProfile'])->middleware('auth:sanctum');
+    // Change password (requires authentication)
+    Route::post('change-password', [AuthController::class, 'changePassword'])->middleware('auth:sanctum');
     // Password reset routes (public)
     Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
     Route::post('reset-password', [AuthController::class, 'resetPassword']);

@@ -160,4 +160,32 @@ class AuthService
 
         return $result;
     }
+
+    /**
+     * Change user password (verifies current password first).
+     *
+     * @param User $user
+     * @param string $currentPassword
+     * @param string $newPassword
+     * @return array
+     */
+    public function changePassword(User $user, string $currentPassword, string $newPassword): array
+    {
+        // Verify current password
+        if (!Hash::check($currentPassword, $user->password)) {
+            return [
+                'success' => false,
+                'message' => 'Current password is incorrect'
+            ];
+        }
+
+        // Update password
+        $user->password = Hash::make($newPassword);
+        $user->save();
+
+        return [
+            'success' => true,
+            'message' => 'Password changed successfully'
+        ];
+    }
 }

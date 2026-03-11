@@ -129,4 +129,27 @@ class AuthController extends Controller
 
         return $this->fail(false, null, 'Invalid or expired reset token', 400);
     }
+
+    /**
+     * Change user password (requires current password verification)
+     */
+    public function changePassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $result = $this->service->changePassword(
+            $request->user(),
+            $request->current_password,
+            $request->new_password
+        );
+
+        if ($result['success']) {
+            return $this->success(true, null, 'Password changed successfully', 200);
+        }
+
+        return $this->fail(false, null, $result['message'], 400);
+    }
 }

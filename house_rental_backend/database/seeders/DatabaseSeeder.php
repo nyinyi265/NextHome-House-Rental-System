@@ -31,5 +31,29 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $user->assignRole('admin');
+
+        $landlord = User::create([
+            'name' => 'John Doe',
+            'email' => 'johndoe@gmail.com',
+            'password' => bcrypt('JohnDoe123!'),
+            'phone_number' => '1234567890',
+            'profile_path' => null,
+            'deleted_at' => null,
+            'delete_flg' => null,
+        ]);
+
+        $landlord->assignRole('landlord');
+
+        $tenant = User::create([
+            'name' => 'Jane Smith',
+            'email' => 'janesmith@gmail.com',
+            'password' => bcrypt('JaneSmith123!'),
+            'phone_number' => '1234567890',
+            'profile_path' => null,
+            'deleted_at' => null,
+            'delete_flg' => null,
+        ]);
+
+        $tenant->assignRole('tenant');
     }
 }

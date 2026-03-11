@@ -17,7 +17,7 @@ class UserForm
                 TextInput::make('email')->label('Email')->email()->required(),
                 TextInput::make('password')->label('Password')->password()->required(),
                 TextInput::make('phone_number')->label('Phone Number')->tel()->required(),
-                FileUpload::make('profile_path')->label('Profile Picture')->image()->directory('profile_pictures')->columnSpan('full'),
+                FileUpload::make('profile_path')->label('Profile Picture')->image()->directory('profiles')->columnSpan('full'),
             ]);
     }
 }
