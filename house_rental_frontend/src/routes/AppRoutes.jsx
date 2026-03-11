@@ -8,6 +8,7 @@ import HouseDetail from '../pages/HouseDetail';
 import LandlordDashboard from '../pages/LandlordDashboard';
 import Profile from '../pages/Profile';
 import ResetPassword from '../pages/ResetPassword';
+import ForgotPassword from '../pages/ForgotPassword';
 import ProtectedRoute from '../components/ProtectedRoute';
 
 export default function AppRoutes() {
@@ -18,7 +19,17 @@ export default function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/houses/:id" element={<HouseDetail />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route 
+        path="/reset-password" 
+        element={
+          <ProtectedRoute>
+            <ResetPassword />
+          </ProtectedRoute>
+        } 
+      />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      {/* Public profile route for password change from login */}
+      <Route path="/profile" element={<Profile />} />
       <Route 
         path="/landlord" 
         element={

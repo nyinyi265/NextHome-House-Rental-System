@@ -13,11 +13,18 @@ export default function Navbar() {
     navigate('/login');
   };
 
-  const getProfileLink = () => {
+  const handleProfileClick = () => {
+    setProfileOpen(false);
     if (user?.role === 'landlord') {
-      return '/landlord/profile';
+      navigate('/landlord/profile');
+    } else {
+      navigate('/tenant/profile');
     }
-    return '/tenant/profile';
+  };
+
+  const handleResetPasswordClick = () => {
+    setProfileOpen(false);
+    navigate('/reset-password');
   };
 
   return (
@@ -62,22 +69,20 @@ export default function Navbar() {
                 <p className="text-sm text-gray-500 truncate">{user.email}</p>
               </div>
               <div className="p-2">
-                <Link 
-                  to={getProfileLink()} 
-                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg no-underline transition-colors"
-                  onClick={() => setProfileOpen(false)}
+                <button 
+                  onClick={handleProfileClick}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer bg-transparent border-none text-left"
                 >
                   <User className="w-4 h-4" />
                   Profile
-                </Link>
-                <Link 
-                  to="/reset-password" 
-                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg no-underline transition-colors"
-                  onClick={() => setProfileOpen(false)}
+                </button>
+                {/* <button 
+                  onClick={handleResetPasswordClick}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer bg-transparent border-none text-left"
                 >
                   <LockKeyhole className="w-4 h-4" />
                   Reset Password
-                </Link>
+                </button> */}
                 <button 
                   onClick={handleLogout}
                   className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer bg-transparent border-none"

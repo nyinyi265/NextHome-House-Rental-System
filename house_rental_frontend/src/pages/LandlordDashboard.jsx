@@ -31,6 +31,9 @@ export default function LandlordDashboard() {
   const [rentalApplications, setRentalApplications] = useState([]);
   const [rentalAppsLoading, setRentalAppsLoading] = useState(false);
   const [rentalAppsRefetch, setRentalAppsRefetch] = useState(0);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [selectedApplication, setSelectedApplication] = useState(null);
+  const [modalAction, setModalAction] = useState(null); // 'approve' or 'reject'
   const [dashboardStats, setDashboardStats] = useState({
     totalProperties: 0,
     totalRentals: 0,
@@ -147,6 +150,32 @@ export default function LandlordDashboard() {
     }
   };
 
+  const openConfirmModal = (application, action) => {
+    setSelectedApplication(application);
+    setModalAction(action);
+    setShowConfirmModal(true);
+  };
+
+  const closeConfirmModal = () => {
+    setShowConfirmModal(false);
+    setSelectedApplication(null);
+    setModalAction(null);
+  };
+
+  const handleConfirmAction = async () => {
+    if (!selectedApplication || !modalAction) return;
+    
+    try {
+      const status = modalAction === 'approve' ? 'approved' : 'rejected';
+      await houseService.updateRentalApplicationStatus(token, selectedApplication.id, status);
+      setRentalAppsRefetch(prev => prev + 1);
+      closeConfirmModal();
+    } catch (err) {
+      console.error('Failed to update application status', err);
+      alert('Failed to update application status');
+    }
+  };
+
   // Dynamic stats based on real data
   const stats = [
     { title: 'Total Properties', value: dashboardStats.totalProperties, icon: Building2, color: 'bg-blue-500' },
@@ -192,11 +221,19 @@ export default function LandlordDashboard() {
           {/* User Info */}
           <div className="p-4 border-b">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                <span className="text-emerald-600 font-semibold">
-                  {user?.name?.charAt(0) || 'U'}
-                </span>
-              </div>
+              {user?.profile_path ? (
+                <img 
+                  src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/storage/${user.profile_path}`}
+                  alt="Profile" 
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                  <span className="text-emerald-600 font-semibold">
+                    {user?.name?.charAt(0) || 'U'}
+                  </span>
+                </div>
+              )}
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-gray-900 truncate">{user?.name || 'User'}</p>
                 <p className="text-sm text-gray-500 truncate">{user?.email || 'email@example.com'}</p>
@@ -522,13 +559,13 @@ export default function LandlordDashboard() {
                             {app.status === 'pending' ? (
                               <div className="flex items-center justify-end gap-2">
                                 <button
-                                  onClick={() => handleUpdateApplicationStatus(app.id, 'approved')}
+                                  onClick={() => openConfirmModal(app, 'approve')}
                                   className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
                                 >
                                   Approve
                                 </button>
                                 <button
-                                  onClick={() => handleUpdateApplicationStatus(app.id, 'rejected')}
+                                  onClick={() => openConfirmModal(app, 'reject')}
                                   className="px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
                                 >
                                   Deny
@@ -592,6 +629,46 @@ export default function LandlordDashboard() {
         token={token}
         onSuccess={handleHouseCreated}
       />
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">
+                Confirm {modalAction === 'approve' ? 'Approval' : 'Rejection'}
+              </h3>
+              <button 
+                onClick={closeConfirmModal}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to {modalAction === 'approve' ? 'approve' : 'reject'} this rental application?
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={closeConfirmModal}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmAction}
+                className={`px-4 py-2 text-white rounded-lg transition-colors ${
+                  modalAction === 'approve' 
+                    ? 'bg-green-600 hover:bg-green-700' 
+                    : 'bg-red-600 hover:bg-red-700'
+                }`}
+              >
+                {modalAction === 'approve' ? 'Approve' : 'Reject'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

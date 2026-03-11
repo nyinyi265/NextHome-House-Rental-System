@@ -131,5 +131,22 @@ async function resetPassword(data) {
   return response.json();
 }
 
-const authService = { login, register, me, logout, updateProfile, forgotPassword, resetPassword };
+async function changePassword(data) {
+  const token = localStorage.getItem('token');
+  const response = await fetch(api.auth.changePassword(), {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const err = await response.json();
+    throw err;
+  }
+  return response.json();
+}
+
+const authService = { login, register, me, logout, updateProfile, forgotPassword, resetPassword, changePassword };
 export default authService;

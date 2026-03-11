@@ -26,6 +26,7 @@ const endpoints = {
     me: () => base('/auth/me'),
     logout: () => base('/auth/logout'),
     updateProfile: () => base('/auth/profile'),
+    changePassword: () => base('/auth/change-password'),
     forgotPassword: () => base('/auth/forgot-password'),
     resetPassword: () => base('/auth/reset-password'),
   },
