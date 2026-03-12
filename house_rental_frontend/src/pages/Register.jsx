@@ -1,103 +1,308 @@
-import React, { useContext, useState } from "react";
+import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { AuthContext } from "../context/AuthContext";
 import api from "../config/api";
+import { User, Mail, Phone, LockKeyhole, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 
 export default function Register() {
-  const { login } = useContext(AuthContext);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone_number: "",
+    password: "",
+    password_confirmation: "",
+    emergency_contact: ""
+  });
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState({ type: "", message: "" });
+
+  function handleChange(e) {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    // Clear error when user types
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: "" }));
+    }
+  }
+
+  function validateForm() {
+    const newErrors = {};
+    
+    // Name validation
+    if (!formData.name.trim()) {
+      newErrors.name = "Name is required";
+    } else if (formData.name.trim().length < 2) {
+      newErrors.name = "Name must be at least 2 characters";
+    }
+
+    // Email validation
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    // Phone number validation (optional but if provided must be valid)
+    if (formData.phone_number && !/^\+?[\d\s\-]{6,20}$/.test(formData.phone_number)) {
+      newErrors.phone_number = "Please enter a valid phone number";
+    }
+
+    // Password validation
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+
+    // Password confirmation validation
+    if (!formData.password_confirmation) {
+      newErrors.password_confirmation = "Please confirm your password";
+    } else if (formData.password !== formData.password_confirmation) {
+      newErrors.password_confirmation = "Passwords do not match";
+    }
+
+    // Emergency contact validation (optional but if provided must be valid)
+    if (formData.emergency_contact && !/^\+?[\d\s\-]{6,20}$/.test(formData.emergency_contact)) {
+      newErrors.emergency_contact = "Please enter a valid phone number";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }
+
+  function showToast(type, message) {
+    setToast({ type, message });
+    setTimeout(() => setToast({ type: "", message: "" }), 5000);
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
     setLoading(true);
     try {
-      // call register endpoint then log in with returned token
       const res = await fetch(api.auth.register(), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, phone_number: phoneNumber }),
+        body: JSON.stringify(formData),
       });
-      if (!res.ok) throw new Error("Registration failed");
+      
       const data = await res.json();
-      // data may contain token + user
-      if (data.token) {
-        await login(data);
+      
+      if (!res.ok) {
+        // Handle validation errors from backend
+        if (data.errors) {
+          const backendErrors = {};
+          Object.keys(data.errors).forEach(key => {
+            backendErrors[key] = data.errors[key][0];
+          });
+          setErrors(backendErrors);
+          throw new Error(data.message || "Registration failed");
+        }
+        throw new Error(data.message || "Registration failed");
       }
-      navigate("/");
+
+      showToast("success", "Registration successful! Please login to continue.");
+      
+      // Redirect to login after 2 seconds
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
+      
     } catch (err) {
-      alert(err.message || "Registration failed");
+      showToast("error", err.message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-lg text-center">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800">Register</h2>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <input
-            type="text"
-            placeholder="Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            className="px-3 py-2 border border-gray-300 rounded"
-            disabled={loading}
-          />
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="px-3 py-2 border border-gray-300 rounded"
-            disabled={loading}
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="px-3 py-2 border border-gray-300 rounded"
-            disabled={loading}
-          />
-          <input
-            type="text"
-            placeholder="Phone Number"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            required
-            className="px-3 py-2 border border-gray-300 rounded"
-            disabled={loading}
-          />
-          <button 
-            type="submit" 
-            disabled={loading}
-            className="bg-emerald-600 text-white py-2.5 rounded cursor-pointer border-none hover:bg-emerald-700 disabled:bg-emerald-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <>
-                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>Creating account...</span>
-              </>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-8 px-4">
+      <div className="max-w-md w-full">
+        {/* Toast Notification */}
+        {toast.message && (
+          <div className={`mb-4 p-4 rounded-lg flex items-center gap-3 ${
+            toast.type === "success" 
+              ? "bg-green-50 text-green-800 border border-green-200" 
+              : "bg-red-50 text-red-800 border border-red-200"
+          }`}>
+            {toast.type === "success" ? (
+              <CheckCircle className="w-5 h-5 flex-shrink-0" />
             ) : (
-              'Sign Up'
+              <AlertCircle className="w-5 h-5 flex-shrink-0" />
             )}
-          </button>
-        </form>
-        <p className="mt-4 text-sm text-gray-600">
-          Already have an account? <Link to="/login" className="text-emerald-600 hover:underline">Login</Link>
-        </p>
+            <p className="text-sm">{toast.message}</p>
+          </div>
+        )}
+
+        <div className="bg-white rounded-xl shadow-lg p-8">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">Create Account</h2>
+            <p className="text-gray-500 mt-1">Join NextHome to find your perfect rental</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Name Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Full Name <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="Enter your full name"
+                  className={`w-full pl-12 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors ${
+                    errors.name ? "border-red-500" : "border-gray-300"
+                  }`}
+                  disabled={loading}
+                />
+              </div>
+              {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+            </div>
+
+            {/* Email Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email Address <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="Enter your email"
+                  className={`w-full pl-12 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors ${
+                    errors.email ? "border-red-500" : "border-gray-300"
+                  }`}
+                  disabled={loading}
+                />
+              </div>
+              {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
+            </div>
+
+            {/* Phone Number Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Phone Number
+              </label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="tel"
+                  name="phone_number"
+                  value={formData.phone_number}
+                  onChange={handleChange}
+                  placeholder="Enter your phone number"
+                  className={`w-full pl-12 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors ${
+                    errors.phone_number ? "border-red-500" : "border-gray-300"
+                  }`}
+                  disabled={loading}
+                />
+              </div>
+              {errors.phone_number && <p className="mt-1 text-sm text-red-500">{errors.phone_number}</p>}
+            </div>
+
+            {/* Password Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Password <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <LockKeyhole className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Create a password"
+                  className={`w-full pl-12 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors ${
+                    errors.password ? "border-red-500" : "border-gray-300"
+                  }`}
+                  disabled={loading}
+                />
+              </div>
+              {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
+            </div>
+
+            {/* Confirm Password Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Confirm Password <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <LockKeyhole className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="password"
+                  name="password_confirmation"
+                  value={formData.password_confirmation}
+                  onChange={handleChange}
+                  placeholder="Confirm your password"
+                  className={`w-full pl-12 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors ${
+                    errors.password_confirmation ? "border-red-500" : "border-gray-300"
+                  }`}
+                  disabled={loading}
+                />
+              </div>
+              {errors.password_confirmation && <p className="mt-1 text-sm text-red-500">{errors.password_confirmation}</p>}
+            </div>
+
+            {/* Emergency Contact Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Emergency Contact
+              </label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="tel"
+                  name="emergency_contact"
+                  value={formData.emergency_contact}
+                  onChange={handleChange}
+                  placeholder="Emergency contact number"
+                  className={`w-full pl-12 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors ${
+                    errors.emergency_contact ? "border-red-500" : "border-gray-300"
+                  }`}
+                  disabled={loading}
+                />
+              </div>
+              {errors.emergency_contact && <p className="mt-1 text-sm text-red-500">{errors.emergency_contact}</p>}
+              <p className="mt-1 text-xs text-gray-500">Optional: Someone we can contact in case of emergency</p>
+            </div>
+
+            {/* Submit Button */}
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Creating account...</span>
+                </>
+              ) : (
+                'Create Account'
+              )}
+            </button>
+          </form>
+
+          <p className="mt-6 text-center text-sm text-gray-600">
+            Already have an account?{" "}
+            <Link to="/login" className="text-primary hover:underline font-medium">
+              Login here
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

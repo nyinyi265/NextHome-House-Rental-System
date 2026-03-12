@@ -1,18 +1,24 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, Star, Loader2 } from 'lucide-react';
+import env from '../environment/environment';
 
 export default function PropertyCard({ id, title, location, city, township, street, price, rating, featured, images = [], house_photos = [] }) {
   const [isLiked, setIsLiked] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const navigate = useNavigate();
 
-  // Resolve images: accept explicit `images` prop, fall back to `house_photos` from API,
-  // then extract the `photo_url` or `url` string from each photo object.
+  // Resolve images: first try house_photos array (from API), then explicit images prop
   const resolvedImages = (() => {
-    const source = images.length > 0 ? images : house_photos;
+    const source = house_photos?.length > 0 ? house_photos : images;
+    if (!source || !Array.isArray(source)) return [];
+    
     return source.map((img) => {
+      // Handle both string URLs and objects with photo_path
       if (typeof img === 'string') return img;
+      // Use photo_path from API response
+      if (img?.photo_path) return env.getImageUrl(img.photo_path);
+      // Fallback to photo_url if present
       return img?.photo_url || img?.url || null;
     }).filter(Boolean);
   })();
@@ -34,9 +40,9 @@ export default function PropertyCard({ id, title, location, city, township, stre
   };
 
   return (
-    <div onClick={handleCardClick} className="group cursor-pointer">
+    <div onClick={handleCardClick} className="group cursor-pointer bg-white rounded-2xl border-2 border-transparent border-primary transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:scale-[1.02]">
       {/* Image Container */}
-      <div className="relative rounded-2xl overflow-hidden aspect-[4/3] mb-2">
+      <div className="relative rounded-2xl overflow-hidden aspect-[4/3] mb-2 transition-transform duration-300 ">
         {/* Loading Overlay */}
         {isNavigating && (
           <div className="absolute inset-0 bg-white/90 z-10 flex items-center justify-center">
@@ -75,7 +81,7 @@ export default function PropertyCard({ id, title, location, city, township, stre
       </div>
       
       {/* Property Info */}
-      <div className="flex justify-between items-start">
+      <div className="flex justify-between items-start p-4 transition-colors duration-300 group-hover:bg-gray-50">
         <div>
           <h3 className="font-semibold text-gray-900">{displayLocation}</h3>
           <p className="text-gray-500 text-sm">16 kilometers away</p>

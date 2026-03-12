@@ -12,7 +12,7 @@ module.exports = {
         background: "hsl(0 0% 100%)",
         foreground: "hsl(222.2 84% 4.9%)",
         primary: {
-          DEFAULT: "hsl(160 84% 39%)",
+          DEFAULT: "#0F4C3A",
           foreground: "hsl(210 40% 98%)",
         },
         secondary: {

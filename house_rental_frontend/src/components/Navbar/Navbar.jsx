@@ -1,7 +1,8 @@
 import React, { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
-import { User, LogOut, ChevronDown, LockKeyhole } from "lucide-react";
+import { User, LogOut, ChevronDown } from "lucide-react";
+import env from "../../environment/environment";
 
 export default function Navbar() {
   const { user, logout } = useContext(AuthContext);
@@ -29,22 +30,32 @@ export default function Navbar() {
 
   return (
     <nav className="flex items-center justify-between px-8 py-4 bg-white shadow-md">
-      <div className="text-xl font-bold text-emerald-600">
-        <Link to="/" className="no-underline text-emerald-600">NextHome</Link>
+      <div className="text-xl font-bold text-primary">
+        <Link to="/" className="no-underline text-primary">NextHome</Link>
       </div>
       <ul className="flex gap-6 list-none m-0 p-0">
         <li>
-          <Link to="/" className="no-underline text-gray-700 text-base hover:text-emerald-600">Home</Link>
+          <Link to="/" className="no-underline text-gray-700 text-base hover:text-primary">Home</Link>
         </li>
         <li>
-          <Link to="/explore" className="no-underline text-gray-700 text-base hover:text-emerald-600">Explore</Link>
+          <Link to="/explore" className="no-underline text-gray-700 text-base hover:text-primary">Explore</Link>
         </li>
+        {user && user.role === 'tenant' && (
+          <li>
+            <Link to="/my-rentals" className="no-underline text-gray-700 text-base hover:text-primary">My Rentals</Link>
+          </li>
+        )}
+        {user && user.role === 'landlord' && (
+          <li>
+            <Link to="/landlord" className="no-underline text-gray-700 text-base hover:text-primary">Dashboard</Link>
+          </li>
+        )}
         <li>
-          <Link to="/about" className="no-underline text-gray-700 text-base hover:text-emerald-600">About</Link>
+          <Link to="/about" className="no-underline text-gray-700 text-base hover:text-primary">About</Link>
         </li>
         {user && user.role === 'landlord' && (
           <li>
-            <Link to="/host" className="no-underline text-gray-700 text-base hover:text-emerald-600">Become a Host</Link>
+            <Link to="/host" className="no-underline text-gray-700 text-base hover:text-primary">Become a Host</Link>
           </li>
         )}
       </ul>
@@ -54,8 +65,17 @@ export default function Navbar() {
             onClick={() => setProfileOpen(!profileOpen)}
             className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer bg-transparent border-none"
           >
-            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
-              <User className="w-4 h-4 text-emerald-600" />
+            {/* Profile Picture or Default Avatar */}
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+              {user.profile_path ? (
+                <img 
+                  src={env.getProfileUrl(user.profile_path)} 
+                  alt={user.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <User className="w-4 h-4 text-primary" />
+              )}
             </div>
             <span className="text-gray-700 text-sm hidden sm:inline">{user.name || 'User'}</span>
             <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
@@ -76,13 +96,6 @@ export default function Navbar() {
                   <User className="w-4 h-4" />
                   Profile
                 </button>
-                {/* <button 
-                  onClick={handleResetPasswordClick}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer bg-transparent border-none text-left"
-                >
-                  <LockKeyhole className="w-4 h-4" />
-                  Reset Password
-                </button> */}
                 <button 
                   onClick={handleLogout}
                   className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer bg-transparent border-none"
@@ -98,13 +111,13 @@ export default function Navbar() {
         <>
           <Link 
             to="/login" 
-            className="ml-4 px-4 py-2 bg-emerald-600 text-white rounded cursor-pointer text-base no-underline border-none hover:bg-emerald-700"
+            className="ml-4 px-4 py-2 bg-primary text-white rounded cursor-pointer text-base no-underline border-none hover:opacity-90"
           >
             Login
           </Link>
           <Link 
             to="/register" 
-            className="ml-2 px-4 py-2 bg-emerald-600 text-white rounded cursor-pointer text-base no-underline border-none hover:bg-emerald-700"
+            className="ml-2 px-4 py-2 bg-primary text-white rounded cursor-pointer text-base no-underline border-none hover:opacity-90"
           >
             Register
           </Link>

@@ -188,10 +188,10 @@ export default function LandlordDashboard() {
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'properties', label: 'Properties', icon: Building2 },
     { id: 'reservations', label: 'Reservations', icon: CalendarDays },
-    { id: 'reviews', label: 'Reviews', icon: Star },
-    { id: 'wallet', label: 'Wallet', icon: Wallet },
+    // { id: 'reviews', label: 'Reviews', icon: Star },
+    // { id: 'wallet', label: 'Wallet', icon: Wallet },
     { id: 'settings', label: 'Settings', icon: Settings },
-    { id: 'help', label: 'Help', icon: HelpCircle },
+    // { id: 'help', label: 'Help', icon: HelpCircle },
   ];
 
   const handleLogout = async () => {
@@ -215,7 +215,7 @@ export default function LandlordDashboard() {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="p-6 border-b">
-            <h1 className="text-xl font-bold text-emerald-600">Landlord Dashboard</h1>
+            <h1 className="text-xl font-bold text-primary">Landlord Dashboard</h1>
           </div>
 
           {/* User Info */}
@@ -223,13 +223,13 @@ export default function LandlordDashboard() {
             <div className="flex items-center gap-3">
               {user?.profile_path ? (
                 <img 
-                  src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/storage/${user.profile_path}`}
+                  src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/${user.profile_path}`}
                   alt="Profile" 
                   className="w-10 h-10 rounded-full object-cover"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                  <span className="text-emerald-600 font-semibold">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <span className="text-primary font-semibold">
                     {user?.name?.charAt(0) || 'U'}
                   </span>
                 </div>
@@ -249,7 +249,7 @@ export default function LandlordDashboard() {
                 onClick={() => setActiveTab(item.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                   activeTab === item.id
-                    ? 'bg-emerald-50 text-emerald-700'
+                    ? 'bg-primary/10 text-primary'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
@@ -402,7 +402,7 @@ export default function LandlordDashboard() {
                 <h3 className="text-lg font-semibold text-gray-800">My Properties</h3>
                 <button 
                   onClick={() => setShowAddHouse(true)}
-                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-2"
+                  className="px-4 py-2 bg-primary text-white rounded-lg hover:opacity-90 transition-colors flex items-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
                   Add Property
@@ -443,8 +443,8 @@ export default function LandlordDashboard() {
                                     className="w-full h-full object-cover"
                                   />
                                 ) : (
-                                  <div className="w-full h-full bg-emerald-100 flex items-center justify-center">
-                                    <Building2 className="w-6 h-6 text-emerald-600" />
+                                  <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                                    <Building2 className="w-6 h-6 text-primary" />
                                   </div>
                                 )}
                               </div>
@@ -522,8 +522,8 @@ export default function LandlordDashboard() {
                         <tr key={app.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                                <span className="text-emerald-600 font-semibold">
+                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                <span className="text-primary font-semibold">
                                   {app.tenant?.name?.charAt(0) || 'T'}
                                 </span>
                               </div>

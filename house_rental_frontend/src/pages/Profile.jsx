@@ -44,7 +44,7 @@ export default function Profile() {
         name: user.name || '',
         email: user.email || '',
         phone: user.phone_number || '',
-        profilePreview: user.profile_path ? `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/storage/${user.profile_path}` : null
+        profilePreview: user.profile_path ? `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/${user.profile_path}` : null
       }));
     }
   }, [user]);
@@ -159,7 +159,7 @@ export default function Profile() {
             onClick={() => setActiveTab('profile')}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               activeTab === 'profile' 
-                ? 'bg-emerald-600 text-white' 
+                ? 'bg-primary text-white' 
                 : 'bg-white text-gray-600 hover:bg-gray-100'
             }`}
           >
@@ -169,7 +169,7 @@ export default function Profile() {
             onClick={() => setActiveTab('password')}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               activeTab === 'password' 
-                ? 'bg-emerald-600 text-white' 
+                ? 'bg-primary text-white' 
                 : 'bg-white text-gray-600 hover:bg-gray-100'
             }`}
           >
@@ -197,7 +197,7 @@ export default function Profile() {
                       </div>
                     )}
                   </div>
-                  <label className="absolute bottom-0 right-0 p-2 bg-emerald-600 rounded-full cursor-pointer hover:bg-emerald-700 transition-colors">
+                  <label className="absolute bottom-0 right-0 p-2 bg-primary rounded-full cursor-pointer hover:opacity-90 transition-colors">
                     <Camera className="w-4 h-4 text-white" />
                     <input 
                       type="file" 
@@ -295,7 +295,7 @@ export default function Profile() {
           <div className="bg-white rounded-xl shadow-sm border p-6">
             <form onSubmit={handlePasswordSubmit}>
               <div className="flex items-center gap-3 mb-6">
-                <LockKeyhole className="w-6 h-6 text-emerald-600" />
+                <LockKeyhole className="w-6 h-6 text-primary" />
                 <h2 className="text-lg font-semibold text-gray-800">Change Password</h2>
               </div>
 

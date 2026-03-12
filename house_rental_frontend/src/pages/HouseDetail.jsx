@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar/Navbar';
 import Loading from '../components/Loading';
 import houseService from '../services/houseService';
 import { AuthContext } from '../context/AuthContext';
+import env from '../environment/environment';
 
 export default function HouseDetail() {
   const { id } = useParams();
@@ -128,7 +129,16 @@ export default function HouseDetail() {
   
   // Get house photos
   const photos = property.house_photos || property.photos || [];
-  const mainPhoto = photos.length > 0 ? photos[currentPhotoIndex]?.photo_url : null;
+  
+  // Build image URL from photo_path
+  const getPhotoUrl = (photo) => {
+    if (!photo) return null;
+    if (photo.photo_url) return photo.photo_url;
+    if (photo.photo_path) return env.getImageUrl(photo.photo_path);
+    return null;
+  };
+  
+  const mainPhoto = photos.length > 0 ? getPhotoUrl(photos[currentPhotoIndex]) : null;
 
   return (
     <div className="min-h-screen bg-white">
@@ -171,7 +181,7 @@ export default function HouseDetail() {
           {photos.slice(0, 4).map((photo, index) => (
             <div key={index} className="hidden md:block relative h-48">
               <img 
-                src={photo.photo_url} 
+                src={getPhotoUrl(photo)} 
                 alt={`${title} ${index + 1}`} 
                 className="w-full h-full object-cover cursor-pointer"
                 onClick={() => setCurrentPhotoIndex(index)}

@@ -155,7 +155,7 @@ export default function Home() {
       </div>
 
       {/* Categories */}
-      <PropertyTags />
+      {/* <PropertyTags /> */}
 
       {/* Featured Properties */}
       <div className="max-w-7xl mx-auto px-4 py-8">

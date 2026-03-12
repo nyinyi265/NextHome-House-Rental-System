@@ -19,7 +19,9 @@ const endpoints = {
   },
   tenant: {
     rentalApplications: () => base('/tenant/rental-applications'),
+    rentals: () => base('/tenant/rentals'),
   },
+  furnitures: () => base('/amenties'),
   auth: {
     login: () => base('/auth/login'),
     register: () => base('/auth/register'),

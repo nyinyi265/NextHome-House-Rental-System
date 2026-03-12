@@ -1,6 +1,7 @@
 import React, { useContext, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { Mail, LockKeyhole, AlertCircle, CheckCircle, Loader2, Building2 } from 'lucide-react';
 
 export default function Login() {
   const { login } = useContext(AuthContext);
@@ -8,12 +9,25 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [toast, setToast] = useState({ type: '', message: '' });
   const navigate = useNavigate();
+
+  function showToast(type, message) {
+    setToast({ type, message });
+    setTimeout(() => setToast({ type: '', message: '' }), 5000);
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
     setError('');
+    
+    if (!email.trim() || !password) {
+      setError('Please enter both email and password');
+      setLoading(false);
+      return;
+    }
+
     try {
       const user = await login({ email, password });
       
@@ -23,6 +37,8 @@ export default function Login() {
       // The login returns user object with role property
       const role = user?.role || null;
       console.log('User role:', role);
+      
+      showToast('success', 'Login successful!');
       
       // Redirect based on role
       if (role === 'landlord') {
@@ -35,65 +51,117 @@ export default function Login() {
       // Show more detailed error
       const errorMessage = err.message || err.error || 'Login failed. Please check your credentials.';
       setError(errorMessage);
+      showToast('error', errorMessage);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-lg text-center">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800">Sign In</h2>
-        
-        {error && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-            {error}
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-8 px-4">
+      <div className="max-w-md w-full">
+        {/* Toast Notification */}
+        {toast.message && (
+          <div className={`mb-4 p-4 rounded-lg flex items-center gap-3 ${
+            toast.type === "success" 
+              ? "bg-green-50 text-green-800 border border-green-200" 
+              : "bg-red-50 text-red-800 border border-red-200"
+          }`}>
+            {toast.type === "success" ? (
+              <CheckCircle className="w-5 h-5 flex-shrink-0" />
+            ) : (
+              <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            )}
+            <p className="text-sm">{toast.message}</p>
           </div>
         )}
-        
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <input 
-            type="email" 
-            placeholder="Email" 
-            value={email} 
-            onChange={e => setEmail(e.target.value)} 
-            required 
-            className="px-3 py-2 border border-gray-300 rounded"
-            disabled={loading}
-          />
-          <input 
-            type="password" 
-            placeholder="Password" 
-            value={password} 
-            onChange={e => setPassword(e.target.value)} 
-            required 
-            className="px-3 py-2 border border-gray-300 rounded"
-            disabled={loading}
-          />
-          <button 
-            type="submit" 
-            disabled={loading}
-            className="bg-emerald-600 text-white py-2.5 rounded cursor-pointer border-none hover:bg-emerald-700 disabled:bg-emerald-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <>
-                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>Signing in...</span>
-              </>
-            ) : (
-              'Login'
-            )}
-          </button>
-        </form>
-        <p className="mt-4 text-sm text-gray-600">
-          <Link to="/forgot-password" className="text-emerald-600 hover:underline">Forgot Password?</Link>
-        </p>
-        <p className="mt-2 text-sm text-gray-600">
-          Don't have an account? <Link to="/register" className="text-emerald-600 hover:underline">Register</Link>
-        </p>
+
+        <div className="bg-white rounded-xl shadow-lg p-8">
+          {/* Logo */}
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary mb-4">
+              <Building2 className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900">Welcome Back</h2>
+            <p className="text-gray-500 mt-1">Sign in to continue to NextHome</p>
+          </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3 text-red-700">
+              <AlertCircle className="w-5 h-5 flex-shrink-0" />
+              <p className="text-sm">{error}</p>
+            </div>
+          )}
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Email Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors"
+                  disabled={loading}
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Password Field */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Password
+                </label>
+                <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
+              <div className="relative">
+                <LockKeyhole className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors"
+                  disabled={loading}
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Signing in...</span>
+                </>
+              ) : (
+                'Sign In'
+              )}
+            </button>
+          </form>
+
+          <p className="mt-6 text-center text-sm text-gray-600">
+            Don't have an account?{' '}
+            <Link to="/register" className="text-primary hover:underline font-medium">
+              Create one
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

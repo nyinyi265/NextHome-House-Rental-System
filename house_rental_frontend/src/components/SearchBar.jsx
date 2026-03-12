@@ -35,7 +35,7 @@ export default function SearchBar() {
             className="w-full text-sm outline-none text-gray-600 bg-transparent"
           />
         </div>
-        <button className="m-2 p-3 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 transition-colors">
+        <button className="m-2 p-3 bg-primary text-white rounded-full hover:opacity-90 transition-colors">
           <Search className="w-5 h-5" />
         </button>
       </div>

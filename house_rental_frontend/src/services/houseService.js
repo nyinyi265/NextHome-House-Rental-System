@@ -82,6 +82,19 @@ async function getAmenties() {
 }
 
 /**
+ * Fetch all furniture
+ */
+async function getFurnitures() {
+  const headers = { Accept: 'application/json' };
+  const response = await fetch(api.furnitures(), { headers });
+  if (!response.ok) {
+    const err = await response.json();
+    throw err;
+  }
+  return response.json();
+}
+
+/**
  * Submit a rental application for a house
  * @param {string} token - Authentication token
  * @param {number} houseId - House ID to apply for
@@ -234,6 +247,7 @@ const houseService = {
   list, 
   get, 
   getAmenties, 
+  getFurnitures,
   applyRental,
   getLandlordAmenties,
   getLandlordFurnitures,

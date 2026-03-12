@@ -9,8 +9,17 @@ import { AuthContext } from '../context/AuthContext';
  * @param {string} requiredRole - The role required to access this route ('landlord' | 'tenant' | null for any authenticated user)
  */
 export default function ProtectedRoute({ children, requiredRole }) {
-  const { user, token } = useContext(AuthContext);
+  const { user, token, loading } = useContext(AuthContext);
   const location = useLocation();
+
+  // If still loading auth state from localStorage, don't redirect yet
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   // If not authenticated, redirect to login
   if (!token || !user) {
