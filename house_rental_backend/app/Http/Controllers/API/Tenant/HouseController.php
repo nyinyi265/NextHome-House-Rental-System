@@ -33,8 +33,11 @@ class HouseController extends Controller
             'min_area',
             'max_area',
             'city',
+            'street',
             'township',
-            'amenties'
+            'area',
+            'amenties',
+            'furnitures'
         ]);
 
         $houses = $this->service->listAll($filters);

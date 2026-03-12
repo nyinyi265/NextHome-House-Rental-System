@@ -55,12 +55,23 @@ class HouseService
         if (!empty($filters['city'])) {
             $query->where('city', 'like', '%' . $filters['city'] . '%');
         }
+        if (!empty($filters['street'])) {
+            $query->where('street', 'like', '%' . $filters['street'] . '%');
+        }
         if (!empty($filters['township'])) {
             $query->where('township', 'like', '%' . $filters['township'] . '%');
+        }
+        if (!empty($filters['area'])) {
+            $query->where('area', 'like', '%' . $filters['area'] . '%');
         }
         if (!empty($filters['amenties'])) {
             $query->whereHas('amenties', function ($q) use ($filters) {
                 $q->whereIn('amenties.id', $filters['amenties']);
+            });
+        }
+        if (!empty($filters['furnitures'])) {
+            $query->whereHas('furnitures', function ($q) use ($filters) {
+                $q->whereIn('furnitures.id', $filters['furnitures']);
             });
         }
 
