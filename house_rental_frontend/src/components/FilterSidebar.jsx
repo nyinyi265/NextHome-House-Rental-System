@@ -153,8 +153,6 @@ export default function FilterSidebar({ filters, onFilterChange }) {
             <option value="Apartment">Apartment</option>
             <option value="House">House</option>
             <option value="Condo">Condo</option>
-            <option value="Studio">Studio</option>
-            <option value="Villa">Villa</option>
           </select>
         </div>
 

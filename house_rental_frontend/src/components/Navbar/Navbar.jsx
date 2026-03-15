@@ -53,6 +53,9 @@ export default function Navbar() {
         <li>
           <Link to="/about" className="no-underline text-gray-700 text-base hover:text-primary">About</Link>
         </li>
+        <li>
+          <Link to="/contact" className="no-underline text-gray-700 text-base hover:text-primary">Contact Us</Link>
+        </li>
         {user && user.role === 'landlord' && (
           <li>
             <Link to="/host" className="no-underline text-gray-700 text-base hover:text-primary">Become a Host</Link>

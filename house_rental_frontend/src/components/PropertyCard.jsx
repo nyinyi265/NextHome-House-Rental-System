@@ -42,11 +42,12 @@ export default function PropertyCard({ id, title, location, city, township, stre
   return (
     <div onClick={handleCardClick} className="group cursor-pointer bg-white rounded-2xl border-2 border-transparent border-primary transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:scale-[1.02]">
       {/* Image Container */}
-      <div className="relative rounded-2xl overflow-hidden aspect-[4/3] mb-2 transition-transform duration-300 ">
-        {/* Loading Overlay */}
+      <div className={`relative rounded-2xl overflow-hidden aspect-[4/3] mb-2 transition-transform duration-300 ${isNavigating ? 'opacity-50' : ''}`}>
+        {/* Loading Overlay - Full card loading like My Rentals */}
         {isNavigating && (
-          <div className="absolute inset-0 bg-white/90 z-10 flex items-center justify-center">
-            <Loader2 className="w-10 h-10 text-emerald-600 animate-spin" />
+          <div className="absolute inset-0 bg-white/90 z-10 flex flex-col items-center justify-center gap-2">
+            <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
+            <span className="text-sm text-gray-600 font-medium">Loading...</span>
           </div>
         )}
         

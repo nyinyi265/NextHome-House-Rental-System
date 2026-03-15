@@ -1,11 +1,22 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Star, Bed, Bath, Users, Check, ChevronLeft, ChevronRight, X, MessageSquare } from 'lucide-react';
-import Navbar from '../components/Navbar/Navbar';
-import Loading from '../components/Loading';
-import houseService from '../services/houseService';
-import { AuthContext } from '../context/AuthContext';
-import env from '../environment/environment';
+import React, { useState, useEffect, useContext } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  Star,
+  Bed,
+  Bath,
+  Users,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  MessageSquare,
+  Loader2,
+} from "lucide-react";
+import Navbar from "../components/Navbar/Navbar";
+import Loading from "../components/Loading";
+import houseService from "../services/houseService";
+import { AuthContext } from "../context/AuthContext";
+import env from "../environment/environment";
 
 export default function HouseDetail() {
   const { id } = useParams();
@@ -25,7 +36,7 @@ export default function HouseDetail() {
   const [showReservationModal, setShowReservationModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reservationSuccess, setReservationSuccess] = useState(false);
-  const [reservationMessage, setReservationMessage] = useState('');
+  const [reservationMessage, setReservationMessage] = useState("");
 
   useEffect(() => {
     setLoading(true);
@@ -37,8 +48,8 @@ export default function HouseDetail() {
         setError(null);
       })
       .catch((err) => {
-        console.error('Failed to fetch house', err);
-        setError(err.message || 'Unable to load property');
+        console.error("Failed to fetch house", err);
+        setError(err.message || "Unable to load property");
       })
       .finally(() => setLoading(false));
   }, [id, token, role]);
@@ -55,7 +66,7 @@ export default function HouseDetail() {
 
   const handleReserveClick = () => {
     if (!token) {
-      navigate('/login');
+      navigate("/login");
       return;
     }
     setShowReservationModal(true);
@@ -64,22 +75,22 @@ export default function HouseDetail() {
   const handleSubmitReservation = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
       // Call the API to submit rental application
       // house_id is automatically passed via the URL/property id
       await houseService.applyRental(token, parseInt(id), reservationMessage);
       setReservationSuccess(true);
-      
+
       // Close modal after showing success
       setTimeout(() => {
         setShowReservationModal(false);
         setReservationSuccess(false);
-        setReservationMessage('');
+        setReservationMessage("");
       }, 2000);
     } catch (err) {
-      console.error('Failed to submit reservation', err);
-      alert(err.message || 'Failed to submit application. Please try again.');
+      console.error("Failed to submit reservation", err);
+      alert(err.message || "Failed to submit application. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -89,7 +100,10 @@ export default function HouseDetail() {
     return (
       <div className="min-h-screen bg-white">
         <Navbar />
-        <Loading size="large" text="Loading property details..." />
+        <div className="absolute inset-0 bg-white/90 z-10 flex flex-col items-center justify-center gap-2">
+          <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
+          <span className="text-sm text-gray-600 font-medium">Loading...</span>
+        </div>
       </div>
     );
   }
@@ -113,23 +127,24 @@ export default function HouseDetail() {
   }
 
   // Extract property details with fallbacks
-  const title = property.title || 'Property Title';
-  const location = property.location || property.address || 'Location not specified';
+  const title = property.title || "Property Title";
+  const location =
+    property.location || property.address || "Location not specified";
   const price = property.price_per_month || property.price || 0;
-  const description = property.description || 'No description available.';
+  const description = property.description || "No description available.";
   const bedrooms = property.bedrooms || 0;
   const bathrooms = property.bathrooms || 0;
   const maxGuests = property.max_guests || property.guests || 0;
   const beds = property.beds || 0;
   const rating = property.rating || 0;
-  const propertyType = property.property_type || property.type || 'Apartment';
-  
+  const propertyType = property.property_type || property.type || "Apartment";
+
   // Get amenities from the API response
   const amenities = property.amenties || property.amenities || [];
-  
+
   // Get house photos
   const photos = property.house_photos || property.photos || [];
-  
+
   // Build image URL from photo_path
   const getPhotoUrl = (photo) => {
     if (!photo) return null;
@@ -137,22 +152,23 @@ export default function HouseDetail() {
     if (photo.photo_path) return env.getImageUrl(photo.photo_path);
     return null;
   };
-  
-  const mainPhoto = photos.length > 0 ? getPhotoUrl(photos[currentPhotoIndex]) : null;
+
+  const mainPhoto =
+    photos.length > 0 ? getPhotoUrl(photos[currentPhotoIndex]) : null;
 
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
-      
+
       {/* Image Gallery */}
       <div className="max-w-7xl mx-auto px-4 py-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-2 h-96 rounded-xl overflow-hidden bg-gray-200">
           {/* Main Image */}
           <div className="md:col-span-2 md:row-span-2 relative">
             {mainPhoto ? (
-              <img 
-                src={mainPhoto} 
-                alt={title} 
+              <img
+                src={mainPhoto}
+                alt={title}
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -162,13 +178,13 @@ export default function HouseDetail() {
             )}
             {photos.length > 1 && (
               <>
-                <button 
+                <button
                   onClick={prevPhoto}
                   className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full shadow-lg hover:bg-white transition-colors"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
-                <button 
+                <button
                   onClick={nextPhoto}
                   className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full shadow-lg hover:bg-white transition-colors"
                 >
@@ -180,9 +196,9 @@ export default function HouseDetail() {
           {/* Thumbnail Images */}
           {photos.slice(0, 4).map((photo, index) => (
             <div key={index} className="hidden md:block relative h-48">
-              <img 
-                src={getPhotoUrl(photo)} 
-                alt={`${title} ${index + 1}`} 
+              <img
+                src={getPhotoUrl(photo)}
+                alt={`${title} ${index + 1}`}
                 className="w-full h-full object-cover cursor-pointer"
                 onClick={() => setCurrentPhotoIndex(index)}
               />
@@ -197,7 +213,7 @@ export default function HouseDetail() {
                 key={index}
                 onClick={() => setCurrentPhotoIndex(index)}
                 className={`w-2 h-2 rounded-full transition-colors ${
-                  index === currentPhotoIndex ? 'bg-gray-800' : 'bg-gray-300'
+                  index === currentPhotoIndex ? "bg-gray-800" : "bg-gray-300"
                 }`}
               />
             ))}
@@ -265,11 +281,16 @@ export default function HouseDetail() {
 
             {/* Amenities */}
             <div className="py-6">
-              <h2 className="text-xl font-semibold mb-4">What this place offers</h2>
+              <h2 className="text-xl font-semibold mb-4">
+                What this place offers
+              </h2>
               <div className="grid grid-cols-2 gap-4">
                 {amenities.length > 0 ? (
                   amenities.map((amenity, index) => (
-                    <div key={index} className="flex items-center gap-2 text-gray-700">
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 text-gray-700"
+                    >
                       <Check className="w-4 h-4 text-emerald-600" />
                       <span>{amenity.name || amenity}</span>
                     </div>
@@ -315,7 +336,7 @@ export default function HouseDetail() {
                   <span className="text-gray-600"> / month</span>
                 </div>
               </div>
-              
+
               {/* <div className="border rounded-lg overflow-hidden mb-4">
                 <div className="grid grid-cols-2 border-b">
                   <div className="p-3 border-r">
@@ -333,7 +354,7 @@ export default function HouseDetail() {
                 </div>
               </div> */}
 
-              <button 
+              <button
                 onClick={handleReserveClick}
                 className="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold text-lg hover:bg-emerald-700 transition-colors"
               >
@@ -372,17 +393,17 @@ export default function HouseDetail() {
       {showReservationModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* Backdrop */}
-          <div 
+          <div
             className="absolute inset-0 bg-black/50"
             onClick={() => setShowReservationModal(false)}
           />
-          
+
           {/* Modal Content */}
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b">
               <h2 className="text-2xl font-bold">Request to Book</h2>
-              <button 
+              <button
                 onClick={() => setShowReservationModal(false)}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
@@ -396,8 +417,13 @@ export default function HouseDetail() {
                 <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Check className="w-8 h-8 text-emerald-600" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">Request Submitted!</h3>
-                <p className="text-gray-600">Your reservation request has been sent to the host. You'll be notified once they respond.</p>
+                <h3 className="text-xl font-semibold mb-2">
+                  Request Submitted!
+                </h3>
+                <p className="text-gray-600">
+                  Your reservation request has been sent to the host. You'll be
+                  notified once they respond.
+                </p>
               </div>
             ) : (
               <form onSubmit={handleSubmitReservation} className="p-6">
@@ -405,7 +431,9 @@ export default function HouseDetail() {
                 <div className="bg-gray-50 rounded-xl p-4 mb-6">
                   <h3 className="font-semibold text-lg mb-2">{title}</h3>
                   <p className="text-gray-600 text-sm">{location}</p>
-                  <p className="font-bold text-emerald-600 mt-2">${price}/month</p>
+                  <p className="font-bold text-emerald-600 mt-2">
+                    ${price}/month
+                  </p>
                 </div>
 
                 {/* Message to Host */}
@@ -434,18 +462,31 @@ export default function HouseDetail() {
                   {isSubmitting ? (
                     <>
                       <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          fill="none"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
                       </svg>
                       Submitting...
                     </>
                   ) : (
-                    'Confirm and Request'
+                    "Confirm and Request"
                   )}
                 </button>
 
                 <p className="text-center text-gray-500 text-sm mt-4">
-                  You won't be charged yet. The host has 24 hours to accept your request.
+                  You won't be charged yet. The host has 24 hours to accept your
+                  request.
                 </p>
               </form>
             )}

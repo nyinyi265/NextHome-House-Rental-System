@@ -13,13 +13,378 @@ import {
   DollarSign,
   Plus,
   Trash2,
-  Edit
+  Edit,
+  User,
+  Mail,
+  Phone,
+  Camera,
+  Save,
+  LockKeyhole,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
 import houseService from '../services/houseService';
 import AddHouseModal from '../components/AddHouseModal';
+
+// Settings Content Component
+function SettingsContent({ user, token }) {
+  const { setUser } = useContext(AuthContext);
+  const [activeSection, setActiveSection] = useState('profile');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ type: '', text: '' });
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false
+  });
+
+  const [formData, setFormData] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    phone: user?.phone_number || '',
+    profileImage: null,
+    profilePreview: null
+  });
+
+  const [passwordData, setPasswordData] = useState({
+    current_password: '',
+    new_password: '',
+    confirm_password: ''
+  });
+
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone_number || '',
+        profileImage: null,
+        profilePreview: user.profile_path ? `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/${user.profile_path}` : null
+      });
+    }
+  }, [user]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData(prev => ({ 
+        ...prev, 
+        profileImage: file,
+        profilePreview: URL.createObjectURL(file)
+      }));
+    }
+  };
+
+  const handleProfileSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage({ type: '', text: '' });
+
+    try {
+      const response = await authService.updateProfile({
+        name: formData.name,
+        phone: formData.phone,
+        profileImage: formData.profileImage
+      });
+      
+      if (response.data?.user) {
+        setUser(response.data.user);
+      }
+      
+      setMessage({ type: 'success', text: 'Profile updated successfully!' });
+    } catch (error) {
+      console.error('Failed to update profile', error);
+      setMessage({ type: 'error', text: error.message || 'Failed to update profile' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage({ type: '', text: '' });
+
+    if (passwordData.new_password !== passwordData.confirm_password) {
+      setMessage({ type: 'error', text: 'New passwords do not match' });
+      setLoading(false);
+      return;
+    }
+
+    if (passwordData.new_password.length < 8) {
+      setMessage({ type: 'error', text: 'Password must be at least 8 characters' });
+      setLoading(false);
+      return;
+    }
+
+    try {
+      await authService.changePassword({
+        current_password: passwordData.current_password,
+        new_password: passwordData.new_password
+      });
+      
+      setMessage({ type: 'success', text: 'Password changed successfully!' });
+      setPasswordData({ current_password: '', new_password: '', confirm_password: '' });
+    } catch (error) {
+      console.error('Failed to change password', error);
+      setMessage({ type: 'error', text: error.message || 'Failed to change password' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Section Tabs */}
+      <div className="bg-white rounded-xl shadow-sm border p-1 flex gap-1">
+        <button
+          onClick={() => setActiveSection('profile')}
+          className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-colors ${
+            activeSection === 'profile'
+              ? 'bg-primary text-white'
+              : 'text-gray-600 hover:bg-gray-100'
+          }`}
+        >
+          <User className="w-4 h-4 inline-block mr-2" />
+          Profile
+        </button>
+        <button
+          onClick={() => setActiveSection('password')}
+          className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-colors ${
+            activeSection === 'password'
+              ? 'bg-primary text-white'
+              : 'text-gray-600 hover:bg-gray-100'
+          }`}
+        >
+          <LockKeyhole className="w-4 h-4 inline-block mr-2" />
+          Change Password
+        </button>
+      </div>
+
+      {/* Message Alert */}
+      {message.text && (
+        <div className={`p-4 rounded-lg ${
+          message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+        }`}>
+          {message.text}
+        </div>
+      )}
+
+      {/* Profile Section */}
+      {activeSection === 'profile' && (
+        <div className="bg-white rounded-xl shadow-sm border p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-6">Edit Profile</h3>
+          
+          <form onSubmit={handleProfileSubmit}>
+            {/* Profile Image */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Profile Photo</label>
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-20 rounded-full bg-gray-200 overflow-hidden">
+                  {formData.profilePreview ? (
+                    <img 
+                      src={formData.profilePreview} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                      <User className="w-8 h-8 text-primary" />
+                    </div>
+                  )}
+                </div>
+                <label className="cursor-pointer">
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                  <span className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors inline-flex items-center gap-2">
+                    <Camera className="w-4 h-4" />
+                    Change Photo
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            {/* Name */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                  placeholder="Enter your full name"
+                />
+              </div>
+            </div>
+
+            {/* Email */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  disabled
+                  className="w-full pl-10 pr-4 py-3 border rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
+                  placeholder="Enter your email"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+            </div>
+
+            {/* Phone */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                  placeholder="Enter your phone number"
+                />
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:opacity-90 transition-colors disabled:opacity-50 flex items-center gap-2"
+            >
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              Save Changes
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* Password Section */}
+      {activeSection === 'password' && (
+        <div className="bg-white rounded-xl shadow-sm border p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-6">Change Password</h3>
+          
+          <form onSubmit={handlePasswordSubmit}>
+            {/* Current Password */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
+              <div className="relative">
+                <LockKeyhole className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type={showPasswords.current ? 'text' : 'password'}
+                  name="current_password"
+                  value={passwordData.current_password}
+                  onChange={handlePasswordChange}
+                  required
+                  className="w-full pl-10 pr-12 py-3 border rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                  placeholder="Enter current password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPasswords.current ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            {/* New Password */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+              <div className="relative">
+                <LockKeyhole className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type={showPasswords.new ? 'text' : 'password'}
+                  name="new_password"
+                  value={passwordData.new_password}
+                  onChange={handlePasswordChange}
+                  required
+                  className="w-full pl-10 pr-12 py-3 border rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                  placeholder="Enter new password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPasswords.new ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Password must be at least 8 characters</p>
+            </div>
+
+            {/* Confirm Password */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
+              <div className="relative">
+                <LockKeyhole className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type={showPasswords.confirm ? 'text' : 'password'}
+                  name="confirm_password"
+                  value={passwordData.confirm_password}
+                  onChange={handlePasswordChange}
+                  required
+                  className="w-full pl-10 pr-12 py-3 border rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                  placeholder="Confirm new password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPasswords.confirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:opacity-90 transition-colors disabled:opacity-50 flex items-center gap-2"
+            >
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <LockKeyhole className="w-4 h-4" />
+              )}
+              Change Password
+            </button>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function LandlordDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -215,7 +580,7 @@ export default function LandlordDashboard() {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="p-6 border-b">
-            <h1 className="text-xl font-bold text-primary">Landlord Dashboard</h1>
+            <h1 className="text-xl font-bold text-primary">NextHome</h1>
           </div>
 
           {/* User Info */}
@@ -599,10 +964,7 @@ export default function LandlordDashboard() {
           )}
 
           {activeTab === 'settings' && (
-            <div className="bg-white rounded-xl p-6 shadow-sm border">
-              <h3 className="text-lg font-semibold text-gray-800 mb-6">Settings</h3>
-              <p className="text-gray-500">Configure your account settings here.</p>
-            </div>
+            <SettingsContent user={user} token={token} />
           )}
 
           {activeTab === 'help' && (

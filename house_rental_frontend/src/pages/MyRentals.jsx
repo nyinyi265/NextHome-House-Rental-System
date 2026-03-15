@@ -70,7 +70,7 @@ export default function MyRentals() {
       <div>
         <Navbar />
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="flex items-center gap-2 text-gray-600">
+          <div className="flex items-center gap-2 text-emerald-600">
             <Loader2 className="w-6 h-6 animate-spin" />
             <span>Loading your rentals...</span>
           </div>
