@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use App\Traits\HttpResponse;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Support\Facades\Storage;
 
 class AuthController extends Controller
 {
@@ -90,14 +91,14 @@ class AuthController extends Controller
 
         $data = $request->except(['email']);
         if ($request->hasFile('profile_path')) {
-            // Ensure profiles directory exists
-            if (!is_dir(public_path('profiles'))) {
-                mkdir(public_path('profiles'), 0755, true);
+
+            if ($request->user()->profile_path) {
+                Storage::disk('public')->delete($request->user()->profile_path);
             }
-            $file = $request->file('profile_path');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('profiles'), $filename);
-            $data['profile_path'] = 'profiles/' . $filename;
+
+            $path = $request->file('profile_path')->store('profiles', 'public');
+
+            $data['profile_path'] = $path;
         }
 
         $user = $this->service->updateProfile($request->user(), $data);

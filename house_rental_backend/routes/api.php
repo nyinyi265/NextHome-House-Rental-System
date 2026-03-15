@@ -7,7 +7,9 @@ use App\Http\Controllers\API\Landlord\AmentyController;
 use App\Http\Controllers\API\Landlord\FurnitureController;
 use App\Http\Controllers\API\Landlord\HouseController;
 use App\Http\Controllers\API\Landlord\HousePhotoController;
+use App\Http\Controllers\API\Landlord\RentalApplicationController;
 use App\Http\Controllers\API\Tenant\HouseController as TenantHouseController;
+use App\Http\Controllers\API\Tenant\RentalController;
 
 Route::prefix('auth')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
@@ -36,10 +38,10 @@ Route::get('/user', function (Request $request) {
 
 // tenant APIs
 Route::prefix('tenant')->middleware(['auth:sanctum', 'role:tenant'])->group(function () {
-    Route::apiResource('rental-applications', App\Http\Controllers\API\Tenant\RentalApplicationController::class)
+    Route::apiResource('rental-applications', RentalApplicationController::class)
         ->only(['index', 'store', 'show', 'update', 'destroy']);
 
-    Route::apiResource('rentals', App\Http\Controllers\API\Tenant\RentalController::class)
+    Route::apiResource('rentals', RentalController::class)
         ->only(['index', 'show']);
 
     // tenants can only browse houses
@@ -68,10 +70,10 @@ Route::prefix('landlord')->middleware(['auth:sanctum', 'role:landlord'])->group(
         ->only(['index', 'store', 'show', 'update', 'destroy']);
 
     // rental applications belonging to landlord's houses
-    Route::apiResource('rental-applications', App\Http\Controllers\API\Landlord\RentalApplicationController::class)
+    Route::apiResource('rental-applications', RentalApplicationController::class)
         ->only(['index', 'show', 'update', 'destroy']);
 
     // rentals on landlord's properties
-    Route::apiResource('rentals', App\Http\Controllers\API\Landlord\RentalController::class)
+    Route::apiResource('rentals', RentalController::class)
         ->only(['index', 'store', 'show', 'update', 'destroy']);
 });

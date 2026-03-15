@@ -24,7 +24,7 @@ class RentalService
      */
     public function listByTenant(int $tenantProfileId)
     {
-        return Rental::with('house')
+        return Rental::with(['house', 'house.housePhotos'])
             ->where('tenant_profile_id', $tenantProfileId)
             ->get();
     }
@@ -38,7 +38,7 @@ class RentalService
 
     public function findForTenant(int $id, int $tenantProfileId): Rental
     {
-        return Rental::with('house')
+        return Rental::with(['house', 'house.housePhotos'])
             ->where('tenant_profile_id', $tenantProfileId)
             ->findOrFail($id);
     }

@@ -22,15 +22,25 @@ class RentalController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $tenantProfileId = $request->user()->tenantProfile->id;
-        $rentals = $this->service->listByTenant($tenantProfileId);
+        $tenantProfile = $request->user()->tenantProfile;
+
+        if (!$tenantProfile) {
+            return $this->success(true, ['rentals' => []], 'No tenant profile found', 200);
+        }
+
+        $rentals = $this->service->listByTenant($tenantProfile->id);
         return $this->success(true, RentalResponse::list($rentals), 'Rentals retrieved', 200);
     }
 
     public function show(Request $request, $id): JsonResponse
     {
-        $tenantProfileId = $request->user()->tenantProfile->id;
-        $rental = $this->service->findForTenant($id, $tenantProfileId);
+        $tenantProfile = $request->user()->tenantProfile;
+
+        if (!$tenantProfile) {
+            return $this->success(false, null, 'No tenant profile found', 403);
+        }
+
+        $rental = $this->service->findForTenant($id, $tenantProfile->id);
         return $this->success(true, RentalResponse::single($rental), 'Rental retrieved', 200);
     }
 }
