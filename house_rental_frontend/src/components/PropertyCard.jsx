@@ -40,7 +40,7 @@ export default function PropertyCard({ id, title, location, city, township, stre
   };
 
   return (
-    <div onClick={handleCardClick} className="group cursor-pointer bg-white rounded-2xl border-2 border-transparent border-primary transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:scale-[1.02]">
+    <div onClick={handleCardClick} className="group cursor-pointer bg-white rounded-2xl border-2 border-primary transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:scale-[1.02]">
       {/* Image Container */}
       <div className={`relative rounded-2xl overflow-hidden aspect-[4/3] mb-2 transition-transform duration-300 ${isNavigating ? 'opacity-50' : ''}`}>
         {/* Loading Overlay - Full card loading like My Rentals */}

@@ -35,26 +35,26 @@ export default function Navbar() {
       </div>
       <ul className="flex gap-6 list-none m-0 p-0">
         <li>
-          <Link to="/" className="no-underline text-gray-700 text-base hover:text-primary">Home</Link>
+          <Link to="/" className="no-underline text-gray-700 text-base font-semibold hover:text-primary">Home</Link>
         </li>
         <li>
-          <Link to="/explore" className="no-underline text-gray-700 text-base hover:text-primary">Explore</Link>
+          <Link to="/explore" className="no-underline text-gray-700 text-base font-semibold hover:text-primary">Explore</Link>
         </li>
         {user && user.role === 'tenant' && (
           <li>
-            <Link to="/my-rentals" className="no-underline text-gray-700 text-base hover:text-primary">My Rentals</Link>
+            <Link to="/my-rentals" className="no-underline text-gray-700 text-base font-semibold hover:text-primary">My Rentals</Link>
           </li>
         )}
-        {user && user.role === 'landlord' && (
+        {/* {user && user.role === 'landlord' && (
           <li>
-            <Link to="/landlord" className="no-underline text-gray-700 text-base hover:text-primary">Dashboard</Link>
+            <Link to="/landlord" className="no-underline text-gray-700 text-base font-semibold hover:text-primary">Dashboard</Link>
           </li>
-        )}
+        )} */}
         <li>
-          <Link to="/about" className="no-underline text-gray-700 text-base hover:text-primary">About</Link>
+          <Link to="/about" className="no-underline text-gray-700 text-base font-semibold hover:text-primary">About</Link>
         </li>
         <li>
-          <Link to="/contact" className="no-underline text-gray-700 text-base hover:text-primary">Contact Us</Link>
+          <Link to="/contact" className="no-underline text-gray-700 text-base font-semibold hover:text-primary">Contact Us</Link>
         </li>
         {user && user.role === 'landlord' && (
           <li>

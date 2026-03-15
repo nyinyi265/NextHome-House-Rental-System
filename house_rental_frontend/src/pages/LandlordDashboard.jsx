@@ -405,7 +405,8 @@ export default function LandlordDashboard() {
     totalRevenue: 0,
     pendingApplications: 0
   });
-  const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [dashboardLoading, setDashboardLoading] = useState(true);
+  const [dashboardError, setDashboardError] = useState('');
   const [recentApplications, setRecentApplications] = useState([]);
   const { user, token, logout } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -495,6 +496,7 @@ export default function LandlordDashboard() {
         });
       } catch (err) {
         console.error('Failed to fetch dashboard data', err);
+        setDashboardError(err.message || 'Failed to load dashboard data. Please try again.');
       } finally {
         setDashboardLoading(false);
       }
@@ -663,101 +665,127 @@ export default function LandlordDashboard() {
         <main className="flex-1 p-6 overflow-y-auto">
           {activeTab === 'overview' && (
             <div className="space-y-6">
-              {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {stats.map((stat, index) => (
-                  <div key={index} className="bg-white rounded-xl p-6 shadow-sm border">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-gray-500">{stat.title}</p>
-                        <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
+              {/* Error Message */}
+              {dashboardError && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                  {dashboardError}
+                </div>
+              )}
+
+              {/* Skeleton Loading for Stats Cards */}
+              {dashboardLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="bg-white rounded-xl p-6 shadow-sm border animate-pulse">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
+                          <div className="h-8 bg-gray-200 rounded w-16"></div>
+                        </div>
+                        <div className="w-12 h-12 bg-gray-200 rounded-lg"></div>
                       </div>
-                      <div className={`w-12 h-12 rounded-lg ${stat.color} flex items-center justify-center`}>
-                        <stat.icon className="w-6 h-6 text-white" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  {/* Stats Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {stats.map((stat, index) => (
+                      <div key={index} className="bg-white rounded-xl p-6 shadow-sm border">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-gray-500">{stat.title}</p>
+                            <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
+                          </div>
+                          <div className={`w-12 h-12 rounded-lg ${stat.color} flex items-center justify-center`}>
+                            <stat.icon className="w-6 h-6 text-white" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Reservations Overview */}
+                  <div className="bg-white rounded-xl p-6 shadow-sm border">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Reservations Overview</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="p-4 bg-blue-50 rounded-lg">
+                        <p className="text-sm text-blue-600">Pending</p>
+                        <p className="text-2xl font-bold text-blue-800">
+                          {rentalApplications.filter(a => a.status === 'pending').length}
+                        </p>
+                      </div>
+                      <div className="p-4 bg-green-50 rounded-lg">
+                        <p className="text-sm text-green-600">Approved</p>
+                        <p className="text-2xl font-bold text-green-800">
+                          {rentalApplications.filter(a => a.status === 'approved').length}
+                        </p>
+                      </div>
+                      <div className="p-4 bg-red-50 rounded-lg">
+                        <p className="text-sm text-red-600">Rejected</p>
+                        <p className="text-2xl font-bold text-red-800">
+                          {rentalApplications.filter(a => a.status === 'rejected').length}
+                        </p>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
 
-              {/* Reservations Overview */}
-              <div className="bg-white rounded-xl p-6 shadow-sm border">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Reservations Overview</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-4 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-600">Pending</p>
-                    <p className="text-2xl font-bold text-blue-800">
-                      {rentalApplications.filter(a => a.status === 'pending').length}
-                    </p>
+                  {/* Recent Bookings Table */}
+                  <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+                    <div className="p-6 border-b">
+                      <h3 className="text-lg font-semibold text-gray-800">Recent Reservations</h3>
+                    </div>
+                    {recentApplications.length === 0 ? (
+                      <div className="p-6 text-center text-gray-500">
+                        No recent reservations
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Property</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tenant</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-200">
+                            {recentApplications.map((app) => (
+                              <tr key={app.id} className="hover:bg-gray-50">
+                                <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                                  {app.house?.title || '-'}
+                                </td>
+                                <td className="px-6 py-4 text-sm text-gray-600">
+                                  {app.tenant?.name || '-'}
+                                </td>
+                                <td className="px-6 py-4 text-sm text-gray-600">
+                                  {app.created_at ? new Date(app.created_at).toLocaleDateString() : '-'}
+                                </td>
+                                <td className="px-6 py-4">
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    app.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                    app.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                    app.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                    'bg-gray-100 text-gray-800'
+                                  }`}>
+                                    {app.status || 'pending'}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                                  ${app.house?.price_per_month || app.house?.price || '-'}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </div>
-                  <div className="p-4 bg-green-50 rounded-lg">
-                    <p className="text-sm text-green-600">Approved</p>
-                    <p className="text-2xl font-bold text-green-800">
-                      {rentalApplications.filter(a => a.status === 'approved').length}
-                    </p>
-                  </div>
-                  <div className="p-4 bg-red-50 rounded-lg">
-                    <p className="text-sm text-red-600">Rejected</p>
-                    <p className="text-2xl font-bold text-red-800">
-                      {rentalApplications.filter(a => a.status === 'rejected').length}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Recent Bookings Table */}
-              <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-                <div className="p-6 border-b">
-                  <h3 className="text-lg font-semibold text-gray-800">Recent Reservations</h3>
-                </div>
-                {recentApplications.length === 0 ? (
-                  <div className="p-6 text-center text-gray-500">
-                    No recent reservations
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Property</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tenant</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {recentApplications.map((app) => (
-                          <tr key={app.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                              {app.house?.title || '-'}
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-600">
-                              {app.tenant?.name || '-'}
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-600">
-                              {app.created_at ? new Date(app.created_at).toLocaleDateString() : '-'}
-                            </td>
-                            <td className="px-6 py-4">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                app.status === 'approved' ? 'bg-green-100 text-green-800' :
-                                app.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                                app.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-gray-100 text-gray-800'
-                              }`}>
-                                {app.status || 'pending'}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                              ${app.house?.price_per_month || app.house?.price || '-'}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
+                </>
+              )}
             </div>
           )}
 
