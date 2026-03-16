@@ -94,8 +94,8 @@ class AuthService
         if (isset($data['name'])) {
             $user->name = $data['name'];
         }
-        if (isset($data['phone'])) {
-            $user->phone_number = $data['phone'];
+        if (isset($data['phone_number'])) {
+            $user->phone_number = $data['phone_number'];
         }
         if (isset($data['profile_path'])) {
             $user->profile_path = $data['profile_path'];

@@ -32,14 +32,11 @@ class AuthController extends Controller
     {
         $data = $request->validated();
         if ($request->hasFile('profile_path')) {
-            // Ensure profiles directory exists
-            if (!is_dir(public_path('profiles'))) {
-                mkdir(public_path('profiles'), 0755, true);
-            }
             $file = $request->file('profile_path');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('profiles'), $filename);
-            $data['profile_path'] = 'profiles/' . $filename;
+
+            $path = $file->store('profiles', 'public');
+
+            $data['profile_path'] = $path;
         }
         $result = $this->service->registerTenant($data);
         // result now contains user and token
@@ -81,10 +78,11 @@ class AuthController extends Controller
      */
     public function updateProfile(Request $request): JsonResponse
     {
+        // dd($request->all(), $request->file('profile_path'));
         $request->validate([
             'name' => 'sometimes|string|max:255',
             'email' => 'sometimes|email|max:255|unique:users,email,' . $request->user()->id,
-            'phone' => 'sometimes|string|max:20',
+            'phone_number' => 'sometimes|string|max:20',
             'address' => 'sometimes|string|max:500',
             'profile_path' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
