@@ -18,6 +18,7 @@ import {
   Mail,
   Phone,
   Camera,
+  Loader2,
   Save,
   LockKeyhole,
   Eye,
@@ -483,6 +484,7 @@ export default function LandlordDashboard() {
   const [dashboardLoading, setDashboardLoading] = useState(true);
   const [dashboardError, setDashboardError] = useState("");
   const [recentApplications, setRecentApplications] = useState([]);
+  const [logoutLoading, setLogoutLoading] = useState(false);
   const { user, token, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -679,12 +681,14 @@ export default function LandlordDashboard() {
   ];
 
   const handleLogout = async () => {
+    setLogoutLoading(true);
     try {
-      await authService.logout();
-      logout();
+      await logout();
       navigate("/login");
     } catch (error) {
       console.error("Logout failed", error);
+    } finally {
+      setLogoutLoading(false);
     }
   };
 
@@ -707,7 +711,7 @@ export default function LandlordDashboard() {
             <div className="flex items-center gap-3">
               {user?.profile_path ? (
                 <img
-                  src={`${import.meta.env.VITE_API_URL || "http://localhost:8000"}/${user.profile_path}`}
+                  src={`${env.STORAGE_URL}/${user.profile_path}`}
                   alt="Profile"
                   className="w-10 h-10 rounded-full object-cover"
                 />
@@ -751,10 +755,15 @@ export default function LandlordDashboard() {
           <div className="p-4 border-t">
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+              disabled={logoutLoading}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
             >
-              <LogOut className="w-5 h-5" />
-              Logout
+              {logoutLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <LogOut className="w-5 h-5" />
+              )}
+              {logoutLoading ? "Logging out..." : "Logout"}
             </button>
           </div>
         </div>

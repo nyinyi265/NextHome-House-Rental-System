@@ -7,6 +7,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [logoutLoading, setLogoutLoading] = useState(false);
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
@@ -49,11 +50,19 @@ export function AuthProvider({ children }) {
     return userWithRole;
   }
 
-  function logout() {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
+  async function logout() {
+    setLogoutLoading(true);
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setUser(null);
+      setToken(null);
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      setLogoutLoading(false);
+    }
   }
 
   function updateUser(userData) {
@@ -62,7 +71,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, loading, setUser, updateUser }}>
+    <AuthContext.Provider value={{ user, token, login, logout, loading, logoutLoading, setUser, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

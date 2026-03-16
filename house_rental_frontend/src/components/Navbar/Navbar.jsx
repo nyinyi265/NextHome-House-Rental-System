@@ -1,11 +1,11 @@
 import React, { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
-import { User, LogOut, ChevronDown } from "lucide-react";
+import { User, LogOut, ChevronDown, Loader2 } from "lucide-react";
 import env from "../../environment/environment";
 
 export default function Navbar() {
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout, logoutLoading } = useContext(AuthContext);
   const [profileOpen, setProfileOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -140,10 +140,15 @@ export default function Navbar() {
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer bg-transparent border-none"
+                  disabled={logoutLoading}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer bg-transparent border-none disabled:opacity-50"
                 >
-                  <LogOut className="w-4 h-4" />
-                  Logout
+                  {logoutLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <LogOut className="w-4 h-4" />
+                  )}
+                  {logoutLoading ? "Logging out..." : "Logout"}
                 </button>
               </div>
             </div>
