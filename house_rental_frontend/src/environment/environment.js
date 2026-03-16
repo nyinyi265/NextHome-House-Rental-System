@@ -13,8 +13,9 @@ const getImageUrl = (photoPath) => {
 // Helper function to get profile picture URL
 const getProfileUrl = (profilePath) => {
   if (!profilePath) return null;
-  if (profilePath.startsWith('http')) return profilePath;
-  return `${STORAGE_URL}/${profilePath}`;
+  console.log('Profile Path:', profilePath);
+  // if (profilePath.startsWith('http')) return profilePath;
+  return `http://127.0.0.1:8000/storage/${profilePath}`;
 };
 
 const env = {

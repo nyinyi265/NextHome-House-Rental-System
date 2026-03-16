@@ -82,7 +82,7 @@ export default function PropertyCard({ id, title, location, city, township, stre
       </div>
       
       {/* Property Info */}
-      <div className="flex justify-between items-start p-4 transition-colors duration-300 group-hover:bg-gray-50">
+      <div className="flex justify-between items-start p-4 transition-colors duration-300 group-hover:bg-gray-50 p-2">
         <div>
           <h3 className="font-semibold text-gray-900">{displayLocation}</h3>
           <p className="text-gray-500 text-sm">16 kilometers away</p>
@@ -93,7 +93,7 @@ export default function PropertyCard({ id, title, location, city, township, stre
           <span className="font-medium">{rating}</span>
         </div>
       </div>
-      <p className="mt-1">
+      <p className="my-1 px-2">
         <span className="font-semibold text-gray-900">${price}</span>
         <span className="text-gray-900"> / month</span>
       </p>

@@ -1,12 +1,12 @@
-import React, { useState, useContext, useEffect } from 'react';
-import { 
-  LayoutDashboard, 
-  Building2, 
-  CalendarDays, 
-  Star, 
-  Wallet, 
-  Settings, 
-  HelpCircle, 
+import React, { useState, useContext, useEffect } from "react";
+import {
+  LayoutDashboard,
+  Building2,
+  CalendarDays,
+  Star,
+  Wallet,
+  Settings,
+  HelpCircle,
   LogOut,
   Menu,
   X,
@@ -21,69 +21,72 @@ import {
   Save,
   LockKeyhole,
   Eye,
-  EyeOff
-} from 'lucide-react';
-import { AuthContext } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import authService from '../services/authService';
-import houseService from '../services/houseService';
-import AddHouseModal from '../components/AddHouseModal';
+  EyeOff,
+} from "lucide-react";
+import { AuthContext } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import authService from "../services/authService";
+import houseService from "../services/houseService";
+import AddHouseModal from "../components/AddHouseModal";
+import env from "../environment/environment";
 
 // Settings Content Component
 function SettingsContent({ user, token }) {
-  const { setUser } = useContext(AuthContext);
-  const [activeSection, setActiveSection] = useState('profile');
+  const { updateUser } = useContext(AuthContext);
+  const [activeSection, setActiveSection] = useState("profile");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState({ type: '', text: '' });
+  const [message, setMessage] = useState({ type: "", text: "" });
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
-    confirm: false
+    confirm: false,
   });
 
   const [formData, setFormData] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
-    phone: user?.phone_number || '',
+    name: user?.name || "",
+    email: user?.email || "",
+    phone_number: user?.phone_number || "",
     profileImage: null,
-    profilePreview: null
+    profilePreview: null,
   });
 
   const [passwordData, setPasswordData] = useState({
-    current_password: '',
-    new_password: '',
-    confirm_password: ''
+    current_password: "",
+    new_password: "",
+    new_password_confirmation: "",
   });
 
   useEffect(() => {
     if (user) {
       setFormData({
-        name: user.name || '',
-        email: user.email || '',
-        phone: user.phone_number || '',
+        name: user.name || "",
+        email: user.email || "",
+        phone_number: user.phone_number || "",
         profileImage: null,
-        profilePreview: user.profile_path ? `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/${user.profile_path}` : null
+        profilePreview: user.profile_path
+          ? `${env.STORAGE_URL}/${user.profile_path}`
+          : null,
       });
     }
   }, [user]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handlePasswordChange = (e) => {
     const { name, value } = e.target;
-    setPasswordData(prev => ({ ...prev, [name]: value }));
+    setPasswordData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFormData(prev => ({ 
-        ...prev, 
+      setFormData((prev) => ({
+        ...prev,
         profileImage: file,
-        profilePreview: URL.createObjectURL(file)
+        profilePreview: URL.createObjectURL(file),
       }));
     }
   };
@@ -91,23 +94,34 @@ function SettingsContent({ user, token }) {
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage({ type: '', text: '' });
+    setMessage({ type: "", text: "" });
 
     try {
-      const response = await authService.updateProfile({
-        name: formData.name,
-        phone: formData.phone,
-        profileImage: formData.profileImage
-      });
-      
-      if (response.data?.user) {
-        setUser(response.data.user);
+      const formDataToSend = new FormData();
+
+      formDataToSend.append("_method", "PUT");
+      formDataToSend.append("name", formData.name);
+      formDataToSend.append("phone_number", formData.phone_number);
+
+      if (formData.profileImage) {
+        formDataToSend.append("profile_path", formData.profileImage);
       }
-      
-      setMessage({ type: 'success', text: 'Profile updated successfully!' });
+
+      console.log("FormData to send:", formDataToSend);
+      const response = await authService.updateProfile(formDataToSend);
+
+      console.log("Profile Response", response);
+      if (response.data?.user) {
+        updateUser(response.data.user);
+      }
+
+      setMessage({ type: "success", text: "Profile updated successfully!" });
     } catch (error) {
-      console.error('Failed to update profile', error);
-      setMessage({ type: 'error', text: error.message || 'Failed to update profile' });
+      console.error("Failed to update profile", error);
+      setMessage({
+        type: "error",
+        text: error.message || "Failed to update profile",
+      });
     } finally {
       setLoading(false);
     }
@@ -116,16 +130,19 @@ function SettingsContent({ user, token }) {
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage({ type: '', text: '' });
+    setMessage({ type: "", text: "" });
 
-    if (passwordData.new_password !== passwordData.confirm_password) {
-      setMessage({ type: 'error', text: 'New passwords do not match' });
+    if (passwordData.new_password !== passwordData.new_password_confirmation) {
+      setMessage({ type: "error", text: "New passwords do not match" });
       setLoading(false);
       return;
     }
 
     if (passwordData.new_password.length < 8) {
-      setMessage({ type: 'error', text: 'Password must be at least 8 characters' });
+      setMessage({
+        type: "error",
+        text: "Password must be at least 8 characters",
+      });
       setLoading(false);
       return;
     }
@@ -133,14 +150,22 @@ function SettingsContent({ user, token }) {
     try {
       await authService.changePassword({
         current_password: passwordData.current_password,
-        new_password: passwordData.new_password
+        new_password: passwordData.new_password,
+        new_password_confirmation: passwordData.new_password_confirmation,
       });
-      
-      setMessage({ type: 'success', text: 'Password changed successfully!' });
-      setPasswordData({ current_password: '', new_password: '', confirm_password: '' });
+
+      setMessage({ type: "success", text: "Password changed successfully!" });
+      setPasswordData({
+        current_password: "",
+        new_password: "",
+        new_password_confirmation: "",
+      });
     } catch (error) {
-      console.error('Failed to change password', error);
-      setMessage({ type: 'error', text: error.message || 'Failed to change password' });
+      console.error("Failed to change password", error);
+      setMessage({
+        type: "error",
+        text: error.message || "Failed to change password",
+      });
     } finally {
       setLoading(false);
     }
@@ -151,22 +176,22 @@ function SettingsContent({ user, token }) {
       {/* Section Tabs */}
       <div className="bg-white rounded-xl shadow-sm border p-1 flex gap-1">
         <button
-          onClick={() => setActiveSection('profile')}
+          onClick={() => setActiveSection("profile")}
           className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-colors ${
-            activeSection === 'profile'
-              ? 'bg-primary text-white'
-              : 'text-gray-600 hover:bg-gray-100'
+            activeSection === "profile"
+              ? "bg-primary text-white"
+              : "text-gray-600 hover:bg-gray-100"
           }`}
         >
           <User className="w-4 h-4 inline-block mr-2" />
           Profile
         </button>
         <button
-          onClick={() => setActiveSection('password')}
+          onClick={() => setActiveSection("password")}
           className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-colors ${
-            activeSection === 'password'
-              ? 'bg-primary text-white'
-              : 'text-gray-600 hover:bg-gray-100'
+            activeSection === "password"
+              ? "bg-primary text-white"
+              : "text-gray-600 hover:bg-gray-100"
           }`}
         >
           <LockKeyhole className="w-4 h-4 inline-block mr-2" />
@@ -176,28 +201,36 @@ function SettingsContent({ user, token }) {
 
       {/* Message Alert */}
       {message.text && (
-        <div className={`p-4 rounded-lg ${
-          message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
-        }`}>
+        <div
+          className={`p-4 rounded-lg ${
+            message.type === "success"
+              ? "bg-green-50 text-green-800"
+              : "bg-red-50 text-red-800"
+          }`}
+        >
           {message.text}
         </div>
       )}
 
       {/* Profile Section */}
-      {activeSection === 'profile' && (
+      {activeSection === "profile" && (
         <div className="bg-white rounded-xl shadow-sm border p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-6">Edit Profile</h3>
-          
+          <h3 className="text-lg font-semibold text-gray-800 mb-6">
+            Edit Profile
+          </h3>
+
           <form onSubmit={handleProfileSubmit}>
             {/* Profile Image */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Profile Photo</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Profile Photo
+              </label>
               <div className="flex items-center gap-4">
                 <div className="w-20 h-20 rounded-full bg-gray-200 overflow-hidden">
                   {formData.profilePreview ? (
-                    <img 
-                      src={formData.profilePreview} 
-                      alt="Profile" 
+                    <img
+                      src={formData.profilePreview}
+                      alt="Profile"
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -207,8 +240,8 @@ function SettingsContent({ user, token }) {
                   )}
                 </div>
                 <label className="cursor-pointer">
-                  <input 
-                    type="file" 
+                  <input
+                    type="file"
                     accept="image/*"
                     onChange={handleImageChange}
                     className="hidden"
@@ -223,7 +256,9 @@ function SettingsContent({ user, token }) {
 
             {/* Name */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Full Name
+              </label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -239,7 +274,9 @@ function SettingsContent({ user, token }) {
 
             {/* Email */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -251,18 +288,22 @@ function SettingsContent({ user, token }) {
                   placeholder="Enter your email"
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Email cannot be changed
+              </p>
             </div>
 
             {/* Phone */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Phone Number
+              </label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
-                  name="phone"
-                  value={formData.phone}
+                  name="phone_number"
+                  value={formData.phone_number}
                   onChange={handleChange}
                   className="w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                   placeholder="Enter your phone number"
@@ -288,18 +329,22 @@ function SettingsContent({ user, token }) {
       )}
 
       {/* Password Section */}
-      {activeSection === 'password' && (
+      {activeSection === "password" && (
         <div className="bg-white rounded-xl shadow-sm border p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-6">Change Password</h3>
-          
+          <h3 className="text-lg font-semibold text-gray-800 mb-6">
+            Change Password
+          </h3>
+
           <form onSubmit={handlePasswordSubmit}>
             {/* Current Password */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Current Password
+              </label>
               <div className="relative">
                 <LockKeyhole className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
-                  type={showPasswords.current ? 'text' : 'password'}
+                  type={showPasswords.current ? "text" : "password"}
                   name="current_password"
                   value={passwordData.current_password}
                   onChange={handlePasswordChange}
@@ -309,21 +354,32 @@ function SettingsContent({ user, token }) {
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
+                  onClick={() =>
+                    setShowPasswords((prev) => ({
+                      ...prev,
+                      current: !prev.current,
+                    }))
+                  }
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showPasswords.current ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPasswords.current ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
                 </button>
               </div>
             </div>
 
             {/* New Password */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                New Password
+              </label>
               <div className="relative">
                 <LockKeyhole className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
-                  type={showPasswords.new ? 'text' : 'password'}
+                  type={showPasswords.new ? "text" : "password"}
                   name="new_password"
                   value={passwordData.new_password}
                   onChange={handlePasswordChange}
@@ -333,24 +389,34 @@ function SettingsContent({ user, token }) {
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}
+                  onClick={() =>
+                    setShowPasswords((prev) => ({ ...prev, new: !prev.new }))
+                  }
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showPasswords.new ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPasswords.new ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
                 </button>
               </div>
-              <p className="text-xs text-gray-500 mt-1">Password must be at least 8 characters</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Password must be at least 8 characters
+              </p>
             </div>
 
             {/* Confirm Password */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Confirm New Password
+              </label>
               <div className="relative">
                 <LockKeyhole className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
-                  type={showPasswords.confirm ? 'text' : 'password'}
-                  name="confirm_password"
-                  value={passwordData.confirm_password}
+                  type={showPasswords.confirm ? "text" : "password"}
+                  name="new_password_confirmation"
+                  value={passwordData.new_password_confirmation}
                   onChange={handlePasswordChange}
                   required
                   className="w-full pl-10 pr-12 py-3 border rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
@@ -358,10 +424,19 @@ function SettingsContent({ user, token }) {
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
+                  onClick={() =>
+                    setShowPasswords((prev) => ({
+                      ...prev,
+                      confirm: !prev.confirm,
+                    }))
+                  }
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showPasswords.confirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPasswords.confirm ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
                 </button>
               </div>
             </div>
@@ -387,7 +462,7 @@ function SettingsContent({ user, token }) {
 }
 
 export default function LandlordDashboard() {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showAddHouse, setShowAddHouse] = useState(false);
   const [houses, setHouses] = useState([]);
@@ -403,10 +478,10 @@ export default function LandlordDashboard() {
     totalProperties: 0,
     totalRentals: 0,
     totalRevenue: 0,
-    pendingApplications: 0
+    pendingApplications: 0,
   });
   const [dashboardLoading, setDashboardLoading] = useState(true);
-  const [dashboardError, setDashboardError] = useState('');
+  const [dashboardError, setDashboardError] = useState("");
   const [recentApplications, setRecentApplications] = useState([]);
   const { user, token, logout } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -416,23 +491,23 @@ export default function LandlordDashboard() {
     const fetchHouses = async () => {
       setHousesLoading(true);
       try {
-        const response = await houseService.list(token, 'landlord');
+        const response = await houseService.list(token, "landlord");
         const housesData = response.data?.houses || response.houses || [];
         setHouses(housesData);
       } catch (err) {
-        console.error('Failed to fetch houses', err);
+        console.error("Failed to fetch houses", err);
       } finally {
         setHousesLoading(false);
       }
     };
 
-    if (activeTab === 'properties' && token) {
+    if (activeTab === "properties" && token) {
       fetchHouses();
     }
   }, [activeTab, token, refetchTrigger]);
 
   const handleHouseCreated = () => {
-    setRefetchTrigger(prev => prev + 1);
+    setRefetchTrigger((prev) => prev + 1);
     // Update stats for overview
   };
 
@@ -441,17 +516,21 @@ export default function LandlordDashboard() {
     const fetchRentalApplications = async () => {
       setRentalAppsLoading(true);
       try {
-        const response = await houseService.getLandlordRentalApplications(token);
-        const appsData = response.data?.rental_applications || response.rental_applications || [];
+        const response =
+          await houseService.getLandlordRentalApplications(token);
+        const appsData =
+          response.data?.rental_applications ||
+          response.rental_applications ||
+          [];
         setRentalApplications(appsData);
       } catch (err) {
-        console.error('Failed to fetch rental applications', err);
+        console.error("Failed to fetch rental applications", err);
       } finally {
         setRentalAppsLoading(false);
       }
     };
 
-    if (activeTab === 'reservations' && token) {
+    if (activeTab === "reservations" && token) {
       fetchRentalApplications();
     }
   }, [activeTab, token, rentalAppsRefetch]);
@@ -462,58 +541,72 @@ export default function LandlordDashboard() {
       setDashboardLoading(true);
       try {
         // Fetch houses
-        const housesResponse = await houseService.list(token, 'landlord');
-        const housesData = housesResponse.data?.houses || housesResponse.houses || [];
-        
+        const housesResponse = await houseService.list(token, "landlord");
+        const housesData =
+          housesResponse.data?.houses || housesResponse.houses || [];
+
         // Fetch rentals
         const rentalsResponse = await houseService.getLandlordRentals(token);
-        const rentalsData = rentalsResponse.data?.rentals || rentalsResponse.rentals || [];
-        
+        const rentalsData =
+          rentalsResponse.data?.rentals || rentalsResponse.rentals || [];
+
         // Fetch rental applications
-        const appsResponse = await houseService.getLandlordRentalApplications(token);
-        const appsData = appsResponse.data?.rental_applications || appsResponse.rental_applications || [];
+        const appsResponse =
+          await houseService.getLandlordRentalApplications(token);
+        const appsData =
+          appsResponse.data?.rental_applications ||
+          appsResponse.rental_applications ||
+          [];
         setRentalApplications(appsData);
-        
+
         // Calculate total revenue from active rentals
         const totalRevenue = rentalsData
-          .filter(r => r.status === 'active')
+          .filter((r) => r.status === "active")
           .reduce((sum, r) => sum + (parseFloat(r.total_amount) || 0), 0);
-        
+
         // Count pending applications
-        const pendingApplications = appsData.filter(a => a.status === 'pending').length;
-        
+        const pendingApplications = appsData.filter(
+          (a) => a.status === "pending",
+        ).length;
+
         // Store recent applications (last 5)
-        const sortedApps = [...appsData].sort((a, b) => 
-          new Date(b.created_at) - new Date(a.created_at)
+        const sortedApps = [...appsData].sort(
+          (a, b) => new Date(b.created_at) - new Date(a.created_at),
         );
         setRecentApplications(sortedApps.slice(0, 5));
-        
+
         setDashboardStats({
           totalProperties: housesData.length,
           totalRentals: rentalsData.length,
           totalRevenue: totalRevenue,
-          pendingApplications: pendingApplications
+          pendingApplications: pendingApplications,
         });
       } catch (err) {
-        console.error('Failed to fetch dashboard data', err);
-        setDashboardError(err.message || 'Failed to load dashboard data. Please try again.');
+        console.error("Failed to fetch dashboard data", err);
+        setDashboardError(
+          err.message || "Failed to load dashboard data. Please try again.",
+        );
       } finally {
         setDashboardLoading(false);
       }
     };
 
-    if (activeTab === 'overview' && token) {
+    if (activeTab === "overview" && token) {
       fetchDashboardData();
     }
   }, [activeTab, token, refetchTrigger, rentalAppsRefetch]);
 
   const handleUpdateApplicationStatus = async (applicationId, status) => {
     try {
-      await houseService.updateRentalApplicationStatus(token, applicationId, status);
-      setRentalAppsRefetch(prev => prev + 1);
+      await houseService.updateRentalApplicationStatus(
+        token,
+        applicationId,
+        status,
+      );
+      setRentalAppsRefetch((prev) => prev + 1);
     } catch (err) {
-      console.error('Failed to update application status', err);
-      alert('Failed to update application status');
+      console.error("Failed to update application status", err);
+      alert("Failed to update application status");
     }
   };
 
@@ -531,33 +624,57 @@ export default function LandlordDashboard() {
 
   const handleConfirmAction = async () => {
     if (!selectedApplication || !modalAction) return;
-    
+
     try {
-      const status = modalAction === 'approve' ? 'approved' : 'rejected';
-      await houseService.updateRentalApplicationStatus(token, selectedApplication.id, status);
-      setRentalAppsRefetch(prev => prev + 1);
+      const status = modalAction === "approve" ? "approved" : "rejected";
+      await houseService.updateRentalApplicationStatus(
+        token,
+        selectedApplication.id,
+        status,
+      );
+      setRentalAppsRefetch((prev) => prev + 1);
       closeConfirmModal();
     } catch (err) {
-      console.error('Failed to update application status', err);
-      alert('Failed to update application status');
+      console.error("Failed to update application status", err);
+      alert("Failed to update application status");
     }
   };
 
   // Dynamic stats based on real data
   const stats = [
-    { title: 'Total Properties', value: dashboardStats.totalProperties, icon: Building2, color: 'bg-blue-500' },
-    { title: 'Active Rentals', value: dashboardStats.totalRentals, icon: CalendarDays, color: 'bg-green-500' },
-    { title: 'Total Revenue', value: `${dashboardStats.totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'bg-yellow-500' },
-    { title: 'Pending Applications', value: dashboardStats.pendingApplications, icon: Star, color: 'bg-purple-500' },
+    {
+      title: "Total Properties",
+      value: dashboardStats.totalProperties,
+      icon: Building2,
+      color: "bg-blue-500",
+    },
+    {
+      title: "Active Rentals",
+      value: dashboardStats.totalRentals,
+      icon: CalendarDays,
+      color: "bg-green-500",
+    },
+    {
+      title: "Total Revenue",
+      value: `${dashboardStats.totalRevenue.toLocaleString()}`,
+      icon: DollarSign,
+      color: "bg-yellow-500",
+    },
+    {
+      title: "Pending Applications",
+      value: dashboardStats.pendingApplications,
+      icon: Star,
+      color: "bg-purple-500",
+    },
   ];
 
   const menuItems = [
-    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'properties', label: 'Properties', icon: Building2 },
-    { id: 'reservations', label: 'Reservations', icon: CalendarDays },
+    { id: "overview", label: "Overview", icon: LayoutDashboard },
+    { id: "properties", label: "Properties", icon: Building2 },
+    { id: "reservations", label: "Reservations", icon: CalendarDays },
     // { id: 'reviews', label: 'Reviews', icon: Star },
     // { id: 'wallet', label: 'Wallet', icon: Wallet },
-    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: "settings", label: "Settings", icon: Settings },
     // { id: 'help', label: 'Help', icon: HelpCircle },
   ];
 
@@ -565,18 +682,18 @@ export default function LandlordDashboard() {
     try {
       await authService.logout();
       logout();
-      navigate('/login');
+      navigate("/login");
     } catch (error) {
-      console.error('Logout failed', error);
+      console.error("Logout failed", error);
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
-      <aside 
+      <aside
         className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r transform transition-transform duration-300 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
         } lg:transform-none`}
       >
         <div className="flex flex-col h-full">
@@ -589,21 +706,25 @@ export default function LandlordDashboard() {
           <div className="p-4 border-b">
             <div className="flex items-center gap-3">
               {user?.profile_path ? (
-                <img 
-                  src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/${user.profile_path}`}
-                  alt="Profile" 
+                <img
+                  src={`${import.meta.env.VITE_API_URL || "http://localhost:8000"}/${user.profile_path}`}
+                  alt="Profile"
                   className="w-10 h-10 rounded-full object-cover"
                 />
               ) : (
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                   <span className="text-primary font-semibold">
-                    {user?.name?.charAt(0) || 'U'}
+                    {user?.name?.charAt(0) || "U"}
                   </span>
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-gray-900 truncate">{user?.name || 'User'}</p>
-                <p className="text-sm text-gray-500 truncate">{user?.email || 'email@example.com'}</p>
+                <p className="font-medium text-gray-900 truncate">
+                  {user?.name || "User"}
+                </p>
+                <p className="text-sm text-gray-500 truncate">
+                  {user?.email || "email@example.com"}
+                </p>
               </div>
             </div>
           </div>
@@ -616,8 +737,8 @@ export default function LandlordDashboard() {
                 onClick={() => setActiveTab(item.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                   activeTab === item.id
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    ? "bg-primary/10 text-primary"
+                    : "text-gray-600 hover:bg-gray-100"
                 }`}
               >
                 <item.icon className="w-5 h-5" />
@@ -648,14 +769,24 @@ export default function LandlordDashboard() {
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
             >
-              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {sidebarOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
             </button>
             <h2 className="text-xl font-semibold text-gray-800">
-              {menuItems.find(item => item.id === activeTab)?.label || 'Dashboard'}
+              {menuItems.find((item) => item.id === activeTab)?.label ||
+                "Dashboard"}
             </h2>
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-500">
-                {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                {new Date().toLocaleDateString("en-US", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
               </span>
             </div>
           </div>
@@ -663,7 +794,7 @@ export default function LandlordDashboard() {
 
         {/* Dashboard Content */}
         <main className="flex-1 p-6 overflow-y-auto">
-          {activeTab === 'overview' && (
+          {activeTab === "overview" && (
             <div className="space-y-6">
               {/* Error Message */}
               {dashboardError && (
@@ -676,7 +807,10 @@ export default function LandlordDashboard() {
               {dashboardLoading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="bg-white rounded-xl p-6 shadow-sm border animate-pulse">
+                    <div
+                      key={i}
+                      className="bg-white rounded-xl p-6 shadow-sm border animate-pulse"
+                    >
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
@@ -692,13 +826,22 @@ export default function LandlordDashboard() {
                   {/* Stats Cards */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {stats.map((stat, index) => (
-                      <div key={index} className="bg-white rounded-xl p-6 shadow-sm border">
+                      <div
+                        key={index}
+                        className="bg-white rounded-xl p-6 shadow-sm border"
+                      >
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-sm text-gray-500">{stat.title}</p>
-                            <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
+                            <p className="text-sm text-gray-500">
+                              {stat.title}
+                            </p>
+                            <p className="text-2xl font-bold text-gray-900 mt-1">
+                              {stat.value}
+                            </p>
                           </div>
-                          <div className={`w-12 h-12 rounded-lg ${stat.color} flex items-center justify-center`}>
+                          <div
+                            className={`w-12 h-12 rounded-lg ${stat.color} flex items-center justify-center`}
+                          >
                             <stat.icon className="w-6 h-6 text-white" />
                           </div>
                         </div>
@@ -708,24 +851,38 @@ export default function LandlordDashboard() {
 
                   {/* Reservations Overview */}
                   <div className="bg-white rounded-xl p-6 shadow-sm border">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Reservations Overview</h3>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                      Reservations Overview
+                    </h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="p-4 bg-blue-50 rounded-lg">
                         <p className="text-sm text-blue-600">Pending</p>
                         <p className="text-2xl font-bold text-blue-800">
-                          {rentalApplications.filter(a => a.status === 'pending').length}
+                          {
+                            rentalApplications.filter(
+                              (a) => a.status === "pending",
+                            ).length
+                          }
                         </p>
                       </div>
                       <div className="p-4 bg-green-50 rounded-lg">
                         <p className="text-sm text-green-600">Approved</p>
                         <p className="text-2xl font-bold text-green-800">
-                          {rentalApplications.filter(a => a.status === 'approved').length}
+                          {
+                            rentalApplications.filter(
+                              (a) => a.status === "approved",
+                            ).length
+                          }
                         </p>
                       </div>
                       <div className="p-4 bg-red-50 rounded-lg">
                         <p className="text-sm text-red-600">Rejected</p>
                         <p className="text-2xl font-bold text-red-800">
-                          {rentalApplications.filter(a => a.status === 'rejected').length}
+                          {
+                            rentalApplications.filter(
+                              (a) => a.status === "rejected",
+                            ).length
+                          }
                         </p>
                       </div>
                     </div>
@@ -734,7 +891,9 @@ export default function LandlordDashboard() {
                   {/* Recent Bookings Table */}
                   <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
                     <div className="p-6 border-b">
-                      <h3 className="text-lg font-semibold text-gray-800">Recent Reservations</h3>
+                      <h3 className="text-lg font-semibold text-gray-800">
+                        Recent Reservations
+                      </h3>
                     </div>
                     {recentApplications.length === 0 ? (
                       <div className="p-6 text-center text-gray-500">
@@ -745,37 +904,59 @@ export default function LandlordDashboard() {
                         <table className="w-full">
                           <thead className="bg-gray-50">
                             <tr>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Property</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tenant</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                Property
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                Tenant
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                Date
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                Status
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                Price
+                              </th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-200">
                             {recentApplications.map((app) => (
                               <tr key={app.id} className="hover:bg-gray-50">
                                 <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                                  {app.house?.title || '-'}
+                                  {app.house?.title || "-"}
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-600">
-                                  {app.tenant?.name || '-'}
+                                  {app.tenant?.name || "-"}
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-600">
-                                  {app.created_at ? new Date(app.created_at).toLocaleDateString() : '-'}
+                                  {app.created_at
+                                    ? new Date(
+                                        app.created_at,
+                                      ).toLocaleDateString()
+                                    : "-"}
                                 </td>
                                 <td className="px-6 py-4">
-                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                    app.status === 'approved' ? 'bg-green-100 text-green-800' :
-                                    app.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                                    app.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                    'bg-gray-100 text-gray-800'
-                                  }`}>
-                                    {app.status || 'pending'}
+                                  <span
+                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                      app.status === "approved"
+                                        ? "bg-green-100 text-green-800"
+                                        : app.status === "rejected"
+                                          ? "bg-red-100 text-red-800"
+                                          : app.status === "pending"
+                                            ? "bg-yellow-100 text-yellow-800"
+                                            : "bg-gray-100 text-gray-800"
+                                    }`}
+                                  >
+                                    {app.status || "pending"}
                                   </span>
                                 </td>
                                 <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                                  ${app.house?.price_per_month || app.house?.price || '-'}
+                                  $
+                                  {app.house?.price_per_month ||
+                                    app.house?.price ||
+                                    "-"}
                                 </td>
                               </tr>
                             ))}
@@ -789,11 +970,13 @@ export default function LandlordDashboard() {
             </div>
           )}
 
-          {activeTab === 'properties' && (
+          {activeTab === "properties" && (
             <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
               <div className="p-6 border-b flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-800">My Properties</h3>
-                <button 
+                <h3 className="text-lg font-semibold text-gray-800">
+                  My Properties
+                </h3>
+                <button
                   onClick={() => setShowAddHouse(true)}
                   className="px-4 py-2 bg-primary text-white rounded-lg hover:opacity-90 transition-colors flex items-center gap-2"
                 >
@@ -801,26 +984,42 @@ export default function LandlordDashboard() {
                   Add Property
                 </button>
               </div>
-              
+
               {housesLoading ? (
-                <div className="p-6 text-center text-gray-500">Loading properties...</div>
+                <div className="p-6 text-center text-gray-500">
+                  Loading properties...
+                </div>
               ) : houses.length === 0 ? (
                 <div className="p-6 text-center text-gray-500">
                   <Building2 className="w-12 h-12 mx-auto mb-2 text-gray-300" />
                   <p>No properties yet</p>
-                  <p className="text-sm">Click "Add Property" to create your first listing</p>
+                  <p className="text-sm">
+                    Click "Add Property" to create your first listing
+                  </p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Property</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Property
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Location
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Type
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Price
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -829,9 +1028,10 @@ export default function LandlordDashboard() {
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
                               <div className="w-12 h-12 rounded-lg bg-gray-200 overflow-hidden flex-shrink-0">
-                                {house.house_photos && house.house_photos.length > 0 ? (
-                                  <img 
-                                    src={house.house_photos[0]?.photo_url} 
+                                {house.house_photos &&
+                                house.house_photos.length > 0 ? (
+                                  <img
+                                    src={house.house_photos[0]?.photo_url}
                                     alt={house.title}
                                     className="w-full h-full object-cover"
                                   />
@@ -842,8 +1042,12 @@ export default function LandlordDashboard() {
                                 )}
                               </div>
                               <div>
-                                <p className="font-medium text-gray-900">{house.title}</p>
-                                <p className="text-sm text-gray-500">{house.bedrooms} bed · {house.bathrooms} bath</p>
+                                <p className="font-medium text-gray-900">
+                                  {house.title}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  {house.bedrooms} bed · {house.bathrooms} bath
+                                </p>
                               </div>
                             </div>
                           </td>
@@ -851,16 +1055,20 @@ export default function LandlordDashboard() {
                             {house.city}, {house.township}
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-600 capitalize">
-                            {house.property_type || house.type || '-'}
+                            {house.property_type || house.type || "-"}
                           </td>
                           <td className="px-6 py-4 text-sm font-medium text-gray-900">
                             ${house.price_per_month || house.price}/mo
                           </td>
                           <td className="px-6 py-4">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              house.is_available ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                            }`}>
-                              {house.is_available ? 'Available' : 'Unavailable'}
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                house.is_available
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-gray-100 text-gray-800"
+                              }`}
+                            >
+                              {house.is_available ? "Available" : "Unavailable"}
                             </span>
                           </td>
                           <td className="px-6 py-4 text-right">
@@ -882,32 +1090,52 @@ export default function LandlordDashboard() {
             </div>
           )}
 
-          {activeTab === 'reservations' && (
+          {activeTab === "reservations" && (
             <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
               <div className="p-6 border-b">
-                <h3 className="text-lg font-semibold text-gray-800">Rental Applications</h3>
-                <p className="text-sm text-gray-500 mt-1">Manage tenant rental applications for your properties</p>
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Rental Applications
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Manage tenant rental applications for your properties
+                </p>
               </div>
-              
+
               {rentalAppsLoading ? (
-                <div className="p-6 text-center text-gray-500">Loading applications...</div>
+                <div className="p-6 text-center text-gray-500">
+                  Loading applications...
+                </div>
               ) : rentalApplications.length === 0 ? (
                 <div className="p-6 text-center text-gray-500">
                   <CalendarDays className="w-12 h-12 mx-auto mb-2 text-gray-300" />
                   <p>No rental applications yet</p>
-                  <p className="text-sm">Applications from tenants will appear here</p>
+                  <p className="text-sm">
+                    Applications from tenants will appear here
+                  </p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tenant</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Property</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Message</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Applied Date</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Tenant
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Property
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Message
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Applied Date
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -917,55 +1145,77 @@ export default function LandlordDashboard() {
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                                 <span className="text-primary font-semibold">
-                                  {app.tenant?.name?.charAt(0) || 'T'}
+                                  {app.tenant?.name?.charAt(0) || "T"}
                                 </span>
                               </div>
                               <div>
-                                <p className="font-medium text-gray-900">{app.tenant?.name || 'Tenant'}</p>
-                                <p className="text-sm text-gray-500">{app.tenant?.email || '-'}</p>
+                                <p className="font-medium text-gray-900">
+                                  {app.tenant?.name || "Tenant"}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  {app.tenant?.email || "-"}
+                                </p>
                               </div>
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <p className="text-sm text-gray-900">{app.house?.title || '-'}</p>
-                            <p className="text-sm text-gray-500">{app.house?.city || ''}, {app.house?.township || ''}</p>
+                            <p className="text-sm text-gray-900">
+                              {app.house?.title || "-"}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {app.house?.city || ""},{" "}
+                              {app.house?.township || ""}
+                            </p>
                           </td>
                           <td className="px-6 py-4">
                             <p className="text-sm text-gray-600 max-w-xs truncate">
-                              {app.message || '-'}
+                              {app.message || "-"}
                             </p>
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-600">
-                            {app.created_at ? new Date(app.created_at).toLocaleDateString() : '-'}
+                            {app.created_at
+                              ? new Date(app.created_at).toLocaleDateString()
+                              : "-"}
                           </td>
                           <td className="px-6 py-4">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              app.status === 'approved' ? 'bg-green-100 text-green-800' :
-                              app.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                              app.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}>
-                              {app.status || 'pending'}
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                app.status === "approved"
+                                  ? "bg-green-100 text-green-800"
+                                  : app.status === "rejected"
+                                    ? "bg-red-100 text-red-800"
+                                    : app.status === "pending"
+                                      ? "bg-yellow-100 text-yellow-800"
+                                      : "bg-gray-100 text-gray-800"
+                              }`}
+                            >
+                              {app.status || "pending"}
                             </span>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            {app.status === 'pending' ? (
+                            {app.status === "pending" ? (
                               <div className="flex items-center justify-end gap-2">
                                 <button
-                                  onClick={() => openConfirmModal(app, 'approve')}
+                                  onClick={() =>
+                                    openConfirmModal(app, "approve")
+                                  }
                                   className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
                                 >
                                   Approve
                                 </button>
                                 <button
-                                  onClick={() => openConfirmModal(app, 'reject')}
+                                  onClick={() =>
+                                    openConfirmModal(app, "reject")
+                                  }
                                   className="px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
                                 >
                                   Deny
                                 </button>
                               </div>
                             ) : (
-                              <span className="text-sm text-gray-400">No actions</span>
+                              <span className="text-sm text-gray-400">
+                                No actions
+                              </span>
                             )}
                           </td>
                         </tr>
@@ -977,27 +1227,35 @@ export default function LandlordDashboard() {
             </div>
           )}
 
-          {activeTab === 'reviews' && (
+          {activeTab === "reviews" && (
             <div className="bg-white rounded-xl p-6 shadow-sm border">
-              <h3 className="text-lg font-semibold text-gray-800 mb-6">Reviews</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-6">
+                Reviews
+              </h3>
               <p className="text-gray-500">Check your property reviews here.</p>
             </div>
           )}
 
-          {activeTab === 'wallet' && (
+          {activeTab === "wallet" && (
             <div className="bg-white rounded-xl p-6 shadow-sm border">
-              <h3 className="text-lg font-semibold text-gray-800 mb-6">Wallet</h3>
-              <p className="text-gray-500">Manage your earnings and payouts here.</p>
+              <h3 className="text-lg font-semibold text-gray-800 mb-6">
+                Wallet
+              </h3>
+              <p className="text-gray-500">
+                Manage your earnings and payouts here.
+              </p>
             </div>
           )}
 
-          {activeTab === 'settings' && (
+          {activeTab === "settings" && (
             <SettingsContent user={user} token={token} />
           )}
 
-          {activeTab === 'help' && (
+          {activeTab === "help" && (
             <div className="bg-white rounded-xl p-6 shadow-sm border">
-              <h3 className="text-lg font-semibold text-gray-800 mb-6">Help & Support</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-6">
+                Help & Support
+              </h3>
               <p className="text-gray-500">Get help with your account here.</p>
             </div>
           )}
@@ -1006,16 +1264,16 @@ export default function LandlordDashboard() {
 
       {/* Mobile Overlay */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         ></div>
       )}
 
       {/* Add House Modal */}
-      <AddHouseModal 
-        isOpen={showAddHouse} 
-        onClose={() => setShowAddHouse(false)} 
+      <AddHouseModal
+        isOpen={showAddHouse}
+        onClose={() => setShowAddHouse(false)}
         token={token}
         onSuccess={handleHouseCreated}
       />
@@ -1026,9 +1284,9 @@ export default function LandlordDashboard() {
           <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-800">
-                Confirm {modalAction === 'approve' ? 'Approval' : 'Rejection'}
+                Confirm {modalAction === "approve" ? "Approval" : "Rejection"}
               </h3>
-              <button 
+              <button
                 onClick={closeConfirmModal}
                 className="text-gray-400 hover:text-gray-600"
               >
@@ -1036,7 +1294,9 @@ export default function LandlordDashboard() {
               </button>
             </div>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to {modalAction === 'approve' ? 'approve' : 'reject'} this rental application?
+              Are you sure you want to{" "}
+              {modalAction === "approve" ? "approve" : "reject"} this rental
+              application?
             </p>
             <div className="flex gap-3 justify-end">
               <button
@@ -1048,12 +1308,12 @@ export default function LandlordDashboard() {
               <button
                 onClick={handleConfirmAction}
                 className={`px-4 py-2 text-white rounded-lg transition-colors ${
-                  modalAction === 'approve' 
-                    ? 'bg-green-600 hover:bg-green-700' 
-                    : 'bg-red-600 hover:bg-red-700'
+                  modalAction === "approve"
+                    ? "bg-green-600 hover:bg-green-700"
+                    : "bg-red-600 hover:bg-red-700"
                 }`}
               >
-                {modalAction === 'approve' ? 'Approve' : 'Reject'}
+                {modalAction === "approve" ? "Approve" : "Reject"}
               </button>
             </div>
           </div>

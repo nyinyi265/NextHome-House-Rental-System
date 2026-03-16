@@ -1,71 +1,85 @@
-import React, { useState, useContext, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
-import authService from '../services/authService';
-import { User, Mail, Phone, Camera, Save, ArrowLeft, LockKeyhole, Eye, EyeOff } from 'lucide-react';
+import React, { useState, useContext, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
+import authService from "../services/authService";
+import {
+  User,
+  Mail,
+  Phone,
+  Camera,
+  Save,
+  ArrowLeft,
+  LockKeyhole,
+  Eye,
+  EyeOff,
+} from "lucide-react";
+import env from "../environment/environment";
 
 export default function Profile() {
-  const { user, setUser } = useContext(AuthContext);
+  const { user, updateUser } = useContext(AuthContext);
   const navigate = useNavigate();
-  
+
   // Check if user is authenticated, if not redirect to login
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (!user && !token) {
-      navigate('/login');
+      navigate("/login");
     }
   }, [user, navigate]);
 
-  const [activeTab, setActiveTab] = useState('profile');
+  const [activeTab, setActiveTab] = useState("profile");
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
+    name: "",
+    email: "",
+    phone_number: "",
     profileImage: null,
-    profilePreview: null
+    profilePreview: null,
   });
   const [passwordData, setPasswordData] = useState({
-    current_password: '',
-    new_password: '',
-    confirm_password: ''
+    current_password: "",
+    new_password: "",
+    confirm_password: "",
   });
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState({ type: '', text: '' });
+  const [message, setMessage] = useState({ type: "", text: "" });
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
-    confirm: false
+    confirm: false,
   });
 
   useEffect(() => {
     if (user) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        name: user.name || '',
-        email: user.email || '',
-        phone: user.phone_number || '',
-        profilePreview: user.profile_path ? `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/${user.profile_path}` : null
+        name: user.name || "",
+        email: user.email || "",
+        phone_number: user.phone_number || "",
+        profilePreview: user.profile_path
+          ? `${env.STORAGE_URL}/${user.profile_path}`
+          : null,
       }));
     }
   }, [user]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handlePasswordChange = (e) => {
     const { name, value } = e.target;
-    setPasswordData(prev => ({ ...prev, [name]: value }));
+    setPasswordData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
+    console.log("Selected file:", file);
     if (file) {
-      setFormData(prev => ({ 
-        ...prev, 
+      setFormData((prev) => ({
+        ...prev,
         profileImage: file,
-        profilePreview: URL.createObjectURL(file)
+        profilePreview: URL.createObjectURL(file),
       }));
     }
   };
@@ -73,23 +87,35 @@ export default function Profile() {
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage({ type: '', text: '' });
+    setMessage({ type: "", text: "" });
+    console.log("Profile Image", formData.profileImage);
 
     try {
-      const response = await authService.updateProfile({
-        name: formData.name,
-        phone: formData.phone,
-        profileImage: formData.profileImage
-      });
-      
-      if (response.data?.user) {
-        setUser(response.data.user);
+      const formDataToSend = new FormData();
+
+      formDataToSend.append("_method", "PUT");
+      formDataToSend.append("name", formData.name);
+      formDataToSend.append("phone_number", formData.phone_number);
+
+      if (formData.profileImage) {
+        formDataToSend.append("profile_path", formData.profileImage);
       }
-      
-      setMessage({ type: 'success', text: 'Profile updated successfully!' });
+
+      console.log("FormData to send:", formDataToSend);
+      const response = await authService.updateProfile(formDataToSend);
+
+      console.log("Profile Response", response)
+      if (response.data?.user) {
+        updateUser(response.data.user);
+      }
+
+      setMessage({ type: "success", text: "Profile updated successfully!" });
     } catch (error) {
-      console.error('Failed to update profile', error);
-      setMessage({ type: 'error', text: error.message || 'Failed to update profile' });
+      console.error("Failed to update profile", error);
+      setMessage({
+        type: "error",
+        text: error.message || "Failed to update profile",
+      });
     } finally {
       setLoading(false);
     }
@@ -98,18 +124,21 @@ export default function Profile() {
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage({ type: '', text: '' });
+    setMessage({ type: "", text: "" });
 
     // Validate passwords match
     if (passwordData.new_password !== passwordData.confirm_password) {
-      setMessage({ type: 'error', text: 'New passwords do not match!' });
+      setMessage({ type: "error", text: "New passwords do not match!" });
       setLoading(false);
       return;
     }
 
     // Validate password length
     if (passwordData.new_password.length < 8) {
-      setMessage({ type: 'error', text: 'Password must be at least 8 characters!' });
+      setMessage({
+        type: "error",
+        text: "Password must be at least 8 characters!",
+      });
       setLoading(false);
       return;
     }
@@ -118,25 +147,30 @@ export default function Profile() {
       await authService.changePassword({
         current_password: passwordData.current_password,
         new_password: passwordData.new_password,
-        new_password_confirmation: passwordData.confirm_password
+        new_password_confirmation: passwordData.confirm_password,
       });
-      
-      setMessage({ type: 'success', text: 'Password changed successfully!' });
+
+      setMessage({ type: "success", text: "Password changed successfully!" });
       setPasswordData({
-        current_password: '',
-        new_password: '',
-        confirm_password: ''
+        current_password: "",
+        new_password: "",
+        confirm_password: "",
       });
     } catch (error) {
-      console.error('Failed to change password', error);
-      setMessage({ type: 'error', text: error.message || 'Failed to change password. Current password may be incorrect.' });
+      console.error("Failed to change password", error);
+      setMessage({
+        type: "error",
+        text:
+          error.message ||
+          "Failed to change password. Current password may be incorrect.",
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const togglePasswordVisibility = (field) => {
-    setShowPasswords(prev => ({ ...prev, [field]: !prev[field] }));
+    setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
   return (
@@ -144,7 +178,7 @@ export default function Profile() {
       <div className="max-w-2xl mx-auto px-4">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
-          <button 
+          <button
             onClick={() => navigate(-1)}
             className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
           >
@@ -156,21 +190,21 @@ export default function Profile() {
         {/* Tabs */}
         <div className="flex gap-2 mb-6">
           <button
-            onClick={() => setActiveTab('profile')}
+            onClick={() => setActiveTab("profile")}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === 'profile' 
-                ? 'bg-primary text-white' 
-                : 'bg-white text-gray-600 hover:bg-gray-100'
+              activeTab === "profile"
+                ? "bg-primary text-white"
+                : "bg-white text-gray-600 hover:bg-gray-100"
             }`}
           >
             Profile
           </button>
           <button
-            onClick={() => setActiveTab('password')}
+            onClick={() => setActiveTab("password")}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === 'password' 
-                ? 'bg-primary text-white' 
-                : 'bg-white text-gray-600 hover:bg-gray-100'
+              activeTab === "password"
+                ? "bg-primary text-white"
+                : "bg-white text-gray-600 hover:bg-gray-100"
             }`}
           >
             Change Password
@@ -178,7 +212,7 @@ export default function Profile() {
         </div>
 
         {/* Profile Tab */}
-        {activeTab === 'profile' && (
+        {activeTab === "profile" && (
           <div className="bg-white rounded-xl shadow-sm border p-6">
             <form onSubmit={handleProfileSubmit}>
               {/* Profile Image */}
@@ -186,9 +220,9 @@ export default function Profile() {
                 <div className="relative">
                   <div className="w-32 h-32 rounded-full bg-gray-200 overflow-hidden">
                     {formData.profilePreview ? (
-                      <img 
-                        src={formData.profilePreview} 
-                        alt="Profile" 
+                      <img
+                        src={formData.profilePreview}
+                        alt="Profile"
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -199,20 +233,24 @@ export default function Profile() {
                   </div>
                   <label className="absolute bottom-0 right-0 p-2 bg-primary rounded-full cursor-pointer hover:opacity-90 transition-colors">
                     <Camera className="w-4 h-4 text-white" />
-                    <input 
-                      type="file" 
+                    <input
+                      type="file"
                       accept="image/*"
                       onChange={handleImageChange}
                       className="hidden"
                     />
                   </label>
                 </div>
-                <p className="mt-2 text-sm text-gray-500">Click camera icon to change photo</p>
+                <p className="mt-2 text-sm text-gray-500">
+                  Click camera icon to change photo
+                </p>
               </div>
 
               {/* Message */}
-              {message.text && activeTab === 'profile' && (
-                <div className={`mb-6 p-4 rounded-lg ${message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+              {message.text && activeTab === "profile" && (
+                <div
+                  className={`mb-6 p-4 rounded-lg ${message.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}
+                >
                   {message.text}
                 </div>
               )}
@@ -250,7 +288,9 @@ export default function Profile() {
                     placeholder="Enter your email"
                   />
                 </div>
-                <p className="mt-1 text-xs text-gray-500">Email cannot be changed</p>
+                <p className="mt-1 text-xs text-gray-500">
+                  Email cannot be changed
+                </p>
               </div>
 
               {/* Phone Field */}
@@ -262,8 +302,8 @@ export default function Profile() {
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="tel"
-                    name="phone"
-                    value={formData.phone}
+                    name="phone_number"
+                    value={formData.phone_number}
                     onChange={handleChange}
                     className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-colors"
                     placeholder="Enter your phone number"
@@ -278,7 +318,7 @@ export default function Profile() {
                 className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-emerald-400 transition-colors font-medium"
               >
                 {loading ? (
-                  'Saving...'
+                  "Saving..."
                 ) : (
                   <>
                     <Save className="w-5 h-5" />
@@ -291,17 +331,21 @@ export default function Profile() {
         )}
 
         {/* Change Password Tab */}
-        {activeTab === 'password' && (
+        {activeTab === "password" && (
           <div className="bg-white rounded-xl shadow-sm border p-6">
             <form onSubmit={handlePasswordSubmit}>
               <div className="flex items-center gap-3 mb-6">
                 <LockKeyhole className="w-6 h-6 text-primary" />
-                <h2 className="text-lg font-semibold text-gray-800">Change Password</h2>
+                <h2 className="text-lg font-semibold text-gray-800">
+                  Change Password
+                </h2>
               </div>
 
               {/* Message */}
-              {message.text && activeTab === 'password' && (
-                <div className={`mb-6 p-4 rounded-lg ${message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+              {message.text && activeTab === "password" && (
+                <div
+                  className={`mb-6 p-4 rounded-lg ${message.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}
+                >
                   {message.text}
                 </div>
               )}
@@ -314,7 +358,7 @@ export default function Profile() {
                 <div className="relative">
                   <LockKeyhole className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
-                    type={showPasswords.current ? 'text' : 'password'}
+                    type={showPasswords.current ? "text" : "password"}
                     name="current_password"
                     value={passwordData.current_password}
                     onChange={handlePasswordChange}
@@ -324,10 +368,14 @@ export default function Profile() {
                   />
                   <button
                     type="button"
-                    onClick={() => togglePasswordVisibility('current')}
+                    onClick={() => togglePasswordVisibility("current")}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
-                    {showPasswords.current ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPasswords.current ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -340,7 +388,7 @@ export default function Profile() {
                 <div className="relative">
                   <LockKeyhole className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
-                    type={showPasswords.new ? 'text' : 'password'}
+                    type={showPasswords.new ? "text" : "password"}
                     name="new_password"
                     value={passwordData.new_password}
                     onChange={handlePasswordChange}
@@ -351,13 +399,19 @@ export default function Profile() {
                   />
                   <button
                     type="button"
-                    onClick={() => togglePasswordVisibility('new')}
+                    onClick={() => togglePasswordVisibility("new")}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
-                    {showPasswords.new ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPasswords.new ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
-                <p className="mt-1 text-xs text-gray-500">Minimum 8 characters</p>
+                <p className="mt-1 text-xs text-gray-500">
+                  Minimum 8 characters
+                </p>
               </div>
 
               {/* Confirm Password */}
@@ -368,7 +422,7 @@ export default function Profile() {
                 <div className="relative">
                   <LockKeyhole className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
-                    type={showPasswords.confirm ? 'text' : 'password'}
+                    type={showPasswords.confirm ? "text" : "password"}
                     name="confirm_password"
                     value={passwordData.confirm_password}
                     onChange={handlePasswordChange}
@@ -379,10 +433,14 @@ export default function Profile() {
                   />
                   <button
                     type="button"
-                    onClick={() => togglePasswordVisibility('confirm')}
+                    onClick={() => togglePasswordVisibility("confirm")}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
-                    {showPasswords.confirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPasswords.confirm ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -394,7 +452,7 @@ export default function Profile() {
                 className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-emerald-400 transition-colors font-medium"
               >
                 {loading ? (
-                  'Changing...'
+                  "Changing..."
                 ) : (
                   <>
                     <LockKeyhole className="w-5 h-5" />
@@ -405,7 +463,10 @@ export default function Profile() {
 
               {/* Forgot Password Link */}
               <p className="mt-4 text-center text-sm text-gray-600">
-                <Link to="/forgot-password" className="text-emerald-600 hover:underline">
+                <Link
+                  to="/forgot-password"
+                  className="text-emerald-600 hover:underline"
+                >
                   Forgot Password?
                 </Link>
               </p>
