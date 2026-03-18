@@ -270,6 +270,23 @@ async function getLandlordRentals(token) {
   return response.json();
 }
 
+/**
+ * Fetch tenant's rental applications
+ * @param {string} token - Authentication token
+ */
+async function getTenantRentalApplications(token) {
+  const headers = { 
+    Accept: 'application/json',
+    Authorization: `Bearer ${token}`
+  };
+  const response = await fetch(api.tenant.rentalApplications(), { headers });
+  if (!response.ok) {
+    const err = await response.json();
+    throw err;
+  }
+  return response.json();
+}
+
 
 const houseService = { 
   list, 
@@ -282,6 +299,8 @@ const houseService = {
   createHouse,
   getLandlordRentalApplications,
   updateRentalApplicationStatus,
-  getLandlordRentals
+  updateRentalApplicationDuration,
+  getLandlordRentals,
+  getTenantRentalApplications
 };
 export default houseService;

@@ -13,6 +13,7 @@ import Profile from '../pages/Profile';
 import ResetPassword from '../pages/ResetPassword';
 import ForgotPassword from '../pages/ForgotPassword';
 import MyRentals from '../pages/MyRentals';
+import MyRentalApplications from '../pages/MyRentalApplications';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
@@ -133,6 +134,14 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute requiredRole="tenant">
             <MyRentals />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/my-applications" 
+        element={
+          <ProtectedRoute requiredRole="tenant">
+            <MyRentalApplications />
           </ProtectedRoute>
         } 
       />

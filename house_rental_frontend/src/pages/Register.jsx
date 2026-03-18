@@ -1,7 +1,15 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../config/api";
-import { User, Mail, Phone, LockKeyhole, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
+import {
+  User,
+  Mail,
+  Phone,
+  LockKeyhole,
+  AlertCircle,
+  CheckCircle,
+  Loader2,
+} from "lucide-react";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -11,7 +19,7 @@ export default function Register() {
     phone_number: "",
     password: "",
     password_confirmation: "",
-    emergency_contact: ""
+    emergency_contact: "",
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -19,16 +27,16 @@ export default function Register() {
 
   function handleChange(e) {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
     // Clear error when user types
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: "" }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   }
 
   function validateForm() {
     const newErrors = {};
-    
+
     // Name validation
     if (!formData.name.trim()) {
       newErrors.name = "Name is required";
@@ -44,7 +52,10 @@ export default function Register() {
     }
 
     // Phone number validation (optional but if provided must be valid)
-    if (formData.phone_number && !/^\+?[\d\s\-]{6,20}$/.test(formData.phone_number)) {
+    if (
+      formData.phone_number &&
+      !/^\+?[\d\s\-]{6,20}$/.test(formData.phone_number)
+    ) {
       newErrors.phone_number = "Please enter a valid phone number";
     }
 
@@ -63,7 +74,10 @@ export default function Register() {
     }
 
     // Emergency contact validation (optional but if provided must be valid)
-    if (formData.emergency_contact && !/^\+?[\d\s\-]{6,20}$/.test(formData.emergency_contact)) {
+    if (
+      formData.emergency_contact &&
+      !/^\+?[\d\s\-]{6,20}$/.test(formData.emergency_contact)
+    ) {
       newErrors.emergency_contact = "Please enter a valid phone number";
     }
 
@@ -78,7 +92,7 @@ export default function Register() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -90,14 +104,14 @@ export default function Register() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-      
+
       const data = await res.json();
-      
+
       if (!res.ok) {
         // Handle validation errors from backend
         if (data.errors) {
           const backendErrors = {};
-          Object.keys(data.errors).forEach(key => {
+          Object.keys(data.errors).forEach((key) => {
             backendErrors[key] = data.errors[key][0];
           });
           setErrors(backendErrors);
@@ -106,15 +120,31 @@ export default function Register() {
         throw new Error(data.message || "Registration failed");
       }
 
-      showToast("success", "Registration successful! Please login to continue.");
-      
-      // Redirect to login after 2 seconds
-      setTimeout(() => {
-        navigate("/login");
-      }, 2000);
-      
+      // Check if registration returns token (auto-login)
+      if (data.data && data.data.token) {
+        // Save token and user to localStorage
+        localStorage.setItem("token", data.data.token);
+        localStorage.setItem("user", JSON.stringify(data.data.user));
+
+        // Get user role and redirect accordingly
+        const userRole = data.data.user.roles?.[0]?.name || data.data.user.role;
+
+        navigate("/");
+      } else {
+        // Fallback: if no token, redirect to login
+        showToast(
+          "success",
+          "Registration successful! Please login to continue.",
+        );
+        setTimeout(() => {
+          navigate("/");
+        }, 2000);
+      }
     } catch (err) {
-      showToast("error", err.message || "Registration failed. Please try again.");
+      showToast(
+        "error",
+        err.message || "Registration failed. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -125,11 +155,13 @@ export default function Register() {
       <div className="max-w-md w-full">
         {/* Toast Notification */}
         {toast.message && (
-          <div className={`mb-4 p-4 rounded-lg flex items-center gap-3 ${
-            toast.type === "success" 
-              ? "bg-green-50 text-green-800 border border-green-200" 
-              : "bg-red-50 text-red-800 border border-red-200"
-          }`}>
+          <div
+            className={`mb-4 p-4 rounded-lg flex items-center gap-3 ${
+              toast.type === "success"
+                ? "bg-green-50 text-green-800 border border-green-200"
+                : "bg-red-50 text-red-800 border border-red-200"
+            }`}
+          >
             {toast.type === "success" ? (
               <CheckCircle className="w-5 h-5 flex-shrink-0" />
             ) : (
@@ -142,7 +174,9 @@ export default function Register() {
         <div className="bg-white rounded-xl shadow-lg p-8">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900">Create Account</h2>
-            <p className="text-gray-500 mt-1">Join NextHome to find your perfect rental</p>
+            <p className="text-gray-500 mt-1">
+              Join NextHome to find your perfect rental
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -165,7 +199,9 @@ export default function Register() {
                   disabled={loading}
                 />
               </div>
-              {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+              {errors.name && (
+                <p className="mt-1 text-sm text-red-500">{errors.name}</p>
+              )}
             </div>
 
             {/* Email Field */}
@@ -187,7 +223,9 @@ export default function Register() {
                   disabled={loading}
                 />
               </div>
-              {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+              )}
             </div>
 
             {/* Phone Number Field */}
@@ -209,7 +247,11 @@ export default function Register() {
                   disabled={loading}
                 />
               </div>
-              {errors.phone_number && <p className="mt-1 text-sm text-red-500">{errors.phone_number}</p>}
+              {errors.phone_number && (
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.phone_number}
+                </p>
+              )}
             </div>
 
             {/* Password Field */}
@@ -231,7 +273,9 @@ export default function Register() {
                   disabled={loading}
                 />
               </div>
-              {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
+              {errors.password && (
+                <p className="mt-1 text-sm text-red-500">{errors.password}</p>
+              )}
             </div>
 
             {/* Confirm Password Field */}
@@ -248,12 +292,18 @@ export default function Register() {
                   onChange={handleChange}
                   placeholder="Confirm your password"
                   className={`w-full pl-12 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors ${
-                    errors.password_confirmation ? "border-red-500" : "border-gray-300"
+                    errors.password_confirmation
+                      ? "border-red-500"
+                      : "border-gray-300"
                   }`}
                   disabled={loading}
                 />
               </div>
-              {errors.password_confirmation && <p className="mt-1 text-sm text-red-500">{errors.password_confirmation}</p>}
+              {errors.password_confirmation && (
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.password_confirmation}
+                </p>
+              )}
             </div>
 
             {/* Emergency Contact Field */}
@@ -270,18 +320,26 @@ export default function Register() {
                   onChange={handleChange}
                   placeholder="Emergency contact number"
                   className={`w-full pl-12 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors ${
-                    errors.emergency_contact ? "border-red-500" : "border-gray-300"
+                    errors.emergency_contact
+                      ? "border-red-500"
+                      : "border-gray-300"
                   }`}
                   disabled={loading}
                 />
               </div>
-              {errors.emergency_contact && <p className="mt-1 text-sm text-red-500">{errors.emergency_contact}</p>}
-              <p className="mt-1 text-xs text-gray-500">Optional: Someone we can contact in case of emergency</p>
+              {errors.emergency_contact && (
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.emergency_contact}
+                </p>
+              )}
+              <p className="mt-1 text-xs text-gray-500">
+                Optional: Someone we can contact in case of emergency
+              </p>
             </div>
 
             {/* Submit Button */}
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={loading}
               className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-primary text-white font-semibold rounded-full shadow-md hover:bg-opacity-90 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             >
@@ -291,14 +349,17 @@ export default function Register() {
                   <span>Creating account...</span>
                 </>
               ) : (
-                'Create Account'
+                "Create Account"
               )}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-600">
             Already have an account?{" "}
-            <Link to="/login" className="text-primary hover:underline font-medium">
+            <Link
+              to="/login"
+              className="text-primary hover:underline font-medium"
+            >
               Login here
             </Link>
           </p>

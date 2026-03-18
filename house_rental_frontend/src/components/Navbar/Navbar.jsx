@@ -62,6 +62,16 @@ export default function Navbar() {
             </Link>
           </li>
         )}
+        {user && user.role === "tenant" && (
+          <li>
+            <Link
+              to="/my-applications"
+              className="no-underline text-gray-700 text-base font-semibold hover:text-primary"
+            >
+              My Applications
+            </Link>
+          </li>
+        )}
         {/* {user && user.role === 'landlord' && (
           <li>
             <Link to="/landlord" className="no-underline text-gray-700 text-base font-semibold hover:text-primary">Dashboard</Link>

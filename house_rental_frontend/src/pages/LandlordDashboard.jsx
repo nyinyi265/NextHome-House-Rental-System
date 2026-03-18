@@ -25,6 +25,9 @@ import {
   LockKeyhole,
   Eye,
   EyeOff,
+  Home,
+  Calendar,
+  CheckCircle,
 } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import authService from "../services/authService";
@@ -478,6 +481,10 @@ export default function LandlordDashboard() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [modalAction, setModalAction] = useState(null); // 'approve' or 'reject'
+  const [showEditDurationModal, setShowEditDurationModal] = useState(false);
+  const [editingApplication, setEditingApplication] = useState(null);
+  const [editDuration, setEditDuration] = useState(3);
+  const [editDurationLoading, setEditDurationLoading] = useState(false);
   const [dashboardStats, setDashboardStats] = useState({
     totalProperties: 0,
     totalRentals: 0,
@@ -547,6 +554,7 @@ export default function LandlordDashboard() {
       try {
         const response = await houseService.getLandlordRentals(token);
         const rentalsData = response.data?.rentals || response.rentals || [];
+        console.log("Rentals data:", rentalsData);
         setRentals(rentalsData);
       } catch (err) {
         console.error("Failed to fetch rentals", err);
@@ -662,6 +670,38 @@ export default function LandlordDashboard() {
     } catch (err) {
       console.error("Failed to update application status", err);
       alert("Failed to update application status");
+    }
+  };
+
+  const openEditDurationModal = (application) => {
+    setEditingApplication(application);
+    setEditDuration(application.rental_duration || 3);
+    setShowEditDurationModal(true);
+  };
+
+  const closeEditDurationModal = () => {
+    setShowEditDurationModal(false);
+    setEditingApplication(null);
+    setEditDuration(3);
+  };
+
+  const handleUpdateDuration = async () => {
+    if (!editingApplication) return;
+
+    setEditDurationLoading(true);
+    try {
+      await houseService.updateRentalApplicationDuration(
+        token,
+        editingApplication.id,
+        editDuration,
+      );
+      setRentalAppsRefetch((prev) => prev + 1);
+      closeEditDurationModal();
+    } catch (err) {
+      console.error("Failed to update duration", err);
+      alert("Failed to update duration");
+    } finally {
+      setEditDurationLoading(false);
     }
   };
 
@@ -1251,6 +1291,15 @@ export default function LandlordDashboard() {
                               <div className="flex items-center justify-end gap-2">
                                 <button
                                   onClick={() =>
+                                    openEditDurationModal(app)
+                                  }
+                                  className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1"
+                                >
+                                  <Edit className="w-3 h-3" />
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() =>
                                     openConfirmModal(app, "approve")
                                   }
                                   className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
@@ -1356,10 +1405,10 @@ export default function LandlordDashboard() {
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 rounded-lg bg-gray-200 overflow-hidden">
-                                {rental.house?.house_photos &&
-                                rental.house.house_photos.length > 0 ? (
+                                {rental.house?.housePhotos &&
+                                rental.house.housePhotos.length > 0 ? (
                                   <img
-                                    src={`${env.STORAGE_URL}/house_photos/${rental.house.house_photos[0].photo_path}`}
+                                    src={`${env.STORAGE_URL}/house_photos/${rental.house.housePhotos[0].photo_path}`}
                                     alt={rental.house?.title}
                                     className="w-full h-full object-cover"
                                   />
@@ -1495,6 +1544,69 @@ export default function LandlordDashboard() {
                 }`}
               >
                 {modalAction === "approve" ? "Approve" : "Reject"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Duration Modal */}
+      {showEditDurationModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">
+                Edit Rental Duration
+              </h3>
+              <button
+                onClick={closeEditDurationModal}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-gray-600 mb-4">
+              Update the rental duration for this application.
+            </p>
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Duration (months)
+              </label>
+              <select
+                value={editDuration}
+                onChange={(e) => setEditDuration(parseInt(e.target.value))}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              >
+                <option value={1}>1 month</option>
+                <option value={2}>2 months</option>
+                <option value={3}>3 months</option>
+                <option value={6}>6 months</option>
+                <option value={12}>12 months</option>
+                <option value={18}>18 months</option>
+                <option value={24}>24 months</option>
+              </select>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={closeEditDurationModal}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                disabled={editDurationLoading}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdateDuration}
+                disabled={editDurationLoading}
+                className="px-4 py-2 bg-primary text-white rounded-lg hover:opacity-90 transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {editDurationLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  "Update"
+                )}
               </button>
             </div>
           </div>
