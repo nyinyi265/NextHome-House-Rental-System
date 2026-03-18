@@ -68,13 +68,16 @@ class RentalApplicationService
         if ($data['status'] === 'approved') {
             $house = $app->house;
 
+            // Use rental_duration from application, default to 3 months if not provided
+            $duration = $app->rental_duration ?? 3;
+
             Rental::create([
                 'house_id' => $app->house_id,
                 'tenant_profile_id' => $app->tenant_profile_id,
                 'landlord_profile_id' => $app->landlord_profile_id,
                 'rental_start_date' => now()->toDateString(),
-                'rental_end_date' => now()->addMonths(3)->toDateString(), // 3 months duration
-                'rental_duration' => 3, // 3 months as specified
+                'rental_end_date' => now()->addMonths($duration)->toDateString(),
+                'rental_duration' => $duration,
                 'monthly_rent' => $house->price,
                 'status' => 'active',
             ]);

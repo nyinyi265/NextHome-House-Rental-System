@@ -9,6 +9,7 @@ use App\Http\Controllers\API\Landlord\HouseController;
 use App\Http\Controllers\API\Landlord\HousePhotoController;
 use App\Http\Controllers\API\Landlord\RentalApplicationController;
 use App\Http\Controllers\API\Tenant\HouseController as TenantHouseController;
+use App\Http\Controllers\API\Tenant\RentalApplicationController as TenantRentalApplicationController;
 use App\Http\Controllers\API\Tenant\RentalController;
 
 Route::prefix('auth')->group(function () {
@@ -38,7 +39,7 @@ Route::get('/user', function (Request $request) {
 
 // tenant APIs
 Route::prefix('tenant')->middleware(['auth:sanctum', 'role:tenant'])->group(function () {
-    Route::apiResource('rental-applications', RentalApplicationController::class)
+    Route::apiResource('rental-applications', TenantRentalApplicationController::class)
         ->only(['index', 'store', 'show', 'update', 'destroy']);
 
     Route::apiResource('rentals', RentalController::class)

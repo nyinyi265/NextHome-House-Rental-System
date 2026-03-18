@@ -16,6 +16,7 @@ class StoreRentalApplicationRequest extends FormRequest
         return [
             'house_id' => ['required', 'integer', 'exists:houses,id'],
             'message' => ['nullable', 'string'],
+            'rental_duration' => ['required', 'integer', 'min:1', 'max:24'],
         ];
     }
 }

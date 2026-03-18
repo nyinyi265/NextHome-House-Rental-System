@@ -14,7 +14,7 @@ class RentalService
     public function listByLandlord(int $landlordProfileId)
     {
         // now that rentals store landlord_profile_id directly, we can filter on it
-        return Rental::with(['house', 'tenantProfile'])
+        return Rental::with(['house', 'house.housePhotos', 'tenantProfile'])
             ->where('landlord_profile_id', $landlordProfileId)
             ->get();
     }

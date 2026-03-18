@@ -12,7 +12,8 @@ class RentalApplication extends Model
         'landlord_profile_id',
         'application_date',
         'status',
-        'message'
+        'message',
+        'rental_duration'
     ];
 
     public function house()
