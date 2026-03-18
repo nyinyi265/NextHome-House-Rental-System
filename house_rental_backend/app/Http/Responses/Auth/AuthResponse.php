@@ -19,6 +19,7 @@ class AuthResponse
         $response = ['user' => $user];
         if ($token !== null) {
             $response['token'] = $token;
+            $response['role'] = $user->getRoleNames()->first() ?? null;
         }
         return $response;
     }

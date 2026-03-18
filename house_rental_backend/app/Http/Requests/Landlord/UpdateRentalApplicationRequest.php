@@ -14,8 +14,9 @@ class UpdateRentalApplicationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => ['required', 'in:pending,approved,rejected'],
+            'status' => ['sometimes', 'required', 'in:pending,approved,rejected'],
             'message' => ['sometimes', 'string'],
+            'rental_duration' => ['sometimes', 'integer', 'min:1', 'max:24'],
         ];
     }
 }

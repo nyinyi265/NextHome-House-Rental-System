@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\House;
+use App\Models\Rental;
+use App\Models\RentalApplication;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class HouseService
@@ -73,6 +75,84 @@ class HouseService
             $query->whereHas('furnitures', function ($q) use ($filters) {
                 $q->whereIn('furnitures.id', $filters['furnitures']);
             });
+        }
+
+        return $query->get();
+    }
+
+    /**
+     * Return all houses for tenants, excluding houses they have applied for or are currently rented.
+     *
+     * @param array $filters
+     * @param int|null $tenantProfileId If provided, excludes houses with pending/approved applications and active rentals
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function listForTenants(array $filters = [], ?int $tenantProfileId = null)
+    {
+        $query = House::with(['housePhotos', 'amenties', 'furnitures']);
+
+        // Apply filters
+        if (!empty($filters['min_price'])) {
+            $query->where('price', '>=', $filters['min_price']);
+        }
+        if (!empty($filters['max_price'])) {
+            $query->where('price', '<=', $filters['max_price']);
+        }
+        if (!empty($filters['type'])) {
+            $query->where('type', $filters['type']);
+        }
+        if (!empty($filters['bedrooms'])) {
+            $query->where('bedrooms', '>=', $filters['bedrooms']);
+        }
+        if (!empty($filters['bathrooms'])) {
+            $query->where('bathrooms', '>=', $filters['bathrooms']);
+        }
+        if (!empty($filters['min_area'])) {
+            $query->where('area', '>=', $filters['min_area']);
+        }
+        if (!empty($filters['max_area'])) {
+            $query->where('area', '<=', $filters['max_area']);
+        }
+        if (!empty($filters['city'])) {
+            $query->where('city', 'like', '%' . $filters['city'] . '%');
+        }
+        if (!empty($filters['street'])) {
+            $query->where('street', 'like', '%' . $filters['street'] . '%');
+        }
+        if (!empty($filters['township'])) {
+            $query->where('township', 'like', '%' . $filters['township'] . '%');
+        }
+        if (!empty($filters['area'])) {
+            $query->where('area', 'like', '%' . $filters['area'] . '%');
+        }
+        if (!empty($filters['amenties'])) {
+            $query->whereHas('amenties', function ($q) use ($filters) {
+                $q->whereIn('amenties.id', $filters['amenties']);
+            });
+        }
+        if (!empty($filters['furnitures'])) {
+            $query->whereHas('furnitures', function ($q) use ($filters) {
+                $q->whereIn('furnitures.id', $filters['furnitures']);
+            });
+        }
+
+        // Exclude houses that the tenant has already applied for (pending or approved)
+        // and houses that are currently rented (active rental)
+        if ($tenantProfileId !== null) {
+            // Get house IDs that have pending or approved applications from this tenant
+            $appliedHouseIds = RentalApplication::where('tenant_profile_id', $tenantProfileId)
+                ->whereIn('status', ['pending', 'approved'])
+                ->pluck('house_id')
+                ->toArray();
+
+            // Get house IDs that have active rentals
+            $rentedHouseIds = Rental::where('status', 'active')
+                ->pluck('house_id')
+                ->toArray();
+
+            // Combine and exclude both
+            $excludeIds = array_merge($appliedHouseIds, $rentedHouseIds);
+            $query->whereNotIn('id', $excludeIds);
         }
 
         return $query->get();

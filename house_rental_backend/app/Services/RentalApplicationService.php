@@ -65,11 +65,11 @@ class RentalApplicationService
         $app->update($data);
 
         // If status is approved, create a Rental record
-        if ($data['status'] === 'approved') {
+        if (isset($data['status']) && $data['status'] === 'approved') {
             $house = $app->house;
 
-            // Use rental_duration from application, default to 3 months if not provided
-            $duration = $app->rental_duration ?? 3;
+            // Use rental_duration from application (required from frontend)
+            $duration = $app->rental_duration;
 
             Rental::create([
                 'house_id' => $app->house_id,

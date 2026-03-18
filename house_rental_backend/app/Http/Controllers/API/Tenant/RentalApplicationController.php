@@ -10,6 +10,8 @@ use App\Http\Requests\Tenant\StoreRentalApplicationRequest;
 use App\Http\Requests\Tenant\UpdateRentalApplicationRequest;
 use App\Traits\HttpResponse;
 use App\Http\Responses\RentalApplicationResponse;
+use App\Models\RentalApplication;
+use App\Models\Rental;
 
 class RentalApplicationController extends Controller
 {
@@ -33,6 +35,27 @@ class RentalApplicationController extends Controller
     {
         $tenantProfileId = $request->user()->tenantProfile->id;
         $data = $request->validated();
+        $houseId = $data['house_id'];
+
+        // Check if tenant already has a pending or approved application for this house
+        $existingApplication = RentalApplication::where('house_id', $houseId)
+            ->where('tenant_profile_id', $tenantProfileId)
+            ->whereIn('status', ['pending', 'approved'])
+            ->first();
+
+        if ($existingApplication) {
+            return $this->fail(false, null, 'You already have an active application for this house', 422);
+        }
+
+        // Check if house already has an active rental
+        $activeRental = Rental::where('house_id', $houseId)
+            ->where('status', 'active')
+            ->first();
+
+        if ($activeRental) {
+            return $this->fail(false, null, 'This house is already rented', 422);
+        }
+
         $app = $this->service->create($data, $tenantProfileId);
         return $this->success(true, RentalApplicationResponse::created($app), 'Application submitted', 201);
     }
