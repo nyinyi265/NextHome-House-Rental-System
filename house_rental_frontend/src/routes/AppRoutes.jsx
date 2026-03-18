@@ -8,6 +8,7 @@ import Login from '../pages/Login';
 import Register from '../pages/Register';
 import HouseDetail from '../pages/HouseDetail';
 import LandlordDashboard from '../pages/LandlordDashboard';
+import LandlordRentals from '../pages/LandlordRentals';
 import Profile from '../pages/Profile';
 import ResetPassword from '../pages/ResetPassword';
 import ForgotPassword from '../pages/ForgotPassword';
@@ -108,6 +109,14 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute requiredRole="landlord">
             <Profile />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/landlord/rentals" 
+        element={
+          <ProtectedRoute requiredRole="landlord">
+            <LandlordRentals />
           </ProtectedRoute>
         } 
       />

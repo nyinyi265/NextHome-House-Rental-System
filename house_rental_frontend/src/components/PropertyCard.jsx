@@ -62,14 +62,14 @@ export default function PropertyCard({ id, title, location, city, township, stre
         </div>
         
         {/* Like Button */}
-        <button 
+        {/* <button 
           onClick={handleLikeClick}
           className="absolute top-3 right-3 p-2 rounded-full bg-white/80 hover:bg-white transition-colors"
         >
           <Heart 
             className={`w-5 h-5 ${isLiked ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} 
           />
-        </button>
+        </button> */}
         
         {/* Image Indicator */}
         {cardImages.length > 1 && (

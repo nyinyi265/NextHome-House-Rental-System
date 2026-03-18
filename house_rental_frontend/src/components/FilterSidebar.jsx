@@ -96,10 +96,10 @@ export default function FilterSidebar({ filters, onFilterChange }) {
   return (
     <div className="w-64 flex-shrink-0">
       {/* Map Button */}
-      <button className="w-full flex items-center justify-center gap-2 px-4 py-2 border rounded-full hover:shadow-md transition-shadow mb-4">
+      {/* <button className="w-full flex items-center justify-center gap-2 px-4 py-2 border rounded-full hover:shadow-md transition-shadow mb-4">
         <Map className="w-4 h-4" />
         <span className="text-sm font-medium">Show map</span>
-      </button>
+      </button> */}
 
       {/* Filters Card */}
       <div className="border rounded-3xl p-4">

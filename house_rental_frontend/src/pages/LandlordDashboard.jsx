@@ -1,8 +1,10 @@
 import React, { useState, useContext, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Building2,
   CalendarDays,
+  FileText,
   Star,
   Wallet,
   Settings,
@@ -25,7 +27,6 @@ import {
   EyeOff,
 } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
 import authService from "../services/authService";
 import houseService from "../services/houseService";
 import AddHouseModal from "../components/AddHouseModal";
@@ -472,6 +473,8 @@ export default function LandlordDashboard() {
   const [rentalApplications, setRentalApplications] = useState([]);
   const [rentalAppsLoading, setRentalAppsLoading] = useState(false);
   const [rentalAppsRefetch, setRentalAppsRefetch] = useState(0);
+  const [rentals, setRentals] = useState([]);
+  const [rentalsLoading, setRentalsLoading] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [modalAction, setModalAction] = useState(null); // 'approve' or 'reject'
@@ -536,6 +539,26 @@ export default function LandlordDashboard() {
       fetchRentalApplications();
     }
   }, [activeTab, token, rentalAppsRefetch]);
+
+  // Fetch rentals when rentals tab is active
+  useEffect(() => {
+    const fetchRentals = async () => {
+      setRentalsLoading(true);
+      try {
+        const response = await houseService.getLandlordRentals(token);
+        const rentalsData = response.data?.rentals || response.rentals || [];
+        setRentals(rentalsData);
+      } catch (err) {
+        console.error("Failed to fetch rentals", err);
+      } finally {
+        setRentalsLoading(false);
+      }
+    };
+
+    if (activeTab === "rentals" && token) {
+      fetchRentals();
+    }
+  }, [activeTab, token]);
 
   // Fetch dashboard data for overview
   useEffect(() => {
@@ -674,6 +697,7 @@ export default function LandlordDashboard() {
     { id: "overview", label: "Overview", icon: LayoutDashboard },
     { id: "properties", label: "Properties", icon: Building2 },
     { id: "reservations", label: "Reservations", icon: CalendarDays },
+    { id: "rentals", label: "Rentals", icon: FileText },
     // { id: 'reviews', label: 'Reviews', icon: Star },
     // { id: 'wallet', label: 'Wallet', icon: Wallet },
     { id: "settings", label: "Settings", icon: Settings },
@@ -735,20 +759,31 @@ export default function LandlordDashboard() {
 
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-            {menuItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === item.id
-                    ? "bg-primary/10 text-primary"
-                    : "text-gray-600 hover:bg-gray-100"
-                }`}
-              >
-                <item.icon className="w-5 h-5" />
-                {item.label}
-              </button>
-            ))}
+            {menuItems.map((item) =>
+              item.href ? (
+                <Link
+                  key={item.id}
+                  to={item.href}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-gray-600 hover:bg-gray-100`}
+                >
+                  <item.icon className="w-5 h-5" />
+                  {item.label}
+                </Link>
+              ) : (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                    activeTab === item.id
+                      ? "bg-primary/10 text-primary"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`}
+                >
+                  <item.icon className="w-5 h-5" />
+                  {item.label}
+                </button>
+              ),
+            )}
           </nav>
 
           {/* Logout */}
@@ -1040,7 +1075,9 @@ export default function LandlordDashboard() {
                                 {house.house_photos &&
                                 house.house_photos.length > 0 ? (
                                   <img
-                                    src={house.house_photos[0]?.photo_url}
+                                    src={env.getImageUrl(
+                                      house.house_photos[0].photo_path,
+                                    )}
                                     alt={house.title}
                                     className="w-full h-full object-cover"
                                   />
@@ -1137,6 +1174,9 @@ export default function LandlordDashboard() {
                           Message
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Duration
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                           Applied Date
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -1180,6 +1220,11 @@ export default function LandlordDashboard() {
                             <p className="text-sm text-gray-600 max-w-xs truncate">
                               {app.message || "-"}
                             </p>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">
+                            {app.rental_duration
+                              ? `${app.rental_duration} months`
+                              : "-"}
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-600">
                             {app.created_at
@@ -1253,6 +1298,133 @@ export default function LandlordDashboard() {
               <p className="text-gray-500">
                 Manage your earnings and payouts here.
               </p>
+            </div>
+          )}
+
+          {activeTab === "rentals" && (
+            <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+              <div className="p-6 border-b">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  My Rentals
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  View all your active and past rentals
+                </p>
+              </div>
+
+              {rentalsLoading ? (
+                <div className="p-6 text-center text-gray-500">
+                  Loading rentals...
+                </div>
+              ) : rentals.length === 0 ? (
+                <div className="p-6 text-center text-gray-500">
+                  <FileText className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                  <p>No rentals yet</p>
+                  <p className="text-sm">Active rentals will appear here</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Property
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Tenant
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Duration
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Start Date
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          End Date
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Monthly Rent
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Status
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {rentals.map((rental) => (
+                        <tr key={rental.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-lg bg-gray-200 overflow-hidden">
+                                {rental.house?.house_photos &&
+                                rental.house.house_photos.length > 0 ? (
+                                  <img
+                                    src={`${env.STORAGE_URL}/house_photos/${rental.house.house_photos[0].photo_path}`}
+                                    alt={rental.house?.title}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <Building2 className="w-5 h-5 text-gray-400 m-2.5" />
+                                )}
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-900">
+                                  {rental.house?.title || "Property"}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  {rental.house?.city || ""},{" "}
+                                  {rental.house?.township || ""}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="text-sm text-gray-900">
+                              {rental.tenantProfile?.name || "-"}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {rental.tenantProfile?.email || "-"}
+                            </p>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">
+                            {rental.rental_duration
+                              ? `${rental.rental_duration} months`
+                              : "-"}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">
+                            {rental.rental_start_date
+                              ? new Date(
+                                  rental.rental_start_date,
+                                ).toLocaleDateString()
+                              : "-"}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">
+                            {rental.rental_end_date
+                              ? new Date(
+                                  rental.rental_end_date,
+                                ).toLocaleDateString()
+                              : "-"}
+                          </td>
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                            ${rental.monthly_rent?.toLocaleString() || "0"}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                rental.status === "active"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-gray-100 text-gray-800"
+                              }`}
+                            >
+                              {rental.status || "inactive"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 

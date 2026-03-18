@@ -1,4 +1,4 @@
-import api from '../config/api';
+  import api from '../config/api';
 
 /**
  * Fetch a list of houses. The endpoint chosen depends on the user's
@@ -99,8 +99,9 @@ async function getFurnitures() {
  * @param {string} token - Authentication token
  * @param {number} houseId - House ID to apply for
  * @param {string} message - Optional message to the host
+ * @param {number} rentalDuration - Rental duration in months
  */
-async function applyRental(token, houseId, message = '') {
+async function applyRental(token, houseId, message = '', rentalDuration = 3) {
   const headers = { 
     Accept: 'application/json',
     'Content-Type': 'application/json',
@@ -109,7 +110,8 @@ async function applyRental(token, houseId, message = '') {
   
   const body = JSON.stringify({
     house_id: houseId,
-    message: message
+    message: message,
+    rental_duration: rentalDuration
   });
   
   const response = await fetch(api.tenant.rentalApplications(), {
@@ -216,6 +218,32 @@ async function updateRentalApplicationStatus(token, applicationId, status) {
     method: 'PUT',
     headers,
     body: JSON.stringify({ status })
+  });
+  
+  if (!response.ok) {
+    const err = await response.json();
+    throw err;
+  }
+  return response.json();
+}
+
+/**
+ * Update rental application duration
+ * @param {string} token - Authentication token
+ * @param {number} applicationId - Application ID
+ * @param {number} rentalDuration - Duration in months
+ */
+async function updateRentalApplicationDuration(token, applicationId, rentalDuration) {
+  const headers = { 
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`
+  };
+  
+  const response = await fetch(`${api.landlord.rentalApplications()}/${applicationId}`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify({ rental_duration: rentalDuration })
   });
   
   if (!response.ok) {

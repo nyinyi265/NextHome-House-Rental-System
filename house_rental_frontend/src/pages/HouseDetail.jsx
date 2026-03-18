@@ -11,6 +11,7 @@ import {
   X,
   MessageSquare,
   Loader2,
+  Calendar,
 } from "lucide-react";
 import Navbar from "../components/Navbar/Navbar";
 import Loading from "../components/Loading";
@@ -37,6 +38,7 @@ export default function HouseDetail() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reservationSuccess, setReservationSuccess] = useState(false);
   const [reservationMessage, setReservationMessage] = useState("");
+  const [rentalDuration, setRentalDuration] = useState(3);
 
   useEffect(() => {
     setLoading(true);
@@ -79,7 +81,7 @@ export default function HouseDetail() {
     try {
       // Call the API to submit rental application
       // house_id is automatically passed via the URL/property id
-      await houseService.applyRental(token, parseInt(id), reservationMessage);
+      await houseService.applyRental(token, parseInt(id), reservationMessage, rentalDuration);
       setReservationSuccess(true);
 
       // Close modal after showing success
@@ -87,6 +89,7 @@ export default function HouseDetail() {
         setShowReservationModal(false);
         setReservationSuccess(false);
         setReservationMessage("");
+        setRentalDuration(3);
       }, 2000);
     } catch (err) {
       console.error("Failed to submit reservation", err);
@@ -436,6 +439,32 @@ export default function HouseDetail() {
                   </p>
                 </div>
 
+                {/* Rental Duration */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Rental Duration (months)
+                  </label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                    <select
+                      value={rentalDuration}
+                      onChange={(e) => setRentalDuration(parseInt(e.target.value))}
+                      className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none bg-white"
+                    >
+                      <option value={1}>1 month</option>
+                      <option value={2}>2 months</option>
+                      <option value={3}>3 months</option>
+                      <option value={6}>6 months</option>
+                      <option value={12}>12 months</option>
+                      <option value={18}>18 months</option>
+                      <option value={24}>24 months</option>
+                    </select>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Select how long you want to rent this property
+                  </p>
+                </div>
+
                 {/* Message to Host */}
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -448,7 +477,7 @@ export default function HouseDetail() {
                       onChange={(e) => setReservationMessage(e.target.value)}
                       rows={4}
                       className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
-                      placeholder="Tell the host a bit about yourself and why you're staying..."
+                      placeholder="Tell the landlord a bit about yourself and why you're staying..."
                     />
                   </div>
                 </div>
