@@ -70,16 +70,24 @@ class HouseController extends Controller
         $data = $request->validated();
         $house = $this->service->update($id, $data, $landlordProfileId);
 
+        // Handle photo deletion
+        if ($request->has('delete_photos')) {
+            $deletePhotoIds = $request->input('delete_photos');
+            foreach ($deletePhotoIds as $photoId) {
+                $this->photoService->delete($photoId, $house->id, $landlordProfileId);
+            }
+        }
+
+        // Handle new photo uploads
         if ($request->hasFile('photos')) {
             foreach ($request->file('photos') as $file) {
                 $photoData = [];
                 $photoData['photo_path'] = $file->store('house_photos', 'public');
                 $this->photoService->create($house->id, $landlordProfileId, $photoData);
             }
-            $house->load(['housePhotos', 'amenties', 'furnitures']);
-        } else {
-            $house->load(['housePhotos', 'amenties', 'furnitures']);
         }
+
+        $house->load(['housePhotos', 'amenties', 'furnitures']);
 
         return $this->success(true, HouseResponse::updated($house), 'House updated', 200);
     }

@@ -30,14 +30,16 @@ class AuthController extends Controller
      */
     public function register(RegisterTenantRequest $request): JsonResponse
     {
-        $data = $request->validated();
+        // Handle profile image upload first (before validated() which may not include file)
+        $profilePath = null;
         if ($request->hasFile('profile_path')) {
             $file = $request->file('profile_path');
-
-            $path = $file->store('profiles', 'public');
-
-            $data['profile_path'] = $path;
+            $profilePath = $file->store('profiles', 'public');
         }
+
+        $data = $request->validated();
+        $data['profile_path'] = $profilePath;
+
         $result = $this->service->registerTenant($data);
         // result now contains user and token
         return $this->success(true, AuthResponse::register($result['user'], $result['token']), 'Tenant registered successfully', 201);

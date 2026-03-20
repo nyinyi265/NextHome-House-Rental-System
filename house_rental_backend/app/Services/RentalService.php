@@ -14,7 +14,7 @@ class RentalService
     public function listByLandlord(int $landlordProfileId)
     {
         // now that rentals store landlord_profile_id directly, we can filter on it
-        return Rental::with(['house', 'house.housePhotos', 'tenantProfile'])
+        return Rental::with(['house', 'house.housePhotos', 'tenantProfile', 'tenantProfile.user'])
             ->where('landlord_profile_id', $landlordProfileId)
             ->get();
     }
@@ -24,21 +24,21 @@ class RentalService
      */
     public function listByTenant(int $tenantProfileId)
     {
-        return Rental::with(['house', 'house.housePhotos'])
+        return Rental::with(['house', 'house.housePhotos', 'landlordProfile', 'landlordProfile.user'])
             ->where('tenant_profile_id', $tenantProfileId)
             ->get();
     }
 
     public function findForLandlord(int $id, int $landlordProfileId): Rental
     {
-        return Rental::with(['house', 'tenantProfile'])
+        return Rental::with(['house', 'tenantProfile', 'tenantProfile.user'])
             ->where('landlord_profile_id', $landlordProfileId)
             ->findOrFail($id);
     }
 
     public function findForTenant(int $id, int $tenantProfileId): Rental
     {
-        return Rental::with(['house', 'house.housePhotos'])
+        return Rental::with(['house', 'house.housePhotos', 'landlordProfile', 'landlordProfile.user'])
             ->where('tenant_profile_id', $tenantProfileId)
             ->findOrFail($id);
     }

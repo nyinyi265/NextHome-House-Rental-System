@@ -42,4 +42,14 @@ class Rental extends Model
     {
         return $this->belongsTo(LandlordProfile::class, 'landlord_profile_id');
     }
+
+    public function tenant()
+    {
+        return $this->hasOneThrough(User::class, TenantProfile::class, 'id', 'id', 'tenant_profile_id', 'user_id');
+    }
+
+    public function landlord()
+    {
+        return $this->hasOneThrough(User::class, LandlordProfile::class, 'id', 'id', 'landlord_profile_id', 'user_id');
+    }
 }

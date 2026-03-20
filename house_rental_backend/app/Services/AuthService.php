@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class AuthService
 {
@@ -17,12 +18,16 @@ class AuthService
      */
     public function registerTenant(array $data): array
     {
+        // profile_path is now handled by the controller (stores file and passes path string)
+        // or it can be a direct path string
+        $profilePath = $data['profile_path'] ?? null;
+
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'phone_number' => $data['phone_number'] ?? null,
-            'profile_path' => $data['profile_path'] ?? null,
+            'profile_path' => $profilePath,
         ]);
 
         // assign tenant role (assumes role already exists)
