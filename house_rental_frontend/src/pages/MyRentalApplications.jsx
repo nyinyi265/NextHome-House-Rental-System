@@ -28,6 +28,7 @@ export default function MyRentalApplications() {
           return statusA - statusB;
         });
         
+        console.log('sorted', sorted);
         setApplications(sorted);
       } catch (err) {
         setError(err.message || 'Failed to load rental applications');
@@ -195,13 +196,13 @@ export default function MyRentalApplications() {
                       <div className="flex items-start gap-4">
                         {/* House Image */}
                         <div className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                          {application.house?.housePhotos?.[0]?.photo_path ? (
+                          {application.house?.house_photos[0]?.photo_path ? (
                             <img 
-                              src={env.getImageUrl(application.house.housePhotos[0].photo_path)}
+                              src={env.getImageUrl(application.house.house_photos[0].photo_path)}
                               alt={application.house?.title}
                               className="w-full h-full object-cover"
                             />
-                          ) : application.house?.house_photos?.[0]?.photo_path ? (
+                          ) : application.house?.house_photos[0]?.photo_path ? (
                             <img 
                               src={env.getImageUrl(application.house.house_photos[0].photo_path)}
                               alt={application.house?.title}

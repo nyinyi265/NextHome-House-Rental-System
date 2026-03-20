@@ -88,10 +88,10 @@ export default function PropertyCard({ id, title, location, city, township, stre
           <p className="text-gray-500 text-sm">16 kilometers away</p>
           <p className="text-gray-500 text-sm">Feb 27</p>
         </div>
-        <div className="flex items-center gap-1">
+        {/* <div className="flex items-center gap-1">
           <Star className="w-4 h-4 fill-black text-black" />
           <span className="font-medium">{rating}</span>
-        </div>
+        </div> */}
       </div>
       <p className="my-1 px-2">
         <span className="font-semibold text-gray-900">${price}</span>

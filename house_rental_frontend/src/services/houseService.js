@@ -185,6 +185,32 @@ async function createHouse(token, formData) {
 }
 
 /**
+ * Update an existing house listing (landlord)
+ * @param {string} token - Authentication token
+ * @param {number} houseId - House ID to update
+ * @param {FormData} formData - House data including photos, amenities, furniture
+ */
+async function updateHouse(token, houseId, formData) {
+  const headers = { 
+    Accept: 'application/json',
+    Authorization: `Bearer ${token}`
+    // Note: Don't set Content-Type for FormData - browser will set it with boundary
+  };
+  
+  const response = await fetch(`${api.landlord.houses()}/${houseId}`, {
+    method: 'POST', // Laravel uses POST with _method override for PUT
+    headers,
+    body: formData
+  });
+  
+  if (!response.ok) {
+    const err = await response.json();
+    throw err;
+  }
+  return response.json();
+}
+
+/**
  * Fetch rental applications for landlord's properties
  * @param {string} token - Authentication token
  */
@@ -297,6 +323,7 @@ const houseService = {
   getLandlordAmenties,
   getLandlordFurnitures,
   createHouse,
+  updateHouse,
   getLandlordRentalApplications,
   updateRentalApplicationStatus,
   updateRentalApplicationDuration,

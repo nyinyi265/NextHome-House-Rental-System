@@ -81,7 +81,12 @@ export default function HouseDetail() {
     try {
       // Call the API to submit rental application
       // house_id is automatically passed via the URL/property id
-      await houseService.applyRental(token, parseInt(id), reservationMessage, rentalDuration);
+      await houseService.applyRental(
+        token,
+        parseInt(id),
+        reservationMessage,
+        rentalDuration,
+      );
       setReservationSuccess(true);
 
       // Close modal after showing success
@@ -163,65 +168,187 @@ export default function HouseDetail() {
     <div className="min-h-screen bg-white">
       <Navbar />
 
-      {/* Image Gallery */}
+      {/* Image Gallery - Modern Responsive Design */}
       <div className="max-w-7xl mx-auto px-4 py-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-2 h-96 rounded-xl overflow-hidden bg-gray-200">
-          {/* Main Image */}
-          <div className="md:col-span-2 md:row-span-2 relative">
-            {mainPhoto ? (
-              <img
-                src={mainPhoto}
-                alt={title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-                <span className="text-white text-6xl">🏠</span>
-              </div>
-            )}
-            {photos.length > 1 && (
+        {/* Sample Images (for demo - remove when API provides real images) */}
+        {photos.length === 0 && (
+          <div className="mb-4">
+            <h3 className="text-sm text-gray-500 mb-2">Sample Images</h3>
+          </div>
+        )}
+
+        {/* Main Image - Full Width */}
+        <div className="relative w-full h-64 sm:h-80 md:h-96 lg:h-[500px] rounded-xl overflow-hidden bg-gray-200 mb-4">
+          {mainPhoto || photos.length > 0 ? (
+            // <img
+            //   src={mainPhoto}
+            //   alt={title}
+            //   className="w-full h-full object-cover transition-opacity duration-300 ease-in-out"
+            // />
+            <iframe
+              title="house-tour"
+              width="100%"
+              height="640"
+              frameborder="0"
+              allow="xr-spatial-tracking; gyroscope; accelerometer"
+              allowfullscreen
+              scrolling="no"
+              src="https://kuula.co/share/5H7Z7?logo=&info=1&fs=0&vr=0&thumbs=1"
+            ></iframe>
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+              <span className="text-white text-6xl">🏠</span>
+            </div>
+          )}
+
+          {/* Navigation Arrows */}
+          {photos.length > 1 && (
+            <>
+              <button
+                onClick={prevPhoto}
+                className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 p-2 rounded-full shadow-lg hover:bg-white transition-all duration-200 hover:scale-110"
+              >
+                <ChevronLeft className="w-5 h-5 text-gray-700" />
+              </button>
+              <button
+                onClick={nextPhoto}
+                className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 p-2 rounded-full shadow-lg hover:bg-white transition-all duration-200 hover:scale-110"
+              >
+                <ChevronRight className="w-5 h-5 text-gray-700" />
+              </button>
+            </>
+          )}
+
+          {/* Photo Counter Badge */}
+          {photos.length > 1 && (
+            <div className="absolute bottom-4 left-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm font-medium">
+              {currentPhotoIndex + 1} / {photos.length}
+            </div>
+          )}
+        </div>
+
+        {/* Thumbnail Row - Horizontal with spacing */}
+        {photos.length > 1 && (
+          <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 scrollbar-thin">
+            {photos.map((photo, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentPhotoIndex(index)}
+                className={`
+                  flex-shrink-0 w-20 h-16 sm:w-24 sm:h-20 md:w-28 md:h-24 rounded-lg overflow-hidden
+                  transition-all duration-200 ease-in-out mt-4 ml-2
+                  ${
+                    index === currentPhotoIndex
+                      ? "ring-2 ring-emerald-500 ring-offset-2 scale-105 shadow-lg"
+                      : "opacity-70 hover:opacity-100 hover:scale-105 shadow-md"
+                  }
+                `}
+              >
+                <img
+                  src={getPhotoUrl(photo)}
+                  alt={`${title} thumbnail ${index + 1}`}
+                  className="w-full h-full object-cover"
+                />
+              </button>
+            ))}
+            {/* Sample thumbnails when no real photos */}
+            {photos.length === 0 && (
               <>
                 <button
-                  onClick={prevPhoto}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full shadow-lg hover:bg-white transition-colors"
+                  onClick={() => setCurrentPhotoIndex(0)}
+                  className={`
+                    flex-shrink-0 w-20 h-16 sm:w-24 sm:h-20 md:w-28 md:h-24 rounded-lg overflow-hidden
+                    transition-all duration-200 ease-in-out
+                    ${
+                      0 === currentPhotoIndex
+                        ? "ring-2 ring-emerald-500 ring-offset-2 scale-105 shadow-lg"
+                        : "opacity-70 hover:opacity-100 hover:scale-105 shadow-md"
+                    }
+                  `}
                 >
-                  <ChevronLeft className="w-5 h-5" />
+                  <img
+                    src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop"
+                    alt="Property thumbnail 1"
+                    className="w-full h-full object-cover"
+                  />
                 </button>
                 <button
-                  onClick={nextPhoto}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full shadow-lg hover:bg-white transition-colors"
+                  onClick={() => setCurrentPhotoIndex(1)}
+                  className={`
+                    flex-shrink-0 w-20 h-16 sm:w-24 sm:h-20 md:w-28 md:h-24 rounded-lg overflow-hidden
+                    transition-all duration-200 ease-in-out
+                    ${
+                      1 === currentPhotoIndex
+                        ? "ring-2 ring-emerald-500 ring-offset-2 scale-105 shadow-lg"
+                        : "opacity-70 hover:opacity-100 hover:scale-105 shadow-md"
+                    }
+                  `}
                 >
-                  <ChevronRight className="w-5 h-5" />
+                  <img
+                    src="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400&h=300&fit=crop"
+                    alt="Property thumbnail 2"
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+                <button
+                  onClick={() => setCurrentPhotoIndex(2)}
+                  className={`
+                    flex-shrink-0 w-20 h-16 sm:w-24 sm:h-20 md:w-28 md:h-24 rounded-lg overflow-hidden
+                    transition-all duration-200 ease-in-out
+                    ${
+                      2 === currentPhotoIndex
+                        ? "ring-2 ring-emerald-500 ring-offset-2 scale-105 shadow-lg"
+                        : "opacity-70 hover:opacity-100 hover:scale-105 shadow-md"
+                    }
+                  `}
+                >
+                  <img
+                    src="https://images.unsplash.com/photo-1484154218962-a197022b5858?w=400&h=300&fit=crop"
+                    alt="Property thumbnail 3"
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+                <button
+                  onClick={() => setCurrentPhotoIndex(3)}
+                  className={`
+                    flex-shrink-0 w-20 h-16 sm:w-24 sm:h-20 md:w-28 md:h-24 rounded-lg overflow-hidden
+                    transition-all duration-200 ease-in-out
+                    ${
+                      3 === currentPhotoIndex
+                        ? "ring-2 ring-emerald-500 ring-offset-2 scale-105 shadow-lg"
+                        : "opacity-70 hover:opacity-100 hover:scale-105 shadow-md"
+                    }
+                  `}
+                >
+                  <img
+                    src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400&h=300&fit=crop"
+                    alt="Property thumbnail 4"
+                    className="w-full h-full object-cover"
+                  />
                 </button>
               </>
             )}
           </div>
-          {/* Thumbnail Images */}
-          {photos.slice(0, 4).map((photo, index) => (
-            <div key={index} className="hidden md:block relative h-48">
-              <img
-                src={getPhotoUrl(photo)}
-                alt={`${title} ${index + 1}`}
-                className="w-full h-full object-cover cursor-pointer"
-                onClick={() => setCurrentPhotoIndex(index)}
-              />
-            </div>
-          ))}
-        </div>
-        {/* Photo indicators */}
-        {photos.length > 1 && (
-          <div className="flex justify-center gap-2 mt-3">
+        )}
+
+        {/* Photo Indicators (Dots) */}
+        {/* {photos.length > 1 && (
+          <div className="flex justify-center gap-2 mt-4">
             {photos.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentPhotoIndex(index)}
-                className={`w-2 h-2 rounded-full transition-colors ${
-                  index === currentPhotoIndex ? "bg-gray-800" : "bg-gray-300"
-                }`}
+                className={`
+                  w-2.5 h-2.5 rounded-full transition-all duration-200
+                  ${index === currentPhotoIndex 
+                    ? 'bg-emerald-600 w-6' 
+                    : 'bg-gray-300 hover:bg-gray-400'
+                  }
+                `}
               />
             ))}
           </div>
-        )}
+        )} */}
       </div>
 
       {/* Property Info */}
@@ -234,11 +361,11 @@ export default function HouseDetail() {
               <div className="flex items-center justify-between mb-2">
                 <h1 className="text-3xl font-bold text-gray-900">{title}</h1>
                 <div className="flex items-center gap-1">
-                  <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
-                  <span className="font-semibold">{rating}</span>
+                  {/* <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" /> */}
+                  {/* <span className="font-semibold">{rating}</span> */}
                 </div>
               </div>
-              <p className="text-gray-600 text-lg">{location}</p>
+              {/* <p className="text-gray-600 text-lg">{location}</p> */}
               <div className="flex items-center gap-2 mt-2">
                 <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
                   {propertyType}
@@ -448,7 +575,9 @@ export default function HouseDetail() {
                     <Calendar className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
                     <select
                       value={rentalDuration}
-                      onChange={(e) => setRentalDuration(parseInt(e.target.value))}
+                      onChange={(e) =>
+                        setRentalDuration(parseInt(e.target.value))
+                      }
                       className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none bg-white"
                     >
                       <option value={1}>1 month</option>

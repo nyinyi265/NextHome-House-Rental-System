@@ -33,6 +33,7 @@ import { AuthContext } from "../context/AuthContext";
 import authService from "../services/authService";
 import houseService from "../services/houseService";
 import AddHouseModal from "../components/AddHouseModal";
+import EditHouseModal from "../components/EditHouseModal";
 import env from "../environment/environment";
 
 // Settings Content Component
@@ -470,6 +471,7 @@ export default function LandlordDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showAddHouse, setShowAddHouse] = useState(false);
+  const [editingHouse, setEditingHouse] = useState(null);
   const [houses, setHouses] = useState([]);
   const [housesLoading, setHousesLoading] = useState(false);
   const [refetchTrigger, setRefetchTrigger] = useState(0);
@@ -555,6 +557,7 @@ export default function LandlordDashboard() {
         const response = await houseService.getLandlordRentals(token);
         const rentalsData = response.data?.rentals || response.rentals || [];
         console.log("Rentals data:", rentalsData);
+        console.log("House 1", rentalsData[0].house.house_photos[0].photo_path);
         setRentals(rentalsData);
       } catch (err) {
         console.error("Failed to fetch rentals", err);
@@ -767,7 +770,11 @@ export default function LandlordDashboard() {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="p-6 border-b">
-            <h1 className="text-xl font-bold text-primary">NextHome</h1>
+            <img
+              src="/logo512.png"
+              alt="NextHome"
+              className="h-[60px] w-auto"
+            />
           </div>
 
           {/* User Info */}
@@ -979,7 +986,12 @@ export default function LandlordDashboard() {
                         Recent Reservations
                       </h3>
                     </div>
-                    {recentApplications.length === 0 ? (
+                    {dashboardLoading ? (
+                      <div className="p-12 flex flex-col items-center justify-center">
+                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mb-3"></div>
+                        <p className="text-gray-500">Loading reservations...</p>
+                      </div>
+                    ) : recentApplications.length === 0 ? (
                       <div className="p-6 text-center text-gray-500">
                         No recent reservations
                       </div>
@@ -1012,7 +1024,7 @@ export default function LandlordDashboard() {
                                   {app.house?.title || "-"}
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-600">
-                                  {app.tenant?.name || "-"}
+                                  {app.tenantProfile?.user?.name || "-"}
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-600">
                                   {app.created_at
@@ -1070,8 +1082,13 @@ export default function LandlordDashboard() {
               </div>
 
               {housesLoading ? (
-                <div className="p-6 text-center text-gray-500">
-                  Loading properties...
+                <div className="p-12 flex flex-col items-center justify-center">
+                  <div className="flex items-center gap-2 text-emerald-600">
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                    <p className="text-gray-500">Loading properties...</p>
+                  </div>
+                  {/* <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mb-3"></div>
+                  <p className="text-gray-500"></p> */}
                 </div>
               ) : houses.length === 0 ? (
                 <div className="p-6 text-center text-gray-500">
@@ -1159,7 +1176,10 @@ export default function LandlordDashboard() {
                           </td>
                           <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-2">
-                              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                              <button 
+                                onClick={() => setEditingHouse(house)}
+                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                              >
                                 <Edit className="w-4 h-4 text-gray-600" />
                               </button>
                               <button className="p-2 hover:bg-red-50 rounded-lg transition-colors">
@@ -1188,8 +1208,13 @@ export default function LandlordDashboard() {
               </div>
 
               {rentalAppsLoading ? (
-                <div className="p-6 text-center text-gray-500">
-                  Loading applications...
+                <div className="p-12 flex flex-col items-center justify-center">
+                  <div className="flex items-center gap-2 text-emerald-600">
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                    <p className="text-gray-500">Loading applications...</p>
+                  </div>
+                  {/* <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mb-3"></div>
+                  <p className="text-gray-500"></p> */}
                 </div>
               ) : rentalApplications.length === 0 ? (
                 <div className="p-6 text-center text-gray-500">
@@ -1232,17 +1257,35 @@ export default function LandlordDashboard() {
                         <tr key={app.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                <span className="text-primary font-semibold">
-                                  {app.tenant?.name?.charAt(0) || "T"}
-                                </span>
+                              <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
+                                {app.tenant_profile.user?.profile_path &&
+                                app.tenant_profile.user?.profile_path.length >
+                                  0 ? (
+                                  <img
+                                    src={`${env.STORAGE_URL}/${app.tenant_profile?.user.profile_path}`}
+                                    alt={
+                                      app.tenant_profile?.user?.name?.charAt(
+                                        0,
+                                      ) || "T"
+                                    }
+                                    className=""
+                                  />
+                                ) : (
+                                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                    <span className="text-primary font-semibold">
+                                      {app.tenant_profile?.user?.name?.charAt(
+                                        0,
+                                      ) || "T"}
+                                    </span>
+                                  </div>
+                                )}
                               </div>
                               <div>
                                 <p className="font-medium text-gray-900">
-                                  {app.tenant?.name || "Tenant"}
+                                  {app.tenant_profile?.user?.name || "Tenant"}
                                 </p>
                                 <p className="text-sm text-gray-500">
-                                  {app.tenant?.email || "-"}
+                                  {app.tenant_profile?.user?.email || "-"}
                                 </p>
                               </div>
                             </div>
@@ -1290,9 +1333,7 @@ export default function LandlordDashboard() {
                             {app.status === "pending" ? (
                               <div className="flex items-center justify-end gap-2">
                                 <button
-                                  onClick={() =>
-                                    openEditDurationModal(app)
-                                  }
+                                  onClick={() => openEditDurationModal(app)}
                                   className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1"
                                 >
                                   <Edit className="w-3 h-3" />
@@ -1354,7 +1395,7 @@ export default function LandlordDashboard() {
             <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
               <div className="p-6 border-b">
                 <h3 className="text-lg font-semibold text-gray-800">
-                  My Rentals
+                  Rentals
                 </h3>
                 <p className="text-sm text-gray-500 mt-1">
                   View all your active and past rentals
@@ -1362,8 +1403,11 @@ export default function LandlordDashboard() {
               </div>
 
               {rentalsLoading ? (
-                <div className="p-6 text-center text-gray-500">
-                  Loading rentals...
+                <div className="p-12 flex flex-col items-center justify-center">
+                  <div className="flex items-center gap-2 text-emerald-600">
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                    <p className="text-gray-500">Loading rentals...</p>
+                  </div>
                 </div>
               ) : rentals.length === 0 ? (
                 <div className="p-6 text-center text-gray-500">
@@ -1405,10 +1449,10 @@ export default function LandlordDashboard() {
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 rounded-lg bg-gray-200 overflow-hidden">
-                                {rental.house?.housePhotos &&
-                                rental.house.housePhotos.length > 0 ? (
+                                {rental.house?.house_photos &&
+                                rental.house.house_photos.length > 0 ? (
                                   <img
-                                    src={`${env.STORAGE_URL}/house_photos/${rental.house.housePhotos[0].photo_path}`}
+                                    src={`${env.STORAGE_URL}/${rental.house.house_photos[0].photo_path}`}
                                     alt={rental.house?.title}
                                     className="w-full h-full object-cover"
                                   />
@@ -1429,10 +1473,10 @@ export default function LandlordDashboard() {
                           </td>
                           <td className="px-6 py-4">
                             <p className="text-sm text-gray-900">
-                              {rental.tenantProfile?.name || "-"}
+                              {rental.tenant_profile?.user?.name || "-"}
                             </p>
                             <p className="text-sm text-gray-500">
-                              {rental.tenantProfile?.email || "-"}
+                              {rental.tenant_profile?.user?.email || "-"}
                             </p>
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-600">
@@ -1505,6 +1549,15 @@ export default function LandlordDashboard() {
         isOpen={showAddHouse}
         onClose={() => setShowAddHouse(false)}
         token={token}
+        onSuccess={handleHouseCreated}
+      />
+
+      {/* Edit House Modal */}
+      <EditHouseModal
+        isOpen={!!editingHouse}
+        onClose={() => setEditingHouse(null)}
+        token={token}
+        house={editingHouse}
         onSuccess={handleHouseCreated}
       />
 

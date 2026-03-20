@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 import api from "../config/api";
 import {
   User,
@@ -9,10 +10,12 @@ import {
   AlertCircle,
   CheckCircle,
   Loader2,
+  Camera,
 } from "lucide-react";
 
 export default function Register() {
   const navigate = useNavigate();
+  const { setUser, setToken } = useContext(AuthContext);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -21,6 +24,8 @@ export default function Register() {
     password_confirmation: "",
     emergency_contact: "",
   });
+  const [profileImage, setProfileImage] = useState(null);
+  const [profileImagePreview, setProfileImagePreview] = useState(null);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState({ type: "", message: "" });
@@ -32,6 +37,33 @@ export default function Register() {
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
+  }
+
+  function handleProfileImageChange(e) {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setErrors((prev) => ({ ...prev, profile_image: 'Please select an image file' }));
+        return;
+      }
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        setErrors((prev) => ({ ...prev, profile_image: 'Image must be less than 2MB' }));
+        return;
+      }
+      setProfileImage(file);
+      setProfileImagePreview(URL.createObjectURL(file));
+      setErrors((prev) => ({ ...prev, profile_image: '' }));
+    }
+  }
+
+  function removeProfileImage() {
+    setProfileImage(null);
+    if (profileImagePreview) {
+      URL.revokeObjectURL(profileImagePreview);
+    }
+    setProfileImagePreview(null);
   }
 
   function validateForm() {
@@ -99,10 +131,20 @@ export default function Register() {
 
     setLoading(true);
     try {
+      // Create FormData for file upload
+      const formDataToSend = new FormData();
+      Object.keys(formData).forEach((key) => {
+        formDataToSend.append(key, formData[key]);
+      });
+      
+      // Add profile image if selected
+      if (profileImage) {
+        formDataToSend.append('profile_path', profileImage);
+      }
+
       const res = await fetch(api.auth.register(), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: formDataToSend,
       });
 
       const data = await res.json();
@@ -122,14 +164,26 @@ export default function Register() {
 
       // Check if registration returns token (auto-login)
       if (data.data && data.data.token) {
-        // Save token and user to localStorage
-        localStorage.setItem("token", data.data.token);
-        localStorage.setItem("user", JSON.stringify(data.data.user));
-
-        // Get user role and redirect accordingly
-        const userRole = data.data.user.roles?.[0]?.name || data.data.user.role;
-
-        navigate("/");
+        // Update AuthContext state directly (like login does)
+        const userData = data.data.user;
+        const tokenData = data.data.token;
+        const roleData = userData.roles?.[0]?.name || userData.role;
+        const userWithRole = { ...userData, role: roleData };
+        
+        // Save to localStorage
+        localStorage.setItem('token', tokenData);
+        localStorage.setItem('user', JSON.stringify(userWithRole));
+        
+        // Update AuthContext state
+        setToken(tokenData);
+        setUser(userWithRole);
+        
+        // Redirect based on role
+        if (roleData === 'landlord') {
+          navigate('/landlord');
+        } else {
+          navigate('/');
+        }
       } else {
         // Fallback: if no token, redirect to login
         showToast(
@@ -137,7 +191,7 @@ export default function Register() {
           "Registration successful! Please login to continue.",
         );
         setTimeout(() => {
-          navigate("/");
+          navigate("/login");
         }, 2000);
       }
     } catch (err) {
@@ -180,6 +234,53 @@ export default function Register() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Profile Image Upload */}
+            <div className="flex flex-col items-center mb-6">
+              <div className="relative">
+                <div className="w-24 h-24 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center border-2 border-dashed border-gray-300">
+                  {profileImagePreview ? (
+                    <img 
+                      src={profileImagePreview} 
+                      alt="Profile Preview" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-10 h-10 text-gray-400" />
+                  )}
+                </div>
+                <label 
+                  htmlFor="profile_image" 
+                  className="absolute bottom-0 right-0 bg-primary text-white p-1.5 rounded-full cursor-pointer hover:opacity-90 transition-opacity"
+                >
+                  <Camera className="w-4 h-4" />
+                </label>
+                <input
+                  type="file"
+                  id="profile_image"
+                  name="profile_image"
+                  accept="image/*"
+                  onChange={handleProfileImageChange}
+                  className="hidden"
+                  disabled={loading}
+                />
+              </div>
+              <p className="mt-2 text-sm text-gray-500">
+                Upload profile photo (optional)
+              </p>
+              {profileImage && (
+                <button
+                  type="button"
+                  onClick={removeProfileImage}
+                  className="mt-2 text-sm text-red-500 hover:text-red-700"
+                >
+                  Remove photo
+                </button>
+              )}
+              {errors.profile_image && (
+                <p className="mt-1 text-sm text-red-500">{errors.profile_image}</p>
+              )}
+            </div>
+
             {/* Name Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

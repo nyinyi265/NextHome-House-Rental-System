@@ -1,5 +1,5 @@
 import React, { useContext, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { User, LogOut, ChevronDown, Loader2 } from "lucide-react";
 import env from "../../environment/environment";
@@ -29,78 +29,105 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="flex items-center justify-between px-8 py-4 bg-white shadow-md">
-      <div className="text-xl font-bold text-primary">
-        <Link to="/" className="no-underline text-primary">
-          NextHome
+    <nav className="flex items-center justify-between px-8 py-4 bg-white border-b border-gray-200">
+      <div>
+        <Link to="/" className="no-underline">
+          <img 
+            src="/logo512.png" 
+            alt="NextHome" 
+            className="h-[50px] w-auto"
+          />
         </Link>
       </div>
-      <ul className="flex gap-6 list-none m-0 p-0">
+      <ul className="flex gap-x-2 list-none m-0 p-0 items-center">
         <li>
-          <Link
+          <NavLink
             to="/"
-            className="no-underline text-gray-700 text-base font-semibold hover:text-primary"
+            className={({ isActive }) => 
+              `no-underline px-4 py-2 rounded-lg text-base font-medium transition ${isActive 
+                ? "bg-green-100 text-green-700" 
+                : "text-gray-700 hover:bg-green-50 hover:text-green-700"}`
+            }
           >
             Home
-          </Link>
+          </NavLink>
         </li>
         <li>
-          <Link
+          <NavLink
             to="/explore"
-            className="no-underline text-gray-700 text-base font-semibold hover:text-primary"
+            className={({ isActive }) => 
+              `no-underline px-4 py-2 rounded-lg text-base font-medium transition ${isActive 
+                ? "bg-green-100 text-green-700" 
+                : "text-gray-700 hover:bg-green-50 hover:text-green-700"}`
+            }
           >
             Explore
-          </Link>
+          </NavLink>
         </li>
         {user && user.role === "tenant" && (
           <li>
-            <Link
+            <NavLink
               to="/my-rentals"
-              className="no-underline text-gray-700 text-base font-semibold hover:text-primary"
+              className={({ isActive }) => 
+                `no-underline px-4 py-2 rounded-lg text-base font-medium transition ${isActive 
+                  ? "bg-green-100 text-green-700" 
+                  : "text-gray-700 hover:bg-green-50 hover:text-green-700"}`
+              }
             >
               My Rentals
-            </Link>
+            </NavLink>
           </li>
         )}
         {user && user.role === "tenant" && (
           <li>
-            <Link
+            <NavLink
               to="/my-applications"
-              className="no-underline text-gray-700 text-base font-semibold hover:text-primary"
+              className={({ isActive }) => 
+                `no-underline px-4 py-2 rounded-lg text-base font-medium transition ${isActive 
+                  ? "bg-green-100 text-green-700" 
+                  : "text-gray-700 hover:bg-green-50 hover:text-green-700"}`
+              }
             >
               My Applications
-            </Link>
+            </NavLink>
           </li>
         )}
-        {/* {user && user.role === 'landlord' && (
-          <li>
-            <Link to="/landlord" className="no-underline text-gray-700 text-base font-semibold hover:text-primary">Dashboard</Link>
-          </li>
-        )} */}
         <li>
-          <Link
+          <NavLink
             to="/about"
-            className="no-underline text-gray-700 text-base font-semibold hover:text-primary"
+            className={({ isActive }) => 
+              `no-underline px-4 py-2 rounded-lg text-base font-medium transition ${isActive 
+                ? "bg-green-100 text-green-700" 
+                : "text-gray-700 hover:bg-green-50 hover:text-green-700"}`
+            }
           >
             About
-          </Link>
+          </NavLink>
         </li>
         <li>
-          <Link
+          <NavLink
             to="/contact"
-            className="no-underline text-gray-700 text-base font-semibold hover:text-primary"
+            className={({ isActive }) => 
+              `no-underline px-4 py-2 rounded-lg text-base font-medium transition ${isActive 
+                ? "bg-green-100 text-green-700" 
+                : "text-gray-700 hover:bg-green-50 hover:text-green-700"}`
+            }
           >
             Contact Us
-          </Link>
+          </NavLink>
         </li>
         {user && user.role === "landlord" && (
           <li>
-            <Link
+            <NavLink
               to="/host"
-              className="no-underline text-gray-700 text-base hover:text-primary"
+              className={({ isActive }) => 
+                `no-underline px-4 py-2 rounded-lg text-base font-medium transition ${isActive 
+                  ? "bg-green-100 text-green-700" 
+                  : "text-gray-700 hover:bg-green-50 hover:text-green-700"}`
+              }
             >
               Become a Host
-            </Link>
+            </NavLink>
           </li>
         )}
       </ul>
