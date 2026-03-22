@@ -9,7 +9,8 @@ class HousePhoto extends Model
     //
     protected $fillable = [
         'house_id',
-        'photo_path'
+        'photo_path',
+        'is_panorama'
     ];
 
     public function house()

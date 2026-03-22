@@ -34,6 +34,17 @@ class HousePhotoController extends Controller
         $landlordProfileId = $request->user()->landlordProfile->id;
         $data = $request->validated();
         if ($request->hasFile('photo_path')) {
+
+            // Use PHP's getimagesize to get image dimensions
+            $imageInfo = getimagesize($request->file('photo_path'));
+            $width = $imageInfo[0];
+            $height = $imageInfo[1];
+
+            // Consider panorama if width is at least 1.8x the height
+            $isPanorama = $width / $height >= 1.8;
+            // dd($width, $height, $isPanorama);
+
+            $data['is_panorama'] = $isPanorama === true ? 1 : 0; // convert to int for database
             $data['photo_path'] = $request->file('photo_path')->store('house_photos', 'public');
         }
         $photo = $this->service->create($houseId, $landlordProfileId, $data);

@@ -12,7 +12,7 @@ use App\Http\Requests\Landlord\StoreHouseRequest;
 use App\Http\Requests\Landlord\UpdateHouseRequest;
 use App\Traits\HttpResponse;
 use App\Http\Responses\Landlord\HouseResponse;
-use Illuminate\Support\Facades\Log;
+
 
 class HouseController extends Controller
 {
@@ -44,6 +44,16 @@ class HouseController extends Controller
         if ($request->hasFile('photos')) {
             foreach ($request->file('photos') as $file) {
                 $photoData = [];
+
+                // Use PHP's getimagesize to get image dimensions
+                $imageInfo = getimagesize($file);
+                $width = $imageInfo[0];
+                $height = $imageInfo[1];
+
+                // Consider panorama if width is at least 1.8x the height
+                $isPanorama = $width / $height >= 1.8;
+
+                $photoData['is_panorama'] = $isPanorama;
                 $photoData['photo_path'] = $file->store('house_photos', 'public');
                 $this->photoService->create($house->id, $landlordProfileId, $photoData);
             }
@@ -82,6 +92,16 @@ class HouseController extends Controller
         if ($request->hasFile('photos')) {
             foreach ($request->file('photos') as $file) {
                 $photoData = [];
+
+                // Use PHP's getimagesize to get image dimensions
+                $imageInfo = getimagesize($file);
+                $width = $imageInfo[0];
+                $height = $imageInfo[1];
+
+                // Consider panorama if width is at least 1.8x the height
+                $isPanorama = $width / $height >= 1.8;
+
+                $photoData['is_panorama'] = $isPanorama;
                 $photoData['photo_path'] = $file->store('house_photos', 'public');
                 $this->photoService->create($house->id, $landlordProfileId, $photoData);
             }
