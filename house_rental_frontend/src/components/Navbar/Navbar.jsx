@@ -33,7 +33,7 @@ export default function Navbar() {
       <div>
         <Link to="/" className="no-underline">
           <img 
-            src="/logo512.png" 
+            src="/NextHomeLogo.png" 
             alt="NextHome" 
             className="h-[50px] w-auto"
           />

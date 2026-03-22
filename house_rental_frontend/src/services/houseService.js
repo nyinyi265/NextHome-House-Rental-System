@@ -211,6 +211,29 @@ async function updateHouse(token, houseId, formData) {
 }
 
 /**
+ * Delete a house listing (landlord) - soft delete
+ * @param {string} token - Authentication token
+ * @param {number} houseId - House ID to delete
+ */
+async function deleteHouse(token, houseId) {
+  const headers = { 
+    Accept: 'application/json',
+    Authorization: `Bearer ${token}`
+  };
+  
+  const response = await fetch(`${api.landlord.houses()}/${houseId}`, {
+    method: 'DELETE',
+    headers
+  });
+  
+  if (!response.ok) {
+    const err = await response.json();
+    throw err;
+  }
+  return response.json();
+}
+
+/**
  * Fetch rental applications for landlord's properties
  * @param {string} token - Authentication token
  */
@@ -324,6 +347,7 @@ const houseService = {
   getLandlordFurnitures,
   createHouse,
   updateHouse,
+  deleteHouse,
   getLandlordRentalApplications,
   updateRentalApplicationStatus,
   updateRentalApplicationDuration,

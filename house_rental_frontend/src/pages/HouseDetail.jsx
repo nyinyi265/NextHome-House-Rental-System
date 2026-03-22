@@ -180,22 +180,22 @@ export default function HouseDetail() {
         {/* Main Image - Full Width */}
         <div className="relative w-full h-64 sm:h-80 md:h-96 lg:h-[500px] rounded-xl overflow-hidden bg-gray-200 mb-4">
           {mainPhoto || photos.length > 0 ? (
-            // <img
-            //   src={mainPhoto}
-            //   alt={title}
-            //   className="w-full h-full object-cover transition-opacity duration-300 ease-in-out"
-            // />
-            <iframe
-              title="house-tour"
-              width="100%"
-              height="640"
-              frameborder="0"
-              allow="xr-spatial-tracking; gyroscope; accelerometer"
-              allowfullscreen
-              scrolling="no"
-              src="https://kuula.co/share/5H7Z7?logo=&info=1&fs=0&vr=0&thumbs=1"
-            ></iframe>
+            <img
+              src={mainPhoto}
+              alt={title}
+              className="w-full h-full object-cover transition-opacity duration-300 ease-in-out"
+            />
           ) : (
+            // <iframe
+            //   title="house-tour"
+            //   width="100%"
+            //   height="640"
+            //   frameborder="0"
+            //   allow="xr-spatial-tracking; gyroscope; accelerometer"
+            //   allowfullscreen
+            //   scrolling="no"
+            //   src="https://kuula.co/share/5H7Z7?logo=&info=1&fs=0&vr=0&thumbs=1"
+            // ></iframe>
             <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
               <span className="text-white text-6xl">🏠</span>
             </div>

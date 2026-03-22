@@ -472,6 +472,8 @@ export default function LandlordDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showAddHouse, setShowAddHouse] = useState(false);
   const [editingHouse, setEditingHouse] = useState(null);
+  const [deletingHouse, setDeletingHouse] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [houses, setHouses] = useState([]);
   const [housesLoading, setHousesLoading] = useState(false);
   const [refetchTrigger, setRefetchTrigger] = useState(0);
@@ -771,7 +773,7 @@ export default function LandlordDashboard() {
           {/* Logo */}
           <div className="p-6 border-b">
             <img
-              src="/logo512.png"
+              src="/NextHomeLogo.png"
               alt="NextHome"
               className="h-[60px] w-auto"
             />
@@ -1182,7 +1184,10 @@ export default function LandlordDashboard() {
                               >
                                 <Edit className="w-4 h-4 text-gray-600" />
                               </button>
-                              <button className="p-2 hover:bg-red-50 rounded-lg transition-colors">
+                              <button 
+                                onClick={() => setDeletingHouse(house)}
+                                className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                              >
                                 <Trash2 className="w-4 h-4 text-red-600" />
                               </button>
                             </div>
@@ -1560,6 +1565,62 @@ export default function LandlordDashboard() {
         house={editingHouse}
         onSuccess={handleHouseCreated}
       />
+
+      {/* Delete Property Confirmation Modal */}
+      {deletingHouse && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-black/50" 
+            onClick={() => setDeletingHouse(null)}
+          />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
+              Delete Property
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete this property?
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setDeletingHouse(null)}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    setIsDeleting(true);
+                    await houseService.deleteHouse(token, deletingHouse.id);
+                    setDeletingHouse(null);
+                    // Refresh houses list
+                    setRefetchTrigger(prev => prev + 1);
+                  } catch (err) {
+                    console.error('Failed to delete property', err);
+                    alert(err.message || 'Failed to delete property');
+                  } finally {
+                    setIsDeleting(false);
+                  }
+                }}
+                disabled={isDeleting}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {isDeleting ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Deleting...
+                  </>
+                ) : (
+                  'Delete'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Confirmation Modal */}
       {showConfirmModal && (
