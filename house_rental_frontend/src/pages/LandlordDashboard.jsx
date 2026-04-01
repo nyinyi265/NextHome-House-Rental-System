@@ -28,12 +28,23 @@ import {
   Home,
   Calendar,
   CheckCircle,
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  Bed,
+  Bath,
+  MapPin,
+  Ruler,
+  Layers,
+  Check,
+  Heart,
 } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import authService from "../services/authService";
 import houseService from "../services/houseService";
 import AddHouseModal from "../components/AddHouseModal";
 import EditHouseModal from "../components/EditHouseModal";
+import PanoramaViewer from "../components/PanoramaViewer";
 import env from "../environment/environment";
 
 // Settings Content Component
@@ -471,6 +482,8 @@ export default function LandlordDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showAddHouse, setShowAddHouse] = useState(false);
+  const [selectedHouse, setSelectedHouse] = useState(null);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [editingHouse, setEditingHouse] = useState(null);
   const [deletingHouse, setDeletingHouse] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -524,8 +537,25 @@ export default function LandlordDashboard() {
 
   const handleHouseCreated = () => {
     setRefetchTrigger((prev) => prev + 1);
-    // Update stats for overview
   };
+
+  const handleHouseDeleted = () => {
+    setSelectedHouse(null);
+    setCurrentPhotoIndex(0);
+    setRefetchTrigger((prev) => prev + 1);
+  };
+
+  // Navigate back to card grid if selected house is no longer in the list
+  useEffect(() => {
+    if (
+      selectedHouse &&
+      houses.length > 0 &&
+      !houses.some((h) => h.id === selectedHouse.id)
+    ) {
+      setSelectedHouse(null);
+      setCurrentPhotoIndex(0);
+    }
+  }, [houses, selectedHouse?.id]);
 
   // Fetch rental applications when reservations tab is active
   useEffect(() => {
@@ -1068,7 +1098,383 @@ export default function LandlordDashboard() {
             </div>
           )}
 
-          {activeTab === "properties" && (
+          {activeTab === "properties" && selectedHouse ? (
+            /* ========== PROPERTY DETAIL VIEW ========== */
+            <div className="space-y-6">
+              {/* Back Button + Actions */}
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => {
+                    setSelectedHouse(null);
+                    setCurrentPhotoIndex(0);
+                  }}
+                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                  <span className="font-medium">Back to Properties</span>
+                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setEditingHouse(selectedHouse)}
+                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+                  >
+                    <Edit className="w-4 h-4" />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => setDeletingHouse(selectedHouse)}
+                    className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors flex items-center gap-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </button>
+                </div>
+              </div>
+
+              {/* Photo Gallery */}
+              {(() => {
+                const photos = selectedHouse.house_photos || [];
+                const getPhotoUrl = (photo) => {
+                  if (!photo) return null;
+                  if (photo.photo_url) return photo.photo_url;
+                  if (photo.photo_path) return env.getImageUrl(photo.photo_path);
+                  return null;
+                };
+                const mainPhoto =
+                  photos.length > 0
+                    ? getPhotoUrl(photos[currentPhotoIndex])
+                    : null;
+                const currentPhoto = photos[currentPhotoIndex];
+                const isPanorama =
+                  currentPhoto?.is_panorama === 1 ||
+                  currentPhoto?.is_panorama === true ||
+                  currentPhoto?.is_panorama === "1";
+
+                const nextPhoto = () => {
+                  if (photos.length <= 1) return;
+                  setCurrentPhotoIndex((prev) => (prev + 1) % photos.length);
+                };
+                const prevPhoto = () => {
+                  if (photos.length <= 1) return;
+                  setCurrentPhotoIndex(
+                    (prev) => (prev - 1 + photos.length) % photos.length,
+                  );
+                };
+
+                return (
+                  <>
+                    {/* Main Image */}
+                    <div className="relative w-full h-64 sm:h-80 md:h-96 lg:h-[500px] rounded-xl overflow-hidden bg-gray-200 mb-4">
+                      {mainPhoto && mainPhoto.startsWith("http") ? (
+                        isPanorama ? (
+                          <PanoramaViewer image={mainPhoto} />
+                        ) : (
+                          <img
+                            src={mainPhoto}
+                            alt={selectedHouse.title}
+                            className="w-full h-full object-cover transition-opacity duration-300 ease-in-out"
+                          />
+                        )
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                          <Building2 className="w-16 h-16 text-white/60" />
+                        </div>
+                      )}
+
+                      {photos.length > 1 && (
+                        <>
+                          <button
+                            onClick={prevPhoto}
+                            className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 p-2 rounded-full shadow-lg hover:bg-white transition-all duration-200 hover:scale-110"
+                          >
+                            <ChevronLeft className="w-5 h-5 text-gray-700" />
+                          </button>
+                          <button
+                            onClick={nextPhoto}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 p-2 rounded-full shadow-lg hover:bg-white transition-all duration-200 hover:scale-110"
+                          >
+                            <ChevronRight className="w-5 h-5 text-gray-700" />
+                          </button>
+                        </>
+                      )}
+
+                      {photos.length > 1 && (
+                        <div className="absolute bottom-4 left-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm font-medium">
+                          {currentPhotoIndex + 1} / {photos.length}
+                        </div>
+                      )}
+
+                      {/* Status Badge on Photo */}
+                      <span
+                        className={`absolute top-4 right-4 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm ${
+                          selectedHouse.is_available
+                            ? "bg-green-100/90 text-green-800"
+                            : "bg-gray-100/90 text-gray-800"
+                        }`}
+                      >
+                        {selectedHouse.is_available
+                          ? "Available"
+                          : "Unavailable"}
+                      </span>
+                    </div>
+
+                    {/* Thumbnail Row */}
+                    {photos.length > 1 && (
+                      <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 scrollbar-thin">
+                        {photos.map((photo, index) => (
+                          <button
+                            key={index}
+                            onClick={() => setCurrentPhotoIndex(index)}
+                            className={`flex-shrink-0 w-20 h-16 sm:w-24 sm:h-20 md:w-28 md:h-24 rounded-lg overflow-hidden transition-all duration-200 ease-in-out ${
+                              index === currentPhotoIndex
+                                ? "ring-2 ring-emerald-500 ring-offset-2 scale-105 shadow-lg"
+                                : "opacity-70 hover:opacity-100 hover:scale-105 shadow-md"
+                            }`}
+                          >
+                            <img
+                              src={getPhotoUrl(photo)}
+                              alt={`${selectedHouse.title} thumbnail ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+
+              {/* Property Info - Two Column Layout */}
+              <div className="flex flex-col lg:flex-row gap-8">
+                {/* Main Content */}
+                <div className="flex-1">
+                  {/* Title Section */}
+                  <div className="border-b pb-6">
+                    <div className="flex items-start justify-between mb-2">
+                      <h1 className="text-3xl font-bold text-gray-900">
+                        {selectedHouse.title}
+                      </h1>
+                      <span
+                        className={`px-3 py-1 rounded-full text-sm font-medium ${
+                          selectedHouse.is_available
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {selectedHouse.is_available
+                          ? "Available"
+                          : "Unavailable"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-600 mt-1">
+                      <MapPin className="w-4 h-4" />
+                      <span>
+                        {[
+                          selectedHouse.apartment_number,
+                          selectedHouse.street,
+                          selectedHouse.township,
+                          selectedHouse.city,
+                        ]
+                          .filter(Boolean)
+                          .join(", ") || "Location not specified"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-3">
+                      <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm capitalize">
+                        {selectedHouse.type || "Property"}
+                      </span>
+                      {selectedHouse.floor && (
+                        <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
+                          Floor {selectedHouse.floor}
+                        </span>
+                      )}
+                      {selectedHouse.area && (
+                        <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
+                          {selectedHouse.area} sq ft
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Property Stats */}
+                  <div className="border-b py-6">
+                    <div className="flex flex-wrap gap-8">
+                      {selectedHouse.bedrooms != null && (
+                        <div className="flex items-center gap-2">
+                          <Bed className="w-6 h-6 text-gray-600" />
+                          <div>
+                            <p className="font-semibold">
+                              {selectedHouse.bedrooms} Bedrooms
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {selectedHouse.bathrooms != null && (
+                        <div className="flex items-center gap-2">
+                          <Bath className="w-6 h-6 text-gray-600" />
+                          <div>
+                            <p className="font-semibold">
+                              {selectedHouse.bathrooms} Bathrooms
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {selectedHouse.area != null && (
+                        <div className="flex items-center gap-2">
+                          <Ruler className="w-6 h-6 text-gray-600" />
+                          <div>
+                            <p className="font-semibold">
+                              {selectedHouse.area} sq ft
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {selectedHouse.floor != null && (
+                        <div className="flex items-center gap-2">
+                          <Layers className="w-6 h-6 text-gray-600" />
+                          <div>
+                            <p className="font-semibold">
+                              Floor {selectedHouse.floor}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <div className="border-b py-6">
+                    <h2 className="text-xl font-semibold mb-4">
+                      About this place
+                    </h2>
+                    <p className="text-gray-700 leading-relaxed">
+                      {selectedHouse.description ||
+                        "No description available."}
+                    </p>
+                  </div>
+
+                  {/* Amenities */}
+                  <div className="border-b py-6">
+                    <h2 className="text-xl font-semibold mb-4">
+                      What this place offers
+                    </h2>
+                    <div className="grid grid-cols-2 gap-4">
+                      {(selectedHouse.amenties || selectedHouse.amenities || [])
+                        .length > 0 ? (
+                        (
+                          selectedHouse.amenties ||
+                          selectedHouse.amenities ||
+                          []
+                        ).map((amenity, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-2 text-gray-700"
+                          >
+                            <Check className="w-4 h-4 text-emerald-600" />
+                            <span>{amenity.name || amenity}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-gray-400 text-sm col-span-2">
+                          No amenities added yet
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Furniture */}
+                  <div className="py-6">
+                    <h2 className="text-xl font-semibold mb-4">Furniture</h2>
+                    <div className="grid grid-cols-2 gap-4">
+                      {(selectedHouse.furnitures || []).length > 0 ? (
+                        selectedHouse.furnitures.map((item, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-2 text-gray-700"
+                          >
+                            <Check className="w-4 h-4 text-emerald-600" />
+                            <span>{item.name || item}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-gray-400 text-sm col-span-2">
+                          No furniture added yet
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sidebar - Property Summary */}
+                <div className="lg:w-96">
+                  <div className="border rounded-xl p-6 shadow-sm sticky top-4">
+                    <div className="flex items-end justify-between mb-4">
+                      <div>
+                        <span className="text-3xl font-bold">
+                          ${selectedHouse.price}
+                        </span>
+                        <span className="text-gray-600"> / month</span>
+                      </div>
+                    </div>
+
+                    {/* Property Quick Info */}
+                    <div className="space-y-3 mb-6">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Status</span>
+                        <span
+                          className={`font-medium ${
+                            selectedHouse.is_available
+                              ? "text-green-600"
+                              : "text-gray-600"
+                          }`}
+                        >
+                          {selectedHouse.is_available
+                            ? "Available"
+                            : "Unavailable"}
+                        </span>
+                      </div>
+                      {selectedHouse.available_from && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">
+                            Available From
+                          </span>
+                          <span className="font-medium text-gray-900">
+                            {new Date(
+                              selectedHouse.available_from,
+                            ).toLocaleDateString()}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Property ID</span>
+                        <span className="font-medium text-gray-900">
+                          #{selectedHouse.id}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-4">
+                      <button
+                        onClick={() => setEditingHouse(selectedHouse)}
+                        className="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold text-md hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <Edit className="w-5 h-5" />
+                        Edit Property
+                      </button>
+                      <button
+                        onClick={() => setDeletingHouse(selectedHouse)}
+                        className="w-full mt-3 border border-red-300 text-red-600 py-3 rounded-lg font-semibold text-md hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                        Delete Property
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : activeTab === "properties" ? (
+            /* ========== PROPERTY CARD GRID ========== */
             <div className="space-y-6">
               {/* Header with Add Button */}
               <div className="flex items-center justify-between">
@@ -1104,7 +1510,11 @@ export default function LandlordDashboard() {
                   {houses.map((house) => (
                     <div
                       key={house.id}
-                      className="bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-shadow"
+                      onClick={() => {
+                        setSelectedHouse(house);
+                        setCurrentPhotoIndex(0);
+                      }}
+                      className="bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
                     >
                       {/* Property Image */}
                       <div className="relative h-48 bg-gray-200">
@@ -1133,11 +1543,12 @@ export default function LandlordDashboard() {
                           {house.is_available ? "Available" : "Unavailable"}
                         </span>
                         {/* Photo Count */}
-                        {house.house_photos && house.house_photos.length > 1 && (
-                          <span className="absolute bottom-3 right-3 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-black/60 text-white backdrop-blur-sm">
-                            {house.house_photos.length} photos
-                          </span>
-                        )}
+                        {house.house_photos &&
+                          house.house_photos.length > 1 && (
+                            <span className="absolute bottom-3 right-3 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-black/60 text-white backdrop-blur-sm">
+                              {house.house_photos.length} photos
+                            </span>
+                          )}
                       </div>
 
                       {/* Property Info */}
@@ -1174,14 +1585,20 @@ export default function LandlordDashboard() {
                           </p>
                           <div className="flex items-center gap-1">
                             <button
-                              onClick={() => setEditingHouse(house)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingHouse(house);
+                              }}
                               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                               title="Edit"
                             >
                               <Edit className="w-4 h-4 text-gray-600" />
                             </button>
                             <button
-                              onClick={() => setDeletingHouse(house)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeletingHouse(house);
+                              }}
                               className="p-2 hover:bg-red-50 rounded-lg transition-colors"
                               title="Delete"
                             >
@@ -1195,7 +1612,7 @@ export default function LandlordDashboard() {
                 </div>
               )}
             </div>
-          )}
+          ) : null}
 
           {activeTab === "reservations" && (
             <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
@@ -1589,8 +2006,7 @@ export default function LandlordDashboard() {
                     setIsDeleting(true);
                     await houseService.deleteHouse(token, deletingHouse.id);
                     setDeletingHouse(null);
-                    // Refresh houses list
-                    setRefetchTrigger(prev => prev + 1);
+                    handleHouseDeleted();
                   } catch (err) {
                     console.error('Failed to delete property', err);
                     alert(err.message || 'Failed to delete property');
