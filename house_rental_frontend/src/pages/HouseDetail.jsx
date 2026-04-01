@@ -18,6 +18,7 @@ import Loading from "../components/Loading";
 import houseService from "../services/houseService";
 import { AuthContext } from "../context/AuthContext";
 import env from "../environment/environment";
+import PanoramaViewer from "../components/PanoramaViewer";
 
 export default function HouseDetail() {
   const { id } = useParams();
@@ -79,8 +80,6 @@ export default function HouseDetail() {
     setIsSubmitting(true);
 
     try {
-      // Call the API to submit rental application
-      // house_id is automatically passed via the URL/property id
       await houseService.applyRental(
         token,
         parseInt(id),
@@ -144,7 +143,6 @@ export default function HouseDetail() {
   const bathrooms = property.bathrooms || 0;
   const maxGuests = property.max_guests || property.guests || 0;
   const beds = property.beds || 0;
-  const rating = property.rating || 0;
   const propertyType = property.property_type || property.type || "Apartment";
 
   // Get amenities from the API response
@@ -164,6 +162,11 @@ export default function HouseDetail() {
   const mainPhoto =
     photos.length > 0 ? getPhotoUrl(photos[currentPhotoIndex]) : null;
 
+  const currentPhoto = photos[currentPhotoIndex];
+  const isPanorama = currentPhoto?.is_panorama === 1 || currentPhoto?.is_panorama === true || currentPhoto?.is_panorama === "1";
+
+  console.log("Main Photo", mainPhoto)
+
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
@@ -179,23 +182,17 @@ export default function HouseDetail() {
 
         {/* Main Image - Full Width */}
         <div className="relative w-full h-64 sm:h-80 md:h-96 lg:h-[500px] rounded-xl overflow-hidden bg-gray-200 mb-4">
-          {mainPhoto || photos.length > 0 ? (
-            <img
-              src={mainPhoto}
-              alt={title}
-              className="w-full h-full object-cover transition-opacity duration-300 ease-in-out"
-            />
+          {mainPhoto && mainPhoto.startsWith('http') ? (
+            isPanorama ? (
+              <PanoramaViewer image={mainPhoto} />
+            ) : (
+              <img
+                src={mainPhoto}
+                alt={title}
+                className="w-full h-full object-cover transition-opacity duration-300 ease-in-out"
+              />
+            )
           ) : (
-            // <iframe
-            //   title="house-tour"
-            //   width="100%"
-            //   height="640"
-            //   frameborder="0"
-            //   allow="xr-spatial-tracking; gyroscope; accelerometer"
-            //   allowfullscreen
-            //   scrolling="no"
-            //   src="https://kuula.co/share/5H7Z7?logo=&info=1&fs=0&vr=0&thumbs=1"
-            // ></iframe>
             <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
               <span className="text-white text-6xl">🏠</span>
             </div>

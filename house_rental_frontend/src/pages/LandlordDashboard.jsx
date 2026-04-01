@@ -1069,8 +1069,9 @@ export default function LandlordDashboard() {
           )}
 
           {activeTab === "properties" && (
-            <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-              <div className="p-6 border-b flex items-center justify-between">
+            <div className="space-y-6">
+              {/* Header with Add Button */}
+              <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-800">
                   My Properties
                 </h3>
@@ -1084,16 +1085,14 @@ export default function LandlordDashboard() {
               </div>
 
               {housesLoading ? (
-                <div className="p-12 flex flex-col items-center justify-center">
+                <div className="bg-white rounded-xl shadow-sm border p-12 flex flex-col items-center justify-center">
                   <div className="flex items-center gap-2 text-emerald-600">
                     <Loader2 className="w-6 h-6 animate-spin" />
                     <p className="text-gray-500">Loading properties...</p>
                   </div>
-                  {/* <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mb-3"></div>
-                  <p className="text-gray-500"></p> */}
                 </div>
               ) : houses.length === 0 ? (
-                <div className="p-6 text-center text-gray-500">
+                <div className="bg-white rounded-xl shadow-sm border p-6 text-center text-gray-500">
                   <Building2 className="w-12 h-12 mx-auto mb-2 text-gray-300" />
                   <p>No properties yet</p>
                   <p className="text-sm">
@@ -1101,101 +1100,98 @@ export default function LandlordDashboard() {
                   </p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Property
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Location
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Type
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Price
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Status
-                        </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {houses.map((house) => (
-                        <tr key={house.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 rounded-lg bg-gray-200 overflow-hidden flex-shrink-0">
-                                {house.house_photos &&
-                                house.house_photos.length > 0 ? (
-                                  <img
-                                    src={env.getImageUrl(
-                                      house.house_photos[0].photo_path,
-                                    )}
-                                    alt={house.title}
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                                    <Building2 className="w-6 h-6 text-primary" />
-                                  </div>
-                                )}
-                              </div>
-                              <div>
-                                <p className="font-medium text-gray-900">
-                                  {house.title}
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                  {house.bedrooms} bed · {house.bathrooms} bath
-                                </p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-600">
-                            {house.city}, {house.township}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-600 capitalize">
-                            {house.property_type || house.type || "-"}
-                          </td>
-                          <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                            ${house.price_per_month || house.price}/mo
-                          </td>
-                          <td className="px-6 py-4">
-                            <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                house.is_available
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-gray-100 text-gray-800"
-                              }`}
-                            >
-                              {house.is_available ? "Available" : "Unavailable"}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {houses.map((house) => (
+                    <div
+                      key={house.id}
+                      className="bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-shadow"
+                    >
+                      {/* Property Image */}
+                      <div className="relative h-48 bg-gray-200">
+                        {house.house_photos &&
+                        house.house_photos.length > 0 ? (
+                          <img
+                            src={env.getImageUrl(
+                              house.house_photos[0].photo_path,
+                            )}
+                            alt={house.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                            <Building2 className="w-12 h-12 text-primary" />
+                          </div>
+                        )}
+                        {/* Status Badge */}
+                        <span
+                          className={`absolute top-3 right-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium backdrop-blur-sm ${
+                            house.is_available
+                              ? "bg-green-100/90 text-green-800"
+                              : "bg-gray-100/90 text-gray-800"
+                          }`}
+                        >
+                          {house.is_available ? "Available" : "Unavailable"}
+                        </span>
+                        {/* Photo Count */}
+                        {house.house_photos && house.house_photos.length > 1 && (
+                          <span className="absolute bottom-3 right-3 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-black/60 text-white backdrop-blur-sm">
+                            {house.house_photos.length} photos
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Property Info */}
+                      <div className="p-4">
+                        <h4 className="font-semibold text-gray-900 mb-1 truncate">
+                          {house.title}
+                        </h4>
+                        <p className="text-sm text-gray-500 mb-3 flex items-center gap-1">
+                          {house.city}, {house.township}
+                        </p>
+
+                        {/* Stats Row */}
+                        <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                          {house.type && (
+                            <span className="capitalize bg-gray-100 px-2 py-0.5 rounded text-xs font-medium">
+                              {house.type}
                             </span>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <button 
-                                onClick={() => setEditingHouse(house)}
-                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                              >
-                                <Edit className="w-4 h-4 text-gray-600" />
-                              </button>
-                              <button 
-                                onClick={() => setDeletingHouse(house)}
-                                className="p-2 hover:bg-red-50 rounded-lg transition-colors"
-                              >
-                                <Trash2 className="w-4 h-4 text-red-600" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                          )}
+                          {house.bedrooms && (
+                            <span>{house.bedrooms} bed</span>
+                          )}
+                          {house.bathrooms && (
+                            <span>{house.bathrooms} bath</span>
+                          )}
+                        </div>
+
+                        {/* Price and Actions */}
+                        <div className="flex items-center justify-between pt-3 border-t">
+                          <p className="font-bold text-gray-900">
+                            ${house.price || house.price_per_month}
+                            <span className="text-sm font-normal text-gray-500">
+                              {" "}/ month
+                            </span>
+                          </p>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => setEditingHouse(house)}
+                              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                              title="Edit"
+                            >
+                              <Edit className="w-4 h-4 text-gray-600" />
+                            </button>
+                            <button
+                              onClick={() => setDeletingHouse(house)}
+                              className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-4 h-4 text-red-600" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
