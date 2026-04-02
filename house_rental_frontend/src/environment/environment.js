@@ -1,7 +1,8 @@
 // central environment configuration for frontend
 
 const API_BASE_URL = 'http://127.0.0.1:8000/api';
-const STORAGE_URL = 'http://127.0.0.1:8000/storage';
+// Use API storage proxy for CORS-friendly image loading
+const STORAGE_URL = 'http://127.0.0.1:8000/api/storage';
 
 // Helper function for full image path
 const getImageUrl = (photoPath) => {
@@ -14,7 +15,7 @@ const getImageUrl = (photoPath) => {
 const getProfileUrl = (profilePath) => {
   if (!profilePath) return null;
   console.log('Profile Path:', profilePath);
-  return `http://127.0.0.1:8000/storage/${profilePath}`;
+  return `${STORAGE_URL}/${profilePath}`;
 };
 
 const env = {

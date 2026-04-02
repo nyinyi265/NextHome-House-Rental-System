@@ -50,9 +50,9 @@ export function CardSkeleton() {
 }
 
 // Skeleton loader for property grid
-export function PropertyGridSkeleton({ count = 8 }) {
+export function PropertyGridSkeleton({ count = 6 }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {Array.from({ length: count }).map((_, i) => (
         <CardSkeleton key={i} />
       ))}

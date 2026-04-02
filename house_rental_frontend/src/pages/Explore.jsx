@@ -274,7 +274,7 @@ export default function Explore() {
           {/* Properties */}
           <div className="flex-1">
             {loading && layout === 'grid' && (
-              <PropertyGridSkeleton count={8} />
+              <PropertyGridSkeleton count={6} />
             )}
             {loading && layout === 'list' && (
               <div className="space-y-4">
