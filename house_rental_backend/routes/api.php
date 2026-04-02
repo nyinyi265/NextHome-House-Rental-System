@@ -12,6 +12,7 @@ use App\Http\Controllers\API\Tenant\HouseController as TenantHouseController;
 use App\Http\Controllers\API\Tenant\RentalApplicationController as TenantRentalApplicationController;
 use App\Http\Controllers\API\Tenant\RentalController as TenantRentalController;
 use App\Http\Controllers\API\Landlord\RentalController as LandlordRentalController;
+use Illuminate\Support\Facades\Storage;
 
 Route::prefix('auth')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
@@ -27,7 +28,28 @@ Route::prefix('auth')->group(function () {
     Route::post('reset-password', [AuthController::class, 'resetPassword']);
 });
 
-// public browsing routes for houses (available to guests and tenants)
+// Storage proxy route for CORS-friendly image serving
+Route::get('storage/{path}', function (Request $request, $path) {
+    $path = str_replace('..', '', $path);
+    
+    if (!Storage::disk('public')->exists($path)) {
+        return response()->json(['error' => 'File not found'], 404);
+    }
+    
+    $file = Storage::disk('public')->get($path);
+    $mimeType = mime_content_type(storage_path('app/public/' . $path));
+    
+    $response = response($file, 200)
+        ->header('Content-Type', $mimeType)
+        ->header('Access-Control-Allow-Origin', '*')
+        ->header('Access-Control-Allow-Methods', 'GET, OPTIONS')
+        ->header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
+        ->header('Access-Control-Max-Age', '86400');
+    
+    return $response;
+})->where('path', '.*');
+
+// Public browsing routes for houses (available to guests and tenants)
 Route::get('houses', [TenantHouseController::class, 'index']);
 Route::get('houses/{house}', [TenantHouseController::class, 'show']);
 
