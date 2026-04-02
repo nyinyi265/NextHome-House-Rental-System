@@ -1615,8 +1615,8 @@ export default function LandlordDashboard() {
           ) : null}
 
           {activeTab === "reservations" && (
-            <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-              <div className="p-6 border-b">
+            <div className="space-y-6">
+              <div className="bg-white rounded-xl shadow-sm border p-6">
                 <h3 className="text-lg font-semibold text-gray-800">
                   Rental Applications
                 </h3>
@@ -1626,16 +1626,14 @@ export default function LandlordDashboard() {
               </div>
 
               {rentalAppsLoading ? (
-                <div className="p-12 flex flex-col items-center justify-center">
+                <div className="bg-white rounded-xl shadow-sm border p-12 flex flex-col items-center justify-center">
                   <div className="flex items-center gap-2 text-emerald-600">
                     <Loader2 className="w-6 h-6 animate-spin" />
                     <p className="text-gray-500">Loading applications...</p>
                   </div>
-                  {/* <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mb-3"></div>
-                  <p className="text-gray-500"></p> */}
                 </div>
               ) : rentalApplications.length === 0 ? (
-                <div className="p-6 text-center text-gray-500">
+                <div className="bg-white rounded-xl shadow-sm border p-6 text-center text-gray-500">
                   <CalendarDays className="w-12 h-12 mx-auto mb-2 text-gray-300" />
                   <p>No rental applications yet</p>
                   <p className="text-sm">
@@ -1643,147 +1641,136 @@ export default function LandlordDashboard() {
                   </p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Tenant
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Property
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Message
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Duration
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Applied Date
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Status
-                        </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {rentalApplications.map((app) => (
-                        <tr key={app.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
-                                {app.tenant_profile.user?.profile_path &&
-                                app.tenant_profile.user?.profile_path.length >
-                                  0 ? (
-                                  <img
-                                    src={`${env.STORAGE_URL}/${app.tenant_profile?.user.profile_path}`}
-                                    alt={
-                                      app.tenant_profile?.user?.name?.charAt(
-                                        0,
-                                      ) || "T"
-                                    }
-                                    className=""
-                                  />
-                                ) : (
-                                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                    <span className="text-primary font-semibold">
-                                      {app.tenant_profile?.user?.name?.charAt(
-                                        0,
-                                      ) || "T"}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                              <div>
-                                <p className="font-medium text-gray-900">
-                                  {app.tenant_profile?.user?.name || "Tenant"}
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                  {app.tenant_profile?.user?.email || "-"}
-                                </p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <p className="text-sm text-gray-900">
-                              {app.house?.title || "-"}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {app.house?.city || ""},{" "}
-                              {app.house?.township || ""}
-                            </p>
-                          </td>
-                          <td className="px-6 py-4">
-                            <p className="text-sm text-gray-600 max-w-xs truncate">
-                              {app.message || "-"}
-                            </p>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-600">
-                            {app.rental_duration
-                              ? `${app.rental_duration} months`
-                              : "-"}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-600">
-                            {app.created_at
-                              ? new Date(app.created_at).toLocaleDateString()
-                              : "-"}
-                          </td>
-                          <td className="px-6 py-4">
-                            <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                app.status === "approved"
-                                  ? "bg-green-100 text-green-800"
-                                  : app.status === "rejected"
-                                    ? "bg-red-100 text-red-800"
-                                    : app.status === "pending"
-                                      ? "bg-yellow-100 text-yellow-800"
-                                      : "bg-gray-100 text-gray-800"
-                              }`}
-                            >
-                              {app.status || "pending"}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            {app.status === "pending" ? (
-                              <div className="flex items-center justify-end gap-2">
-                                <button
-                                  onClick={() => openEditDurationModal(app)}
-                                  className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1"
-                                >
-                                  <Edit className="w-3 h-3" />
-                                  Edit
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    openConfirmModal(app, "approve")
-                                  }
-                                  className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
-                                >
-                                  Approve
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    openConfirmModal(app, "reject")
-                                  }
-                                  className="px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
-                                >
-                                  Deny
-                                </button>
-                              </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {rentalApplications.map((app) => (
+                    <div
+                      key={app.id}
+                      className="bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-shadow"
+                    >
+                      {/* Property Image */}
+                      <div className="relative h-40 bg-gray-200">
+                        {app.house?.house_photos && app.house.house_photos.length > 0 ? (
+                          <img
+                            src={env.getImageUrl(app.house.house_photos[0].photo_path)}
+                            alt={app.house?.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                            <Building2 className="w-10 h-10 text-primary" />
+                          </div>
+                        )}
+                        {/* Status Badge */}
+                        <span
+                          className={`absolute top-3 right-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium backdrop-blur-sm ${
+                            app.status === "approved"
+                              ? "bg-green-100/90 text-green-800"
+                              : app.status === "rejected"
+                                ? "bg-red-100/90 text-red-800"
+                                : "bg-yellow-100/90 text-yellow-800"
+                          }`}
+                        >
+                          {app.status || "pending"}
+                        </span>
+                      </div>
+
+                      {/* Application Details */}
+                      <div className="p-4">
+                        {/* Tenant Info */}
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
+                            {app.tenant_profile?.user?.profile_path && app.tenant_profile.user.profile_path.length > 0 ? (
+                              <img
+                                src={env.getProfileUrl(app.tenant_profile.user.profile_path)}
+                                alt={app.tenant_profile?.user?.name?.charAt(0) || "T"}
+                                className="w-full h-full object-cover"
+                              />
                             ) : (
-                              <span className="text-sm text-gray-400">
-                                No actions
-                              </span>
+                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                <span className="text-primary font-semibold">
+                                  {app.tenant_profile?.user?.name?.charAt(0) || "T"}
+                                </span>
+                              </div>
                             )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-gray-900 truncate">
+                              {app.tenant_profile?.user?.name || "Tenant"}
+                            </p>
+                            <p className="text-xs text-gray-500 truncate">
+                              {app.tenant_profile?.user?.email || "-"}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Property Info */}
+                        <div className="mb-3">
+                          <p className="font-semibold text-gray-900 truncate">
+                            {app.house?.title || "Property"}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {app.house?.city}, {app.house?.township}
+                          </p>
+                        </div>
+
+                        {/* Details Grid */}
+                        <div className="grid grid-cols-2 gap-2 text-sm mb-3">
+                          <div>
+                            <p className="text-gray-500">Duration</p>
+                            <p className="font-medium text-gray-900">
+                              {app.rental_duration ? `${app.rental_duration} months` : "-"}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500">Applied</p>
+                            <p className="font-medium text-gray-900">
+                              {app.created_at ? new Date(app.created_at).toLocaleDateString() : "-"}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Message */}
+                        {app.message && (
+                          <div className="mb-3 p-2 bg-gray-50 rounded-lg">
+                            <p className="text-xs text-gray-500">Message</p>
+                            <p className="text-sm text-gray-700 line-clamp-2">{app.message}</p>
+                          </div>
+                        )}
+
+                        {/* Actions */}
+                        {app.status === "pending" && (
+                          <div className="flex gap-2 pt-3 border-t">
+                            <button
+                              onClick={() => openEditDurationModal(app)}
+                              className="flex-1 px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-1"
+                            >
+                              <Edit className="w-3 h-3" />
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => openConfirmModal(app, "approve")}
+                              className="flex-1 px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => openConfirmModal(app, "reject")}
+                              className="flex-1 px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
+                            >
+                              Deny
+                            </button>
+                          </div>
+                        )}
+                        {app.status !== "pending" && (
+                          <div className="pt-3 border-t text-center">
+                            <span className="text-sm text-gray-400">
+                              {app.status === "approved" ? "Application Approved" : "Application Denied"}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
