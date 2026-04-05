@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { AuthContext } from "../context/AuthContext";
-import authService from "../services/authService";
+import { AuthContext } from "../../context/AuthContext";
+import authService from "../../services/authService";
 import {
   User,
   Mail,
@@ -13,7 +13,7 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-import env from "../environment/environment";
+import env from "../../environment/environment";
 
 export default function Profile() {
   const { user, updateUser } = useContext(AuthContext);

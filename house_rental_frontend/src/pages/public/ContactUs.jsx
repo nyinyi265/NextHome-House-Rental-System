@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Navbar from '../components/Navbar/Navbar';
+import Navbar from '../../components/Navbar/Navbar';
 import { MessageCircle, Phone as PhoneIcon, Mail, MapPin, Clock, Send, User, MessageSquare } from 'lucide-react';
 
 export default function ContactUs() {

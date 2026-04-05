@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import Navbar from '../components/Navbar/Navbar';
-import rentalService from '../services/rentalService';
-import env from '../environment/environment';
+import Navbar from '../../components/Navbar/Navbar';
+import rentalService from '../../services/rentalService';
+import env from '../../environment/environment';
 import { Home, MapPin, Calendar, DollarSign, FileText, Loader2, AlertCircle } from 'lucide-react';
 
 export default function MyRentals() {

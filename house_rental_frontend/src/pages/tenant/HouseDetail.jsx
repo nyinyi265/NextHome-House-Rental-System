@@ -13,12 +13,12 @@ import {
   Loader2,
   Calendar,
 } from "lucide-react";
-import Navbar from "../components/Navbar/Navbar";
-import Loading from "../components/Loading";
-import houseService from "../services/houseService";
-import { AuthContext } from "../context/AuthContext";
-import env from "../environment/environment";
-import PanoramaViewer from "../components/PanoramaViewer";
+import Navbar from "../../components/Navbar/Navbar";
+import Loading from "../../components/Loading";
+import houseService from "../../services/houseService";
+import { AuthContext } from "../../context/AuthContext";
+import env from "../../environment/environment";
+import PanoramaViewer from "../../components/PanoramaViewer";
 
 export default function HouseDetail() {
   const { id } = useParams();
@@ -497,10 +497,6 @@ export default function HouseDetail() {
                 <div className="flex justify-between">
                   <span className="underline">${price} x 30 nights</span>
                   <span>${price * 30}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="underline">Cleaning fee</span>
-                  <span>$50</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="underline">Service fee</span>

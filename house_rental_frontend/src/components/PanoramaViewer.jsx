@@ -158,7 +158,7 @@ export default function PanoramaViewer({ image }) {
         <div className="absolute inset-0 bg-gray-900/80 flex items-center justify-center">
           <div className="flex flex-col items-center gap-3">
             <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
-            <span className="text-white text-sm font-medium">Loading panorama...</span>
+            <span className="text-white text-sm font-medium">Loading image...</span>
           </div>
         </div>
       )}

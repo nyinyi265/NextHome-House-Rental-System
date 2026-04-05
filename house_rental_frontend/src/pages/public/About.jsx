@@ -1,5 +1,5 @@
 import React from 'react';
-import Navbar from '../components/Navbar/Navbar';
+import Navbar from '../../components/Navbar/Navbar';
 import { Building2, Star, Shield, Phone as PhoneIcon, Mail, MapPin, Clock, ChevronRight, HelpCircle } from 'lucide-react';
 
 export default function About() {

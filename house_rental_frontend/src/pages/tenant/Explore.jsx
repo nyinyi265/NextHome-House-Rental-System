@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../components/Navbar/Navbar';
-import FilterSidebar from '../components/FilterSidebar';
-import PropertyCard from '../components/PropertyCard';
-import { PropertyGridSkeleton } from '../components/Loading';
+import Navbar from '../../components/Navbar/Navbar';
+import FilterSidebar from '../../components/FilterSidebar';
+import PropertyCard from '../../components/PropertyCard';
+import { PropertyGridSkeleton } from '../../components/Loading';
 import { Search, MapPin, LayoutGrid, List, Bed, Bath, Maximize, Loader2, Star } from 'lucide-react';
-import houseService from '../services/houseService';
-import { AuthContext } from '../context/AuthContext';
-import env from '../environment/environment';
+import houseService from '../../services/houseService';
+import { AuthContext } from '../../context/AuthContext';
+import env from '../../environment/environment';
 
 function PropertyListItem({ property }) {
   const navigate = useNavigate();

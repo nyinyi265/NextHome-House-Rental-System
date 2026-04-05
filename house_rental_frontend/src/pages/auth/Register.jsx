@@ -1,7 +1,7 @@
 import React, { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { AuthContext } from "../context/AuthContext";
-import api from "../config/api";
+import { AuthContext } from "../../context/AuthContext";
+import api from "../../config/api";
 import {
   User,
   Mail,

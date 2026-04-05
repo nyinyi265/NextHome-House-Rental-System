@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
-import { AuthContext } from "../context/AuthContext";
-import houseService from "../services/houseService";
-import env from "../environment/environment";
+import { AuthContext } from "../../context/AuthContext";
+import houseService from "../../services/houseService";
+import env from "../../environment/environment";
 import { 
   Home, 
   Calendar, 

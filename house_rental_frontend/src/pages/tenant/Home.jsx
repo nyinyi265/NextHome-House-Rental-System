@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useContext } from 'react';
-import Navbar from '../components/Navbar/Navbar';
-import SearchBar from '../components/SearchBar';
-import PropertyTags from '../components/PropertyTags';
-import PropertyCard from '../components/PropertyCard';
-import { PropertyGridSkeleton } from '../components/Loading';
+import Navbar from '../../components/Navbar/Navbar';
+import SearchBar from '../../components/SearchBar';
+import PropertyTags from '../../components/PropertyTags';
+import PropertyCard from '../../components/PropertyCard';
+import { PropertyGridSkeleton } from '../../components/Loading';
 import { Facebook, Instagram, Twitter, Globe } from 'lucide-react';
-import houseService from '../services/houseService';
-import { AuthContext } from '../context/AuthContext';
+import houseService from '../../services/houseService';
+import { AuthContext } from '../../context/AuthContext';
 
 const nearbyDestinations = [
   {

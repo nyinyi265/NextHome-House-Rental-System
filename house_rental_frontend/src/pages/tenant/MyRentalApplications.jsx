@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import Navbar from '../components/Navbar/Navbar';
-import houseService from '../services/houseService';
-import env from '../environment/environment';
+import Navbar from '../../components/Navbar/Navbar';
+import houseService from '../../services/houseService';
+import env from '../../environment/environment';
 import { Home, MapPin, Calendar, FileText, Loader2, AlertCircle, Clock, CheckCircle, XCircle } from 'lucide-react';
 
 export default function MyRentalApplications() {

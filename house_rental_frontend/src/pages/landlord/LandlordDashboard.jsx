@@ -39,13 +39,13 @@ import {
   Check,
   Heart,
 } from "lucide-react";
-import { AuthContext } from "../context/AuthContext";
-import authService from "../services/authService";
-import houseService from "../services/houseService";
-import AddHouseModal from "../components/AddHouseModal";
-import EditHouseModal from "../components/EditHouseModal";
-import PanoramaViewer from "../components/PanoramaViewer";
-import env from "../environment/environment";
+import { AuthContext } from "../../context/AuthContext";
+import authService from "../../services/authService";
+import houseService from "../../services/houseService";
+import AddHouseModal from "../../components/AddHouseModal";
+import EditHouseModal from "../../components/EditHouseModal";
+import PanoramaViewer from "../../components/PanoramaViewer";
+import env from "../../environment/environment";
 
 // Settings Content Component
 function SettingsContent({ user, token }) {
@@ -568,6 +568,8 @@ export default function LandlordDashboard() {
           response.data?.rental_applications ||
           response.rental_applications ||
           [];
+        
+          console.log("Rental applications data:", appsData);
         setRentalApplications(appsData);
       } catch (err) {
         console.error("Failed to fetch rental applications", err);
@@ -1028,68 +1030,40 @@ export default function LandlordDashboard() {
                         No recent reservations
                       </div>
                     ) : (
-                      <div className="overflow-x-auto">
-                        <table className="w-full">
-                          <thead className="bg-gray-50">
-                            <tr>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                Property
-                              </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                Tenant
-                              </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                Date
-                              </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                Status
-                              </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                Price
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-200">
-                            {recentApplications.map((app) => (
-                              <tr key={app.id} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                                  {app.house?.title || "-"}
-                                </td>
-                                <td className="px-6 py-4 text-sm text-gray-600">
-                                  {app.tenantProfile?.user?.name || "-"}
-                                </td>
-                                <td className="px-6 py-4 text-sm text-gray-600">
-                                  {app.created_at
-                                    ? new Date(
-                                        app.created_at,
-                                      ).toLocaleDateString()
-                                    : "-"}
-                                </td>
-                                <td className="px-6 py-4">
-                                  <span
-                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                      app.status === "approved"
-                                        ? "bg-green-100 text-green-800"
-                                        : app.status === "rejected"
-                                          ? "bg-red-100 text-red-800"
-                                          : app.status === "pending"
-                                            ? "bg-yellow-100 text-yellow-800"
-                                            : "bg-gray-100 text-gray-800"
-                                    }`}
-                                  >
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {recentApplications.map((app) => (
+                          <div key={app.id} className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                            <div className="flex items-start gap-3">
+                              <div className="w-16 h-16 rounded-lg bg-gray-200 overflow-hidden flex-shrink-0">
+                                {app.house?.house_photos && app.house.house_photos.length > 0 ? (
+                                  <img src={env.getImageUrl(app.house.house_photos[0].photo_path)} alt={app.house?.title} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <Building2 className="w-6 h-6 text-gray-400" />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-gray-900 truncate">{app.house?.title || "-"}</p>
+                                <p className="text-sm text-gray-500 truncate">{app.tenantProfile?.user?.name || "-"}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                    app.status === "approved" ? "bg-green-100 text-green-800" : app.status === "rejected" ? "bg-red-100 text-red-800" : app.status === "pending" ? "bg-yellow-100 text-yellow-800" : "bg-gray-100 text-gray-800"
+                                  }`}>
                                     {app.status || "pending"}
                                   </span>
-                                </td>
-                                <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                                  $
-                                  {app.house?.price_per_month ||
-                                    app.house?.price ||
-                                    "-"}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                                  <span className="text-xs text-gray-500">
+                                    {app.created_at ? new Date(app.created_at).toLocaleDateString() : "-"}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className="font-semibold text-gray-900">${app.house?.price_per_month || app.house?.price || "-"}</p>
+                                <p className="text-xs text-gray-500">/month</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -1821,106 +1795,60 @@ export default function LandlordDashboard() {
                   <p className="text-sm">Active rentals will appear here</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Property
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Tenant
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Duration
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Start Date
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          End Date
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Monthly Rent
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Status
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {rentals.map((rental) => (
-                        <tr key={rental.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-lg bg-gray-200 overflow-hidden">
-                                {rental.house?.house_photos &&
-                                rental.house.house_photos.length > 0 ? (
-                                  <img
-                                    src={`${env.STORAGE_URL}/${rental.house.house_photos[0].photo_path}`}
-                                    alt={rental.house?.title}
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <Building2 className="w-5 h-5 text-gray-400 m-2.5" />
-                                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {rentals.map((rental) => (
+                    <div key={rental.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                      <div className="relative h-32 bg-gray-200">
+                        {rental.house?.house_photos && rental.house.house_photos.length > 0 ? (
+                          <img src={`${env.STORAGE_URL}/${rental.house.house_photos[0].photo_path}`} alt={rental.house?.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Building2 className="w-8 h-8 text-gray-400" />
+                          </div>
+                        )}
+                        <span className={`absolute top-2 right-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${rental.status === "active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
+                          {rental.status || "inactive"}
+                        </span>
+                      </div>
+                      <div className="p-4">
+                        <p className="font-semibold text-gray-900 truncate">{rental.house?.title || "Property"}</p>
+                        <p className="text-sm text-gray-500 truncate">{rental.house?.city}, {rental.house?.township}</p>
+                        <div className="mt-3 flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden">
+                            {rental.tenant_profile?.user?.profile_path ? (
+                              <img src={env.getProfileUrl(rental.tenant_profile.user.profile_path)} alt={rental.tenant_profile?.user?.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                                <User className="w-4 h-4 text-primary" />
                               </div>
-                              <div>
-                                <p className="font-medium text-gray-900">
-                                  {rental.house?.title || "Property"}
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                  {rental.house?.city || ""},{" "}
-                                  {rental.house?.township || ""}
-                                </p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <p className="text-sm text-gray-900">
-                              {rental.tenant_profile?.user?.name || "-"}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {rental.tenant_profile?.user?.email || "-"}
-                            </p>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-600">
-                            {rental.rental_duration
-                              ? `${rental.rental_duration} months`
-                              : "-"}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-600">
-                            {rental.rental_start_date
-                              ? new Date(
-                                  rental.rental_start_date,
-                                ).toLocaleDateString()
-                              : "-"}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-600">
-                            {rental.rental_end_date
-                              ? new Date(
-                                  rental.rental_end_date,
-                                ).toLocaleDateString()
-                              : "-"}
-                          </td>
-                          <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                            ${rental.monthly_rent?.toLocaleString() || "0"}
-                          </td>
-                          <td className="px-6 py-4">
-                            <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                rental.status === "active"
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-gray-100 text-gray-800"
-                              }`}
-                            >
-                              {rental.status || "inactive"}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-gray-900 truncate">{rental.tenant_profile?.user?.name || "-"}</p>
+                            <p className="text-xs text-gray-500 truncate">{rental.tenant_profile?.user?.email || "-"}</p>
+                          </div>
+                        </div>
+                        <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                          <div>
+                            <p className="text-gray-500">Duration</p>
+                            <p className="font-medium text-gray-900">{rental.rental_duration ? `${rental.rental_duration} mo` : "-"}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500">Rent</p>
+                            <p className="font-medium text-gray-900">${rental.monthly_rent?.toLocaleString() || "0"}/mo</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500">Start</p>
+                            <p className="font-medium text-gray-900">{rental.rental_start_date ? new Date(rental.rental_start_date).toLocaleDateString() : "-"}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500">End</p>
+                            <p className="font-medium text-gray-900">{rental.rental_end_date ? new Date(rental.rental_end_date).toLocaleDateString() : "-"}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

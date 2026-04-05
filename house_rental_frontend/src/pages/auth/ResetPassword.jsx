@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
-import authService from '../services/authService';
+import { AuthContext } from '../../context/AuthContext';
+import authService from '../../services/authService';
 import { LockKeyhole, Mail, KeyRound, ArrowLeft, CheckCircle, Eye, EyeOff } from 'lucide-react';
 
 export default function ResetPassword() {
