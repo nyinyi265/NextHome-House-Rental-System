@@ -42,6 +42,9 @@ class HouseController extends Controller
             'furnitures'
         ]);
 
+        $page = (int) $request->query('page', 1);
+        $perPage = (int) $request->query('per_page', 12);
+
         // Get tenant profile ID from authenticated user
         $tenantProfileId = null;
         if ($request->user()) {
@@ -51,7 +54,7 @@ class HouseController extends Controller
             }
         }
 
-        $houses = $this->service->listForTenants($filters, $tenantProfileId);
+        $houses = $this->service->listForTenants($filters, $tenantProfileId, $page, $perPage);
         return $this->success(true, HouseResponse::list($houses), 'House Retrieved Successfully!', 200);
     }
 

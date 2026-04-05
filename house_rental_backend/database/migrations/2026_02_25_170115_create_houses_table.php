@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->string('slug')->unique();
-            $table->integer('apartment_number');
+            $table->string('apartment_number');
             $table->enum('type',  ['apartment', 'house', 'condo']);
             $table->integer('floor');
             $table->integer('area');

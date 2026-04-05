@@ -18,7 +18,7 @@ class RentalApplicationService
 
     public function listByLandlord(int $landlordProfileId)
     {
-        return RentalApplication::with(['house', 'tenantProfile', 'tenantProfile.user'])
+        return RentalApplication::with(['house', 'house.housePhotos', 'tenantProfile', 'tenantProfile.user'])
             ->where('landlord_profile_id', $landlordProfileId)
             ->get();
     }
@@ -32,7 +32,7 @@ class RentalApplicationService
 
     public function findForLandlord(int $id, int $landlordProfileId): RentalApplication
     {
-        return RentalApplication::with(['house', 'tenantProfile', 'tenantProfile.user'])
+        return RentalApplication::with(['house', 'house.housePhotos', 'tenantProfile', 'tenantProfile.user'])
             ->where('landlord_profile_id', $landlordProfileId)
             ->findOrFail($id);
     }

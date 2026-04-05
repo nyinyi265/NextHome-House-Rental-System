@@ -85,9 +85,11 @@ class HouseService
      *
      * @param array $filters
      * @param int|null $tenantProfileId If provided, excludes houses with pending/approved applications and active rentals
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @param int $page
+     * @param int $perPage
+     * @return \Illuminate\Pagination\LengthAwarePaginator
      */
-    public function listForTenants(array $filters = [], ?int $tenantProfileId = null)
+    public function listForTenants(array $filters = [], ?int $tenantProfileId = null, int $page = 1, int $perPage = 12)
     {
         $query = House::with(['housePhotos', 'amenties', 'furnitures']);
 
@@ -155,7 +157,7 @@ class HouseService
             $query->whereNotIn('id', $excludeIds);
         }
 
-        return $query->get();
+        return $query->paginate($perPage, ['*'], 'page', $page);
     }
 
     /**
