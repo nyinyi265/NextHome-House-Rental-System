@@ -114,7 +114,22 @@ export default function Home() {
     houseService
       .list(token, role)
       .then((response) => {
-        const housesData = response.data?.houses || response.houses || [];
+        let housesData = [];
+        
+        // Laravel paginator wrapped in HouseResponse::list()
+        const housesWrapper = response.data?.houses || response.houses;
+        
+        // Handle paginated response - paginator has 'data' property
+        if (housesWrapper?.data) {
+          housesData = housesWrapper.data;
+        } else if (Array.isArray(housesWrapper)) {
+          housesData = housesWrapper;
+        } else if (Array.isArray(response.data)) {
+          housesData = response.data;
+        } else if (Array.isArray(response)) {
+          housesData = response;
+        }
+        
         setProperties(housesData);
         setError(null);
       })

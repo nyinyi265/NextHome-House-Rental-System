@@ -79,8 +79,8 @@ export default function Login() {
         <div className="bg-white rounded-xl shadow-lg p-8">
           {/* Logo */}
           <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary mb-4">
-              <Building2 className="w-8 h-8 text-white" />
+            <div className="inline-flex items-center justify-center w-16 h-16 mb-4">
+              <img src="NextHome.ico" alt="" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900">Welcome Back</h2>
             <p className="text-gray-500 mt-1">Sign in to continue to NextHome</p>

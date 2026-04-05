@@ -164,6 +164,9 @@ export default function Explore() {
   const [filters, setFilters] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
   const [layout, setLayout] = useState('grid');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const { token, user } = useContext(AuthContext);
 
   const role = (() => {
@@ -175,10 +178,37 @@ export default function Explore() {
 
   useEffect(() => {
     setLoading(true);
+    const filtersWithPage = { ...filters, page, per_page: 12 };
     houseService
-      .list(token, role, filters)
+      .list(token, role, filtersWithPage)
       .then((response) => {
-        const housesData = response.data?.houses || response.houses || [];
+        let housesData = [];
+        
+        // Laravel paginator wrapped in HouseResponse::list()
+        const housesWrapper = response.data?.houses || response.houses;
+        
+        // Handle paginated response - paginator has 'data' property
+        if (housesWrapper?.data) {
+          housesData = housesWrapper.data;
+          setTotalPages(housesWrapper.last_page || 1);
+          setTotalCount(housesWrapper.total || housesData.length);
+        } else if (Array.isArray(housesWrapper)) {
+          housesData = housesWrapper;
+          setTotalPages(1);
+          setTotalCount(housesData.length);
+        } else if (Array.isArray(response.data)) {
+          housesData = response.data;
+          setTotalPages(1);
+          setTotalCount(housesData.length);
+        } else if (Array.isArray(response)) {
+          housesData = response;
+          setTotalPages(1);
+          setTotalCount(housesData.length);
+        } else {
+          housesData = [];
+          setTotalCount(0);
+        }
+        
         setProperties(housesData);
         setError(null);
       })
@@ -187,7 +217,7 @@ export default function Explore() {
         setError(err.message || 'Unable to load properties');
       })
       .finally(() => setLoading(false));
-  }, [token, role, filters]);
+  }, [token, role, filters, page]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -229,11 +259,11 @@ export default function Explore() {
       </div>
 
       {/* Results Count + Layout Toggle */}
-      <div className="border-b py-3">
+      <div className="py-3">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-600">
-              {filteredProperties.length} properties found
+              {/* {`${filteredProperties.length} properties found`} */}
             </div>
             <div className="flex items-center gap-1 border rounded-lg overflow-hidden">
               <button
@@ -324,6 +354,29 @@ export default function Explore() {
                 {filteredProperties.map((p) => (
                   <PropertyListItem key={p.id} property={p} />
                 ))}
+              </div>
+            )}
+
+            {/* Pagination */}
+            {!loading && !error && totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-8">
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+                >
+                  Previous
+                </button>
+                <span className="px-4 py-2 text-sm text-gray-600">
+                  Page {page} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+                >
+                  Next
+                </button>
               </div>
             )}
           </div>

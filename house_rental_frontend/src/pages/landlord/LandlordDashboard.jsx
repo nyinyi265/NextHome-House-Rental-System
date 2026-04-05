@@ -1619,7 +1619,7 @@ export default function LandlordDashboard() {
                   {rentalApplications.map((app) => (
                     <div
                       key={app.id}
-                      className="bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-shadow"
+                      className="bg-white rounded-xl shadow-sm border-2 border-primary overflow-hidden hover:shadow-md transition-shadow"
                     >
                       {/* Property Image */}
                       <div className="relative h-40 bg-gray-200">
@@ -1771,8 +1771,8 @@ export default function LandlordDashboard() {
           )}
 
           {activeTab === "rentals" && (
-            <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-              <div className="p-6 border-b">
+            <div className="space-y-6">
+              <div className="bg-white rounded-xl shadow-sm border p-6 ">
                 <h3 className="text-lg font-semibold text-gray-800">
                   Rentals
                 </h3>
@@ -1797,7 +1797,7 @@ export default function LandlordDashboard() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {rentals.map((rental) => (
-                    <div key={rental.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                    <div key={rental.id} className="bg-white rounded-xl border-2 border-primary overflow-hidden hover:shadow-md transition-shadow">
                       <div className="relative h-32 bg-gray-200">
                         {rental.house?.house_photos && rental.house.house_photos.length > 0 ? (
                           <img src={`${env.STORAGE_URL}/${rental.house.house_photos[0].photo_path}`} alt={rental.house?.title} className="w-full h-full object-cover" />

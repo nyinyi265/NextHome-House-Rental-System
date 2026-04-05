@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import Navbar from '../../components/Navbar/Navbar';
 import rentalService from '../../services/rentalService';
 import env from '../../environment/environment';
-import { Home, MapPin, Calendar, DollarSign, FileText, Loader2, AlertCircle } from 'lucide-react';
+import { Home, MapPin, Calendar, DollarSign, Loader2, AlertCircle } from 'lucide-react';
 
 export default function MyRentals() {
   const [rentals, setRentals] = useState([]);
@@ -157,7 +157,6 @@ export default function MyRentals() {
 
                           <div className="flex flex-wrap gap-4 text-sm">
                             <div className="flex items-center gap-1.5 text-gray-600">
-                              <DollarSign className="w-4 h-4 text-primary" />
                               <span className="font-semibold text-primary">
                                 {formatCurrency(rental.monthly_rent)}
                               </span>
