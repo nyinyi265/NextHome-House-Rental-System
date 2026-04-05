@@ -4,9 +4,40 @@ import SearchBar from '../../components/SearchBar';
 import PropertyTags from '../../components/PropertyTags';
 import PropertyCard from '../../components/PropertyCard';
 import { PropertyGridSkeleton } from '../../components/Loading';
-import { Facebook, Instagram, Twitter, Globe } from 'lucide-react';
+import { Facebook, Instagram, Twitter, Globe, Shield, CreditCard, Headphones, DollarSign } from 'lucide-react';
 import houseService from '../../services/houseService';
 import { AuthContext } from '../../context/AuthContext';
+
+const whyChooseUs = [
+  {
+    icon: Shield,
+    title: 'Verified Properties',
+    description: 'All listings are checked for quality and accuracy.',
+    bgColor: 'bg-emerald-100',
+    iconColor: 'text-emerald-600',
+  },
+  {
+    icon: CreditCard,
+    title: 'Secure Payments',
+    description: 'Safe transactions with full protection.',
+    bgColor: 'bg-blue-100',
+    iconColor: 'text-blue-600',
+  },
+  {
+    icon: Headphones,
+    title: '24/7 Support',
+    description: 'Round-the-clock help for any issue.',
+    bgColor: 'bg-purple-100',
+    iconColor: 'text-purple-600',
+  },
+  {
+    icon: DollarSign,
+    title: 'Best Price Guarantee',
+    description: 'Competitive pricing on all rentals.',
+    bgColor: 'bg-amber-100',
+    iconColor: 'text-amber-600',
+  },
+];
 
 const nearbyDestinations = [
   {
@@ -169,8 +200,27 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Categories */}
-      {/* <PropertyTags /> */}
+      {/* Why Choose Us */}
+      <div className="max-w-7xl mx-auto px-4 py-16">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 mb-3">Why Choose Us</h2>
+          <p className="text-lg text-gray-500">We make your rental experience simple and secure</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {whyChooseUs.map((item, index) => (
+            <div
+              key={index}
+              className="bg-white rounded-2xl p-6 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-lg border-2 border-primary"
+            >
+              <div className={`inline-flex items-center justify-center w-14 h-14 rounded-full ${item.bgColor} mb-4`}>
+                <item.icon className={`w-7 h-7 ${item.iconColor}`} />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">{item.title}</h3>
+              <p className="text-sm text-gray-500">{item.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Featured Properties */}
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -229,6 +279,21 @@ export default function Home() {
               <p className="text-sm text-gray-500">{dest.properties.toLocaleString()} properties</p>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Call-To-Action */}
+      <div className="max-w-6xl mx-auto px-4 py-16">
+        <div className="bg-primary rounded-3xl p-8 md:p-12 text-center shadow-lg">
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+            Start renting your property today
+          </h2>
+          <p className="text-lg text-white/90 mb-8 max-w-xl mx-auto">
+            Earn money by listing your space and reaching thousands of renters.
+          </p>
+          <button className="px-8 py-3 bg-white text-primary font-semibold rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg hover:bg-gray-50">
+            List Your Property
+          </button>
         </div>
       </div>
 
