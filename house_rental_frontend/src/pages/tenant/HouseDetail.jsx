@@ -142,7 +142,6 @@ export default function HouseDetail() {
   const bedrooms = property.bedrooms || 0;
   const bathrooms = property.bathrooms || 0;
   const maxGuests = property.max_guests || property.guests || 0;
-  const beds = property.beds || 0;
   const propertyType = property.property_type || property.type || "Apartment";
 
   // Get amenities from the API response
@@ -391,12 +390,6 @@ export default function HouseDetail() {
                     <p className="font-semibold">Up to {maxGuests} Guests</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Bed className="w-6 h-6 text-gray-600" />
-                  <div>
-                    <p className="font-semibold">{beds} Beds</p>
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -495,16 +488,16 @@ export default function HouseDetail() {
               {/* Price Breakdown */}
               <div className="mt-6 space-y-3">
                 <div className="flex justify-between">
-                  <span className="underline">${price} x 30 nights</span>
-                  <span>${price * 30}</span>
+                  <span className="underline">Rent Fee</span>
+                  <span>${Number(price)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="underline">Service fee</span>
-                  <span>$100</span>
+                  <span>$10</span>
                 </div>
                 <div className="border-t pt-3 flex justify-between font-bold">
                   <span>Total before taxes</span>
-                  <span>${price * 30 + 150}</span>
+                  <span>${Number(price) + 10}</span>
                 </div>
               </div>
             </div>

@@ -238,7 +238,7 @@ export default function FilterSidebar({ filters, onFilterChange }) {
         </div>
 
         {/* Amenities */}
-        <div className="mb-4">
+        {/* <div className="mb-4">
           <label className="block text-sm font-medium text-gray-900 mb-2">Amenities</label>
           <div className="space-y-2 max-h-40 overflow-y-auto">
             {amenties.map((amenty) => (
@@ -253,7 +253,7 @@ export default function FilterSidebar({ filters, onFilterChange }) {
               </label>
             ))}
           </div>
-        </div>
+        </div> */}
 
         {/* Furniture */}
         {/* <div className="mb-4">
@@ -274,9 +274,9 @@ export default function FilterSidebar({ filters, onFilterChange }) {
         </div> */}
 
         {/* More Filters Button */}
-        <button className="w-full py-2 border rounded-lg hover:border-gray-400 transition-colors text-sm font-medium">
+        {/* <button className="w-full py-2 border rounded-lg hover:border-gray-400 transition-colors text-sm font-medium">
           More filters
-        </button>
+        </button> */}
       </div>
     </div>
   );

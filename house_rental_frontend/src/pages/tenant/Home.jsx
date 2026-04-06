@@ -171,7 +171,7 @@ export default function Home() {
       .finally(() => setLoading(false));
   }, [token, role]);
 
-  const featuredProperties = properties.slice(0, 2);
+  const featuredProperties = properties.slice(0, 4);
 
   return (
     <div className="min-h-screen bg-white">
@@ -226,7 +226,7 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <h2 className="text-2xl font-semibold text-gray-900 mb-6">Featured Properties</h2>
         {loading ? (
-          <PropertyGridSkeleton count={4} />
+          <PropertyGridSkeleton count={3} />
         ) : error ? (
           <div className="text-red-500 py-4 text-center">{error}</div>
         ) : featuredProperties.length === 0 ? (
@@ -241,7 +241,7 @@ export default function Home() {
       </div>
 
       {/* All Properties */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      {/* <div className="max-w-7xl mx-auto px-4 py-8">
         <h2 className="text-2xl font-semibold text-gray-900 mb-6">All Listings</h2>
         {loading ? (
           <PropertyGridSkeleton count={8} />
@@ -256,7 +256,7 @@ export default function Home() {
             ))}
           </div>
         )}
-      </div>
+      </div> */}
 
       {/* Nearby Destinations */}
       <div className="max-w-7xl mx-auto px-4 py-8">

@@ -58,7 +58,7 @@ export default function About() {
             <PhoneIcon className="w-7 h-7 text-primary" />
             Contact Information
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <Mail className="w-5 h-5 text-primary" />
@@ -74,7 +74,7 @@ export default function About() {
               </div>
               <div>
                 <p className="font-semibold text-gray-900">Phone</p>
-                <p className="text-gray-600">+95 123 456 789</p>
+                <p className="text-gray-600">+959 790 563 812</p>
               </div>
             </div>
             <div className="flex items-start gap-4">
@@ -83,16 +83,7 @@ export default function About() {
               </div>
               <div>
                 <p className="font-semibold text-gray-900">Address</p>
-                <p className="text-gray-600">123 Main Street, Yangon</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Clock className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-semibold text-gray-900">Business Hours</p>
-                <p className="text-gray-600">Mon-Fri: 9AM - 6PM</p>
+                <p className="text-gray-600">123 KyunTaw Road, Yangon</p>
               </div>
             </div>
           </div>

@@ -1199,7 +1199,7 @@ export default function LandlordDashboard() {
                           <button
                             key={index}
                             onClick={() => setCurrentPhotoIndex(index)}
-                            className={`flex-shrink-0 w-20 h-16 sm:w-24 sm:h-20 md:w-28 md:h-24 rounded-lg overflow-hidden transition-all duration-200 ease-in-out ${
+                            className={`ml-2 mt-2 flex-shrink-0 w-20 h-16 sm:w-24 sm:h-20 md:w-28 md:h-24 rounded-lg overflow-hidden transition-all duration-200 ease-in-out ${
                               index === currentPhotoIndex
                                 ? "ring-2 ring-emerald-500 ring-offset-2 scale-105 shadow-lg"
                                 : "opacity-70 hover:opacity-100 hover:scale-105 shadow-md"

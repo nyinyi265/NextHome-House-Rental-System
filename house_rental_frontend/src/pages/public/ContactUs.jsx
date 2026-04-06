@@ -186,8 +186,8 @@ export default function ContactUs() {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900">Phone</p>
-                    <p className="text-gray-600">+95 123 456 789</p>
-                    <p className="text-gray-600">+95 987 654 321</p>
+                    <p className="text-gray-600">+959 790 563 812</p>
+                    <p className="text-gray-600">+959 665 198 463</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
@@ -196,11 +196,11 @@ export default function ContactUs() {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900">Address</p>
-                    <p className="text-gray-600">123 Main Street</p>
+                    <p className="text-gray-600">123 KyunTaw Road</p>
                     <p className="text-gray-600">Yangon, Myanmar</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-4">
+                {/* <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                     <Clock className="w-5 h-5 text-primary" />
                   </div>
@@ -209,12 +209,12 @@ export default function ContactUs() {
                     <p className="text-gray-600">Mon - Fri: 9:00 AM - 6:00 PM</p>
                     <p className="text-gray-600">Sat: 9:00 AM - 1:00 PM</p>
                   </div>
-                </div>
+                </div> */}
               </div>
             </div>
 
             {/* Emergency Contact */}
-            <div className="bg-primary rounded-2xl shadow-sm p-8 text-white">
+            <div className="bg-primary rounded-2xl shadow-sm p-7 text-white">
               <h2 className="text-xl font-bold mb-4">Emergency Support</h2>
               <p className="text-white/80 mb-4">
                 For urgent matters outside business hours, please call our emergency hotline.
