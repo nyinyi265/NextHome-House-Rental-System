@@ -12,6 +12,7 @@ use App\Http\Controllers\API\Tenant\HouseController as TenantHouseController;
 use App\Http\Controllers\API\Tenant\RentalApplicationController as TenantRentalApplicationController;
 use App\Http\Controllers\API\Tenant\RentalController as TenantRentalController;
 use App\Http\Controllers\API\Landlord\RentalController as LandlordRentalController;
+use App\Http\Controllers\MessageController;
 use Illuminate\Support\Facades\Storage;
 
 Route::prefix('auth')->group(function () {
@@ -53,6 +54,7 @@ Route::get('storage/{path}', function (Request $request, $path) {
 Route::get('houses', [TenantHouseController::class, 'index']);
 Route::get('houses/{house}', [TenantHouseController::class, 'show']);
 Route::get('amenties', [AmentyController::class, 'index']);
+Route::post('messages', [MessageController::class, 'store']);
 
 Route::get('/user', function (Request $request) {
     return $request->user();

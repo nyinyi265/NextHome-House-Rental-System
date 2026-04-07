@@ -17,7 +17,7 @@ class StoreHouseRequest extends FormRequest
         return [
             'title' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:houses,slug',
-            'apartment_number' => 'nullable|integer',
+            'apartment_number' => 'nullable|string|max:255',
             'type' => 'nullable|in:apartment,house,condo',
             'floor' => 'nullable|integer',
             'area' => 'nullable|integer',

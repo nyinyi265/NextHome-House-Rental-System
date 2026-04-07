@@ -23,7 +23,7 @@ class UpdateHouseRequest extends FormRequest
                 'string',
                 Rule::unique('houses', 'slug')->ignore($this->route('house')),
             ],
-            'apartment_number' => 'nullable|integer',
+            'apartment_number' => 'nullable|string|max:255',
             'type' => 'nullable|in:apartment,house,condo',
             'floor' => 'nullable|integer',
             'area' => 'nullable|integer',
