@@ -10,6 +10,7 @@ const endpoints = {
   tenantHouses: () => base('/tenant/houses'),
   landlordHouses: () => base('/landlord/houses'),
   amenties: () => base('/amenties'),
+  messages: () => base('/messages'),
   landlord: {
     houses: () => base('/landlord/houses'),
     amenties: () => base('/landlord/amenties'),

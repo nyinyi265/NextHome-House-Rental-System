@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Heart, Star, Loader2 } from 'lucide-react';
 import env from '../environment/environment';
 
-export default function PropertyCard({ id, title, location, city, township, street, price, rating, featured, images = [], house_photos = [] }) {
+export default function PropertyCard({ id, title, location, city, township, street, price, rating, featured, available_from, images = [], house_photos = [] }) {
   const [isLiked, setIsLiked] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const navigate = useNavigate();
@@ -25,6 +25,7 @@ export default function PropertyCard({ id, title, location, city, township, stre
 
   // Resolve display location from either a flat `location` prop or address fields from the API
   const displayLocation = location || [township, city].filter(Boolean).join(', ') || street || '';
+  console.log("Display Location: ", displayLocation);
 
   const defaultImage = "bg-gradient-to-br from-purple-500 to-blue-500";
   const cardImages = resolvedImages.length > 0 ? resolvedImages : [null];
@@ -72,28 +73,27 @@ export default function PropertyCard({ id, title, location, city, township, stre
         </button> */}
         
         {/* Image Indicator */}
-        {cardImages.length > 1 && (
+        {/* {cardImages.length > 1 && (
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
             {cardImages.slice(0, 5).map((_, idx) => (
               <div key={idx} className="w-1.5 h-1.5 rounded-full bg-white/70" />
             ))}
           </div>
-        )}
+        )} */}
       </div>
       
       {/* Property Info */}
-      <div className="flex justify-between items-start p-4 transition-colors duration-300 group-hover:bg-gray-50 p-2">
+      <div className="flex justify-between items-start px-4 transition-colors duration-300 group-hover:bg-gray-50">
         <div>
           <h3 className="font-semibold text-gray-900">{displayLocation}</h3>
-          <p className="text-gray-500 text-sm">16 kilometers away</p>
-          <p className="text-gray-500 text-sm">Feb 27</p>
+          <p className="text-gray-500 text-sm">Available From: {available_from}</p>
         </div>
         {/* <div className="flex items-center gap-1">
           <Star className="w-4 h-4 fill-black text-black" />
           <span className="font-medium">{rating}</span>
         </div> */}
       </div>
-      <p className="my-1 px-2">
+      <p className="my-2 px-4">
         <span className="font-semibold text-gray-900">${price}</span>
         <span className="text-gray-900"> / month</span>
       </p>

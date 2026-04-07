@@ -172,6 +172,7 @@ export default function Home() {
   }, [token, role]);
 
   const featuredProperties = properties.slice(0, 4);
+  console.log('Featured properties:', featuredProperties);
 
   return (
     <div className="min-h-screen bg-white">

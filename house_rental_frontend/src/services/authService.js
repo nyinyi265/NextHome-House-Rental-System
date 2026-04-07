@@ -126,6 +126,17 @@ async function changePassword(data) {
   return response.json();
 }
 
+async function sendMessage(data) {
+  const response = await fetch(api.messages(), {
+    method: "POST",
+    body: JSON.stringify(data)
+  });
+  if (!response.ok) {
+    const err = await response.json();
+    throw err;
+  }
+}
+
 const authService = {
   login,
   register,
@@ -135,5 +146,6 @@ const authService = {
   forgotPassword,
   resetPassword,
   changePassword,
+  sendMessage,
 };
 export default authService;

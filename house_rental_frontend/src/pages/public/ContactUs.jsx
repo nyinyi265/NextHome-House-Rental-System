@@ -1,38 +1,53 @@
-import React, { useState } from 'react';
-import Navbar from '../../components/Navbar/Navbar';
-import { MessageCircle, Phone as PhoneIcon, Mail, MapPin, Clock, Send, User, MessageSquare } from 'lucide-react';
+import React, { useState } from "react";
+import Navbar from "../../components/Navbar/Navbar";
+import {
+  MessageCircle,
+  Phone as PhoneIcon,
+  Mail,
+  MapPin,
+  Clock,
+  Send,
+  User,
+  MessageSquare,
+} from "lucide-react";
+import publicService from "../../services/publicService";
 
 export default function ContactUs() {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: ''
+    name: "",
+    email: "",
+    subject: "",
+    message: "",
   });
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await publicService.sendMessage(formData);
       setSubmitted(true);
-      setFormData({ name: '', email: '', subject: '', message: '' });
-    }, 1500);
+      setFormData({ name: "", email: "", subject: "", message: "" });
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      // You might want to add an error state to show a message to the user
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      
+
       <main className="max-w-6xl mx-auto px-4 py-8">
         {/* Hero Section */}
         <div className="text-center mb-12">
@@ -41,7 +56,8 @@ export default function ContactUs() {
           </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Contact Us</h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+            Have questions? We'd love to hear from you. Send us a message and
+            we'll respond as soon as possible.
           </p>
         </div>
 
@@ -49,18 +65,23 @@ export default function ContactUs() {
           {/* Contact Form */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-2xl shadow-sm border p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Send us a Message</h2>
-              
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                Send us a Message
+              </h2>
+
               {submitted ? (
                 <div className="text-center py-8">
                   <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
                     <MessageCircle className="w-8 h-8 text-green-600" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Message Sent!</h3>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    Message Sent!
+                  </h3>
                   <p className="text-gray-600 mb-4">
-                    Thank you for contacting us. We'll get back to you within 24-48 hours.
+                    Thank you for contacting us. We'll get back to you within
+                    24-48 hours.
                   </p>
-                  <button 
+                  <button
                     onClick={() => setSubmitted(false)}
                     className="text-primary hover:underline font-medium"
                   >
@@ -217,7 +238,8 @@ export default function ContactUs() {
             <div className="bg-primary rounded-2xl shadow-sm p-7 text-white">
               <h2 className="text-xl font-bold mb-4">Emergency Support</h2>
               <p className="text-white/80 mb-4">
-                For urgent matters outside business hours, please call our emergency hotline.
+                For urgent matters outside business hours, please call our
+                emergency hotline.
               </p>
               <div className="flex items-center gap-3">
                 <PhoneIcon className="w-6 h-6" />
