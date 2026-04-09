@@ -163,12 +163,15 @@ class HouseService
     /**
      * Find any house by id (used by tenant viewer).
      *
-     * @param int $id
+     * @param int|string $idOrSlug
      * @return House
      */
-    public function find(int $id): House
+    public function find(int|string $idOrSlug): House
     {
-        return House::with(['housePhotos', 'amenties', 'furnitures'])->findOrFail($id);
+        if (is_numeric($idOrSlug)) {
+            return House::with(['housePhotos', 'amenties', 'furnitures'])->findOrFail($idOrSlug);
+        }
+        return House::with(['housePhotos', 'amenties', 'furnitures'])->where('slug', $idOrSlug)->firstOrFail();
     }
 
     /**
@@ -194,18 +197,22 @@ class HouseService
     }
 
     /**
-     * Find a house by id for given landlord or throw.
+     * Find a house by id or slug for given landlord or throw.
      *
-     * @param int $id
+     * @param int|string $idOrSlug
      * @param int $landlordId
      * @return House
      * @throws ModelNotFoundException
      */
-    public function findForLandlord(int $id, int $landlordProfileId): House
+    public function findForLandlord(int|string $idOrSlug, int $landlordProfileId): House
     {
-        return House::with(['housePhotos', 'amenties', 'furnitures'])
-            ->where('landlord_profile_id', $landlordProfileId)
-            ->findOrFail($id);
+        $query = House::with(['housePhotos', 'amenties', 'furnitures'])
+            ->where('landlord_profile_id', $landlordProfileId);
+        
+        if (is_numeric($idOrSlug)) {
+            return $query->findOrFail($idOrSlug);
+        }
+        return $query->where('slug', $idOrSlug)->firstOrFail();
     }
 
     /**

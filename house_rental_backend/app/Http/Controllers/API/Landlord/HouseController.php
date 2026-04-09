@@ -67,10 +67,10 @@ class HouseController extends Controller
         return $this->success(true, HouseResponse::created($house), 'House created', 201);
     }
 
-    public function show(Request $request, $id): JsonResponse
+    public function show(Request $request, $idOrSlug): JsonResponse
     {
         $landlordProfileId = $request->user()->landlordProfile->id;
-        $house = $this->service->findForLandlord($id, $landlordProfileId);
+        $house = $this->service->findForLandlord($idOrSlug, $landlordProfileId);
         return $this->success(true, HouseResponse::single($house), 'House retrieved', 200);
     }
 

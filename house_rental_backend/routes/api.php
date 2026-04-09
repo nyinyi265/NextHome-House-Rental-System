@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Storage;
 
 Route::prefix('auth')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
+    Route::post('landlord-register', [AuthController::class, 'registerLandlord']);
     // name login so unauthenticated middleware can redirect without error
     Route::post('login', [AuthController::class, 'login'])->name('login');
     Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
@@ -72,7 +73,7 @@ Route::prefix('tenant')->middleware(['auth:sanctum', 'role:tenant'])->group(func
 });
 
 // landlord house and application routes
-Route::prefix('landlord')->middleware(['auth:sanctum', 'role:landlord'])->group(function () {
+Route::prefix('landlord')->middleware(['auth:sanctum', 'landlord.approved'])->group(function () {
     Route::apiResource('houses', HouseController::class)
         ->only(['index', 'store', 'show', 'update', 'destroy']);
 
@@ -94,4 +95,12 @@ Route::prefix('landlord')->middleware(['auth:sanctum', 'role:landlord'])->group(
 
     Route::apiResource('rentals', LandlordRentalController::class)
         ->only(['index', 'store', 'show', 'update', 'destroy']);
+});
+
+// Admin routes for landlord approval
+Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::get('landlord-requests', [App\Http\Controllers\API\Admin\LandlordRequestController::class, 'index']);
+    Route::get('landlord-requests/pending', [App\Http\Controllers\API\Admin\LandlordRequestController::class, 'pending']);
+    Route::post('landlord-requests/{id}/approve', [App\Http\Controllers\API\Admin\LandlordRequestController::class, 'approve']);
+    Route::post('landlord-requests/{id}/reject', [App\Http\Controllers\API\Admin\LandlordRequestController::class, 'reject']);
 });

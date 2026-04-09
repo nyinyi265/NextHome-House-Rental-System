@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Services\AuthService;
 use App\Http\Requests\Auth\RegisterTenantRequest;
+use App\Http\Requests\Auth\RegisterLandlordRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Responses\Auth\AuthResponse;
 use Illuminate\Http\Request;
@@ -30,7 +31,6 @@ class AuthController extends Controller
      */
     public function register(RegisterTenantRequest $request): JsonResponse
     {
-        // Handle profile image upload first (before validated() which may not include file)
         $profilePath = null;
         if ($request->hasFile('profile_path')) {
             $file = $request->file('profile_path');
@@ -41,8 +41,32 @@ class AuthController extends Controller
         $data['profile_path'] = $profilePath;
 
         $result = $this->service->registerTenant($data);
-        // result now contains user and token
         return $this->success(true, AuthResponse::register($result['user'], $result['token']), 'Tenant registered successfully', 201);
+    }
+
+    /**
+     * Register landlord endpoint
+     */
+    public function registerLandlord(RegisterLandlordRequest $request): JsonResponse
+    {
+        $profilePath = null;
+        if ($request->hasFile('profile_path')) {
+            $file = $request->file('profile_path');
+            $profilePath = $file->store('profiles', 'public');
+        }
+
+        $documentPath = null;
+        if ($request->hasFile('document_path')) {
+            $file = $request->file('document_path');
+            $documentPath = $file->store('landlord_documents', 'public');
+        }
+
+        $data = $request->validated();
+        $data['profile_path'] = $profilePath;
+        $data['document_path'] = $documentPath;
+
+        $result = $this->service->registerLandlord($data);
+        return $this->success(true, AuthResponse::register($result['user'], $result['token']), 'Landlord registered successfully', 201);
     }
 
     /**

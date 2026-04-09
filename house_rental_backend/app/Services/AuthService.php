@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Models\LandlordProfile;
+use App\Models\LandlordDocument;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
@@ -47,6 +49,46 @@ class AuthService
     }
 
     /**
+     * Register a new landlord user with profile and documents.
+     *
+     * @param array $data
+     * @return array{user: \App\Models\User, token: string}
+     */
+    public function registerLandlord(array $data): array
+    {
+        $profilePath = $data['profile_path'] ?? null;
+        $documentPath = $data['document_path'] ?? null;
+
+        $user = User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+            'phone_number' => $data['phone_number'] ?? null,
+            'profile_path' => $profilePath,
+        ]);
+
+        if (method_exists($user, 'assignRole')) {
+            $user->assignRole('landlord');
+        }
+
+        $landlordProfile = $user->landlordProfile()->create([
+            'status' => 'pending',
+            'verified_at' => null,
+        ]);
+
+        if ($documentPath) {
+            $landlordProfile->documents()->create([
+                'document_type' => 'identity',
+                'document_path' => $documentPath,
+            ]);
+        }
+
+        $token = $user->createToken('auth-token')->plainTextToken;
+
+        return ['user' => $user, 'token' => $token];
+    }
+
+    /**
      * Attempt to log in a user and generate a token.
      *
      * @param string $email
@@ -59,6 +101,14 @@ class AuthService
         $user = User::where('email', $email)->first();
         if (!$user || !Hash::check($password, $user->password)) {
             throw new AuthenticationException('The provided credentials are incorrect.');
+        }
+
+        // Check if user is a landlord and if their profile is approved
+        if ($user->hasRole('landlord')) {
+            $landlordProfile = $user->landlordProfile;
+            if (!$landlordProfile || $landlordProfile->status !== 'approved') {
+                throw new AuthenticationException('Access denied. Your landlord account is pending approval.');
+            }
         }
 
         $token = $user->createToken('auth-token')->plainTextToken;
@@ -124,12 +174,7 @@ class AuthService
             return 'passwords.user';
         }
 
-        // Generate password reset token
         $token = app('auth.password.broker')->createToken($user);
-
-        // Send email (simplified - in production use proper notification)
-        // You would need to create a Notification class
-        // For now, we just return success
 
         return 'passwords.sent';
     }

@@ -61,12 +61,13 @@ class HouseController extends Controller
     /**
      * Show a single house to tenant.
      */
-    public function show(Request $request, $id): JsonResponse
+    public function show(Request $request, $idOrSlug): JsonResponse
     {
-        $house = $this->service->find($id);
+        $house = $this->service->find($idOrSlug);
+        $houseId = $house->id;
 
         // Check if house has an active rental
-        $hasActiveRental = Rental::where('house_id', $id)
+        $hasActiveRental = Rental::where('house_id', $houseId)
             ->where('status', 'active')
             ->exists();
 
@@ -77,7 +78,7 @@ class HouseController extends Controller
             $tenantProfile = $request->user()->tenantProfile;
             if ($tenantProfile) {
                 $tenantProfileId = $tenantProfile->id;
-                $hasApplication = RentalApplication::where('house_id', $id)
+                $hasApplication = RentalApplication::where('house_id', $houseId)
                     ->where('tenant_profile_id', $tenantProfileId)
                     ->whereIn('status', ['pending', 'approved'])
                     ->exists();
@@ -87,7 +88,7 @@ class HouseController extends Controller
         $houseData = HouseResponse::single($house);
         $houseData['is_available'] = !$hasActiveRental && !$hasApplication;
         $houseData['application_status'] = $hasApplication ?
-            RentalApplication::where('house_id', $id)
+            RentalApplication::where('house_id', $houseId)
                 ->where('tenant_profile_id', $tenantProfileId)
                 ->first()->status ?? null : null;
 

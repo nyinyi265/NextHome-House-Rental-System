@@ -10,6 +10,7 @@ class LandlordProfile extends Model
     use HasRoles;
     protected $fillable = [
         'user_id',
+        'status',
         'verified_at',
     ];
 
@@ -26,5 +27,10 @@ class LandlordProfile extends Model
     public function rentalApplications()
     {
         return $this->hasMany(RentalApplication::class, 'landlord_profile_id');
+    }
+
+    public function documents()
+    {
+        return $this->hasMany(LandlordDocument::class);
     }
 }
