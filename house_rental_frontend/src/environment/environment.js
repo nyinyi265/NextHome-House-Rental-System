@@ -18,11 +18,19 @@ const getProfileUrl = (profilePath) => {
   return `${STORAGE_URL}/${profilePath}`;
 };
 
+// Helper function for documents
+const getDocumentUrl = (docPath) => {
+  if (!docPath) return null;
+  if (docPath.startsWith('http')) return docPath;
+  return `${STORAGE_URL}/${docPath}`;
+};
+
 const env = {
     API_BASE_URL,
     STORAGE_URL,
     getImageUrl,
     getProfileUrl,
+    getDocumentUrl,
 };
 
 export default env;

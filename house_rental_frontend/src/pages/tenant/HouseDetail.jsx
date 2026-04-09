@@ -21,7 +21,7 @@ import env from "../../environment/environment";
 import PanoramaViewer from "../../components/PanoramaViewer";
 
 export default function HouseDetail() {
-  const { id } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
   const { token, user } = useContext(AuthContext);
 
@@ -44,7 +44,7 @@ export default function HouseDetail() {
   useEffect(() => {
     setLoading(true);
     houseService
-      .get(id, token, role)
+      .get(slug, token, role)
       .then((response) => {
         const houseData = response.data?.house || response.house || response;
         setProperty(houseData);
@@ -55,7 +55,7 @@ export default function HouseDetail() {
         setError(err.message || "Unable to load property");
       })
       .finally(() => setLoading(false));
-  }, [id, token, role]);
+  }, [slug, token, role]);
 
   const nextPhoto = () => {
     const photos = property?.house_photos || property?.photos || [];
@@ -82,7 +82,7 @@ export default function HouseDetail() {
     try {
       await houseService.applyRental(
         token,
-        parseInt(id),
+        property.id,
         reservationMessage,
         rentalDuration,
       );

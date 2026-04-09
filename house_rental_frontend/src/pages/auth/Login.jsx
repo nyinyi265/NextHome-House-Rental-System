@@ -87,12 +87,12 @@ export default function Login() {
           </div>
 
           {/* Error Message */}
-          {error && (
+          {/* {error && (
             <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3 text-red-700">
               <AlertCircle className="w-5 h-5 flex-shrink-0" />
               <p className="text-sm">{error}</p>
             </div>
-          )}
+          )} */}
           
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email Field */}
@@ -159,6 +159,13 @@ export default function Login() {
             Don't have an account?{' '}
             <Link to="/register" className="text-primary hover:underline font-medium">
               Create one
+            </Link>
+          </p>
+
+          <p className="mt-4 text-center text-sm text-gray-600">
+            Want to list your property?{' '}
+            <Link to="/landlord-register" className="text-primary hover:underline font-medium">
+              Become a Landlord
             </Link>
           </p>
         </div>

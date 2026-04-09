@@ -116,6 +116,18 @@ export default function Navbar() {
             Contact Us
           </NavLink>
         </li>
+        <li>
+          <NavLink
+            to="/landlord-register"
+            className={({ isActive }) => 
+              `no-underline px-4 py-2 rounded-lg text-base font-medium transition ${isActive 
+                ? "bg-green-100 text-green-700" 
+                : "text-gray-700 hover:bg-green-50 hover:text-green-700"}`
+            }
+          >
+            Become a Landlord
+          </NavLink>
+        </li>
         {user && user.role === "landlord" && (
           <li>
             <NavLink

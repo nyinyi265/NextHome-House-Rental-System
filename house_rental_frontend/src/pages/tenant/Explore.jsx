@@ -29,7 +29,7 @@ function PropertyListItem({ property }) {
 
   const handleClick = () => {
     setIsNavigating(true);
-    navigate(`/houses/${property.id}`);
+    navigate(`/houses/${property.slug || property.id}`);
   };
 
   return (

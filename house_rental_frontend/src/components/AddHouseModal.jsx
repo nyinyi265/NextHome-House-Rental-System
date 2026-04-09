@@ -59,10 +59,16 @@ export default function AddHouseModal({ isOpen, onClose, onSuccess, token }) {
       [name]: type === 'checkbox' ? checked : value
     }));
     
-    // Auto-generate slug from title
-    if (name === 'title') {
-      const slug = value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-      setFormData(prev => ({ ...prev, slug }));
+    // Auto-generate slug from title and city
+    if (name === 'title' || name === 'city') {
+      const title = name === 'title' ? value : formData.title;
+      const city = name === 'city' ? value : formData.city;
+      if (title) {
+        const titleSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        const citySlug = city ? city.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : '';
+        const slug = citySlug ? `${titleSlug}-${citySlug}` : titleSlug;
+        setFormData(prev => ({ ...prev, slug }));
+      }
     }
   };
 
@@ -199,16 +205,12 @@ export default function AddHouseModal({ isOpen, onClose, onSuccess, token }) {
                     placeholder="Beautiful apartment in downtown"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Slug *</label>
+                <div className="hidden">
                   <input
                     type="text"
                     name="slug"
                     value={formData.slug}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="beautiful-apartment-downtown"
+                    readOnly
                   />
                 </div>
                 <div>

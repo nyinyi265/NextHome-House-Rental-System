@@ -26,6 +26,7 @@ const endpoints = {
   auth: {
     login: () => base('/auth/login'),
     register: () => base('/auth/register'),
+    registerLandlord: () => base('/auth/landlord-register'),
     me: () => base('/auth/me'),
     logout: () => base('/auth/logout'),
     updateProfile: () => base('/auth/profile'),

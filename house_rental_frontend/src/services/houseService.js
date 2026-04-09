@@ -46,17 +46,17 @@ async function list(token, role, filters = {}) {
   return response.json();
 }
 
-async function get(id, token, role) {
+async function get(slugOrId, token, role) {
   const headers = { Accept: 'application/json' };
   let url;
   if (token && role === 'landlord') {
-    url = `${api.landlordHouses()}/${id}`;
+    url = `${api.landlordHouses()}/${slugOrId}`;
     headers.Authorization = `Bearer ${token}`;
   } else if (token && role === 'tenant') {
-    url = `${api.tenantHouses()}/${id}`;
+    url = `${api.tenantHouses()}/${slugOrId}`;
     headers.Authorization = `Bearer ${token}`;
   } else {
-    url = `${api.houses()}/${id}`;
+    url = `${api.houses()}/${slugOrId}`;
   }
 
   const response = await fetch(url, { headers });

@@ -6,6 +6,7 @@ import ContactUs from '../pages/public/ContactUs';
 import Explore from '../pages/tenant/Explore';
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
+import LandlordRegister from '../pages/auth/LandlordRegister';
 import HouseDetail from '../pages/tenant/HouseDetail';
 import LandlordDashboard from '../pages/landlord/LandlordDashboard';
 import LandlordRentals from '../pages/landlord/LandlordRentals';
@@ -14,6 +15,7 @@ import ResetPassword from '../pages/auth/ResetPassword';
 import ForgotPassword from '../pages/auth/ForgotPassword';
 import MyRentals from '../pages/tenant/MyRentals';
 import MyRentalApplications from '../pages/tenant/MyRentalApplications';
+import AdminDashboard from '../pages/admin/AdminDashboard';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
@@ -71,8 +73,9 @@ export default function AppRoutes() {
           </PublicOnlyRoute>
         } 
       />
+      <Route path="/landlord-register" element={<LandlordRegister />} />
       <Route 
-        path="/houses/:id" 
+        path="/houses/:slug" 
         element={
           <ProtectedRoute>
             <HouseDetail />
@@ -142,6 +145,14 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute requiredRole="tenant">
             <MyRentalApplications />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin" 
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <AdminDashboard />
           </ProtectedRoute>
         } 
       />
