@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Navbar from "../../components/Navbar/Navbar";
 import api from "../../config/api";
+import { AuthContext } from "../../context/AuthContext";
+import env from "../../environment/environment";
 import {
   User,
   Mail,
@@ -51,6 +53,10 @@ const features = [
 
 export default function LandlordRegister() {
   const navigate = useNavigate();
+  const { user, token } = useContext(AuthContext);
+  
+  const isLoggedIn = !!user && !!token;
+  
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -58,6 +64,21 @@ export default function LandlordRegister() {
     password_confirmation: "",
     phone_number: "",
   });
+
+  // Auto-fill form when user is logged in
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        name: user.name || "",
+        email: user.email || "",
+        phone_number: user.phone_number || "",
+        password: "existing_user",
+        password_confirmation: "existing_user",
+      }));
+    }
+  }, [user]);
+
   const [profileImage, setProfileImage] = useState(null);
   const [documentFile, setDocumentFile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -65,6 +86,7 @@ export default function LandlordRegister() {
   const [success, setSuccess] = useState("");
 
   const handleChange = (e) => {
+    if (isLoggedIn) return;
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -89,11 +111,18 @@ export default function LandlordRegister() {
 
     try {
       const data = new FormData();
-      data.append("name", formData.name);
-      data.append("email", formData.email);
-      data.append("password", formData.password);
-      data.append("password_confirmation", formData.password_confirmation);
-      data.append("phone_number", formData.phone_number);
+
+      // Only include user fields if NOT logged in
+      if (!isLoggedIn) {
+        data.append("name", formData.name);
+        data.append("email", formData.email);
+        data.append("password", formData.password);
+        data.append("password_confirmation", formData.password_confirmation);
+        data.append("phone_number", formData.phone_number);
+      } else if (user?.id) {
+        // Pass user_id explicitly when logged in
+        data.append("user_id", user.id);
+      }
 
       if (profileImage) {
         data.append("profile_path", profileImage);
@@ -102,9 +131,19 @@ export default function LandlordRegister() {
         data.append("document_path", documentFile);
       }
 
+      const headers = {
+        'Accept': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      console.log("Sending data:", Object.fromEntries(data.entries()));
       const response = await fetch(api.auth.registerLandlord(), {
-        method: "POST",
+        method: 'POST',
+        headers,
         body: data,
+        credentials: 'same-origin',
       });
 
       const result = await response.json();
@@ -113,10 +152,12 @@ export default function LandlordRegister() {
         throw new Error(result.message || "Registration failed");
       }
 
-      setSuccess("Registration successful! Please wait for admin approval.");
+      setSuccess(isLoggedIn 
+        ? "Registration successful! Please wait for admin approval. You will be redirected shortly." 
+        : "Registration successful! Please wait for admin approval.");
 
       setTimeout(() => {
-        navigate("/login");
+        navigate(isLoggedIn ? "/" : "/login");
       }, 3000);
     } catch (err) {
       setError(err.message || "Registration failed. Please try again.");
@@ -208,6 +249,7 @@ export default function LandlordRegister() {
                     onChange={handleChange}
                     placeholder="Enter your full name"
                     className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors"
+                    disabled={isLoggedIn}
                     required
                   />
                 </div>
@@ -226,46 +268,51 @@ export default function LandlordRegister() {
                     onChange={handleChange}
                     placeholder="Enter your email"
                     className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors"
+                    disabled={isLoggedIn}
                     required
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Password
-                </label>
-                <div className="relative">
-                  <LockKeyhole className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    placeholder="Create a password"
-                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors"
-                    required
-                  />
-                </div>
-              </div>
+              {!isLoggedIn && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Password
+                    </label>
+                    <div className="relative">
+                      <LockKeyhole className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        type="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        placeholder="Create a password"
+                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors"
+                        required
+                      />
+                    </div>
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Confirm Password
-                </label>
-                <div className="relative max-w-md">
-                  <LockKeyhole className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="password"
-                    name="password_confirmation"
-                    value={formData.password_confirmation}
-                    onChange={handleChange}
-                    placeholder="Confirm your password"
-                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors"
-                    required
-                  />
-                </div>
-              </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Confirm Password
+                    </label>
+                    <div className="relative max-w-md">
+                      <LockKeyhole className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        type="password"
+                        name="password_confirmation"
+                        value={formData.password_confirmation}
+                        onChange={handleChange}
+                        placeholder="Confirm your password"
+                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors"
+                        required
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -280,6 +327,7 @@ export default function LandlordRegister() {
                     onChange={handleChange}
                     placeholder="+95 123 456 789"
                     className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors"
+                    disabled={isLoggedIn}
                   />
                 </div>
               </div>
@@ -291,16 +339,26 @@ export default function LandlordRegister() {
                   Profile Photo{" "}
                   <span className="text-gray-500">(Optional)</span>
                 </label>
-                <label className="flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors w-full">
-                  <Camera className="w-5 h-5 text-gray-400" />
-                  <span className="text-sm text-gray-600">Choose Photo</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleProfileChange}
-                    className="hidden"
-                  />
-                </label>
+                {isLoggedIn && user?.profile_path ? (
+                  <div className="flex items-center gap-4 p-4 border border-gray-300 rounded-xl bg-gray-50">
+                    <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-200">
+                      <img src={env.getProfileUrl(user.profile_path)} alt="Profile" className="w-full h-full object-cover" />
+                    </div>
+                    <span className="text-sm text-gray-500">Current profile photo</span>
+                  </div>
+                ) : (
+                  <label className="flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors w-full">
+                    <Camera className="w-5 h-5 text-gray-400" />
+                    <span className="text-sm text-gray-600">Choose Photo</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleProfileChange}
+                      className="hidden"
+                      disabled={isLoggedIn}
+                    />
+                  </label>
+                )}
                 {profileImage && (
                   <span className="text-sm text-gray-500 mt-2 block">
                     {profileImage.name}
