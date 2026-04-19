@@ -14,13 +14,15 @@ class AuthResponse
      * @param string|null $token
      * @return array
      */
-    public static function register(User $user, string $token): array
+    public static function register(User $user, ?string $token): array
     {
         $response = ['user' => $user];
-        if ($token !== null) {
+        if ($token) { 
             $response['token'] = $token;
-            $response['role'] = $user->getRoleNames()->first() ?? null;
         }
+
+        $response['role'] = $user->getRoleNames()->first() ?? null;
+
         return $response;
     }
 

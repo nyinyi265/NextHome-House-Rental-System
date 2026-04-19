@@ -46,6 +46,7 @@ class AuthController extends Controller
 
     /**
      * Register landlord endpoint
+     * If user is logged in, upgrade their account to landlord instead of creating new user
      */
     public function registerLandlord(RegisterLandlordRequest $request): JsonResponse
     {
@@ -65,8 +66,20 @@ class AuthController extends Controller
         $data['profile_path'] = $profilePath;
         $data['document_path'] = $documentPath;
 
+        // If user is logged in, use their ID
+        if ($request->user()) {
+            $data['user_id'] = $request->user()->id;
+        }
+
         $result = $this->service->registerLandlord($data);
-        return $this->success(true, AuthResponse::register($result['user'], $result['token']), 'Landlord registered successfully', 201);
+        $response = AuthResponse::register($result['user'], $result['token']);
+
+        return $this->success(
+            true,
+            $response,
+            'Landlord registered successfully',
+            201
+        );
     }
 
     /**

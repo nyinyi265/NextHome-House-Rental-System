@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Storage;
 
 Route::prefix('auth')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
-    Route::post('landlord-register', [AuthController::class, 'registerLandlord']);
+    Route::post('landlord-register', [AuthController::class, 'registerLandlord'])->middleware('auth:sanctum');
     // name login so unauthenticated middleware can redirect without error
     Route::post('login', [AuthController::class, 'login'])->name('login');
     Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
