@@ -4,7 +4,7 @@ const API_BASE_URL = env.API_BASE_URL;
 
 const base = (path) => `${API_BASE_URL}${path}`;
 
-const endpoints = {
+  const endpoints = {
   baseUrl: API_BASE_URL,
   houses: () => base('/houses'),          // public/tenant browsing
   tenantHouses: () => base('/tenant/houses'),
@@ -17,10 +17,12 @@ const endpoints = {
     furnitures: () => base('/landlord/furnitures'),
     rentalApplications: () => base('/landlord/rental-applications'),
     rentals: () => base('/landlord/rentals'),
+    notifications: () => base('/landlord/notifications'),
   },
   tenant: {
     rentalApplications: () => base('/tenant/rental-applications'),
     rentals: () => base('/tenant/rentals'),
+    notifications: () => base('/tenant/notifications'),
   },
   furnitures: () => base('/amenties'),
   auth: {

@@ -1,12 +1,17 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect, useRef } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
-import { User, LogOut, ChevronDown, Loader2 } from "lucide-react";
+import { User, LogOut, ChevronDown, Loader2, Bell } from "lucide-react";
 import env from "../../environment/environment";
+import api from "../../config/api";
 
 export default function Navbar() {
-  const { user, logout, logoutLoading } = useContext(AuthContext);
+  const { user, logout, logoutLoading, token } = useContext(AuthContext);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [sseConnected, setSseConnected] = useState(false);
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -27,6 +32,127 @@ export default function Navbar() {
     setProfileOpen(false);
     navigate("/reset-password");
   };
+
+  // Fetch notifications for tenant or landlord
+  useEffect(() => {
+    if (user && token) {
+      if (user.role === "tenant") {
+        fetchNotifications();
+        window.addEventListener('rentalApplicationSubmitted', fetchNotifications);
+        return () => {
+          window.removeEventListener('rentalApplicationSubmitted', fetchNotifications);
+        };
+      } else if (user.role === "landlord") {
+        fetchNotifications();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, token]);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setProfileOpen(false);
+      setNotificationsOpen(false);
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      const response = await fetch(api.tenant.notifications(), {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
+      if (response.ok) {
+        const result = await response.json();
+        const notifs = result.data || [];
+        setNotifications(notifs);
+        setUnreadCount(notifs.filter(n => !n.read_at).length);
+      }
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
+    }
+  };
+
+  const toggleNotifications = async () => {
+    const newState = !notificationsOpen;
+    setNotificationsOpen(newState);
+    if (newState && user && token) {
+      await fetchNotifications();
+    }
+  };
+
+  const markAsRead = async (id, url = null) => {
+    try {
+      await fetch(`${api.tenant.notifications()}/${id}/read`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
+      setNotifications(prev => 
+        prev.map(n => n.id === id ? { ...n, read_at: new Date().toISOString() } : n)
+      );
+      setUnreadCount(prev => Math.max(0, prev - 1));
+      
+      if (url) {
+        navigate(url);
+      }
+      setNotificationsOpen(false);
+      setProfileOpen(false);
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+    }
+  };
+
+  // SSE connection for real-time notifications
+  useEffect(() => {
+    let eventSource = null;
+
+    if (user && token && notificationsOpen) {
+      // Get last notification ID
+      const lastId = notifications.length > 0 ? Math.max(...notifications.map(n => n.id)) : 0;
+      
+      // Determine API endpoint based on user role
+      const baseEndpoint = user.role === "tenant" ? api.tenant.notifications() : api.landlord.notifications();
+      
+      // Use query param for token since EventSource doesn't support custom headers
+      const sseUrl = `${baseEndpoint}/stream?last_id=${lastId}&token=${encodeURIComponent(token)}`;
+      
+      eventSource = new EventSource(sseUrl);
+
+      eventSource.addEventListener('notification', (event) => {
+        const data = JSON.parse(event.data);
+        setNotifications(prev => [data, ...prev]);
+        setUnreadCount(prev => prev + 1);
+      });
+
+      eventSource.addEventListener('error', (err) => {
+        console.error('SSE error:', err);
+        if (eventSource) {
+          eventSource.close();
+          setSseConnected(false);
+        }
+      });
+
+      eventSource.onopen = () => {
+        console.log('SSE connected');
+        setSseConnected(true);
+      };
+    }
+
+    return () => {
+      if (eventSource && eventSource.readyState !== EventSource.CLOSED) {
+        eventSource.close();
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, token, notificationsOpen, notifications]);
 
   return (
     <nav className="flex items-center justify-between px-8 py-4 bg-white border-b border-gray-200">
@@ -128,25 +254,70 @@ export default function Navbar() {
             Become a Landlord
           </NavLink>
         </li>
-        {user && user.role === "landlord" && (
-          <li>
-            <NavLink
-              to="/host"
-              className={({ isActive }) => 
-                `no-underline px-4 py-2 rounded-lg text-base font-medium transition ${isActive 
-                  ? "bg-green-100 text-green-700" 
-                  : "text-gray-700 hover:bg-green-50 hover:text-green-700"}`
-              }
-            >
-              Become a Host
-            </NavLink>
-          </li>
-        )}
       </ul>
       {user ? (
-        <div className="relative">
+        <div className="flex items-center gap-2">
+  {/* Notifications for tenants and landlords */}
+  {(user.role === "tenant" || user.role === "landlord") && (
+    <div className="relative">
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          toggleNotifications();
+        }}
+        className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
+      >
+        <Bell className="w-5 h-5 text-gray-600" />
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+            {unreadCount}
+          </span>
+        )}
+      </button>
+
+      {/* Notifications Dropdown */}
+      {notificationsOpen && (
+        <div 
+          className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border overflow-hidden z-50"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="p-4 border-b">
+            <h3 className="font-semibold text-gray-900">Notifications</h3>
+          </div>
+          <div className="max-h-96 overflow-y-auto">
+            {notifications.length === 0 ? (
+              <div className="p-4 text-center text-gray-500 text-sm">
+                No notifications
+              </div>
+            ) : (
+              notifications.map((notification) => (
+                <div
+                  key={notification.id}
+                  // onClick={() => markAsRead(notification.id, notification.url)}
+                  className={`p-4 border-b hover:bg-gray-50 cursor-pointer transition-colors ${
+                    !notification.read_at ? 'bg-blue-50' : ''
+                  }`}
+                >
+                  <p className="text-sm text-gray-900">{notification.message}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {new Date(notification.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )}
+
+          {/* Profile Dropdown */}
+          <div className="relative">
           <button
-            onClick={() => setProfileOpen(!profileOpen)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setProfileOpen(!profileOpen);
+            }}
             className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer bg-transparent border-none"
           >
             {/* Profile Picture or Default Avatar */}
@@ -170,9 +341,12 @@ export default function Navbar() {
             />
           </button>
 
-          {/* Dropdown Menu */}
-          {profileOpen && (
-            <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border overflow-hidden z-50">
+           {/* Dropdown Menu */}
+           {profileOpen && (
+             <div 
+               className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border overflow-hidden z-50"
+               onClick={(e) => e.stopPropagation()}
+             >
               <div className="p-4 border-b">
                 <p className="font-medium text-gray-900">
                   {user.name || "User"}
@@ -202,6 +376,7 @@ export default function Navbar() {
               </div>
             </div>
           )}
+          </div>
         </div>
       ) : (
         <div className="flex items-center gap-2">
