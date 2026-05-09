@@ -1,9 +1,10 @@
-import React, { useContext, useState, useEffect, useRef } from "react";
+import React, { useContext, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { User, LogOut, ChevronDown, Loader2, Bell } from "lucide-react";
 import env from "../../environment/environment";
 import api from "../../config/api";
+import { useEffect } from "react";
 
 export default function Navbar() {
   const { user, logout, logoutLoading, token } = useContext(AuthContext);

@@ -387,12 +387,12 @@ export default function HouseDetail() {
                     <p className="font-semibold">{bathrooms} Bathrooms</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                {/* <div className="flex items-center gap-2">
                   <Users className="w-6 h-6 text-gray-600" />
                   <div>
                     <p className="font-semibold">Up to {maxGuests} Guests</p>
                   </div>
-                </div>
+                </div> */}
               </div>
             </div>
 

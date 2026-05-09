@@ -502,6 +502,8 @@ export default function LandlordDashboard() {
   const [editingApplication, setEditingApplication] = useState(null);
   const [editDuration, setEditDuration] = useState(3);
   const [editDurationLoading, setEditDurationLoading] = useState(false);
+  const [approveLoading, setApproveLoading] = useState(false);
+  const [rejectLoading, setRejectLoading] = useState(false);
   const [dashboardStats, setDashboardStats] = useState({
     totalProperties: 0,
     totalRentals: 0,
@@ -690,6 +692,8 @@ export default function LandlordDashboard() {
     setShowConfirmModal(false);
     setSelectedApplication(null);
     setModalAction(null);
+    setApproveLoading(false);
+    setRejectLoading(false);
   };
 
   const handleConfirmAction = async () => {
@@ -697,6 +701,13 @@ export default function LandlordDashboard() {
 
     try {
       const status = modalAction === "approve" ? "approved" : "rejected";
+
+      if (modalAction === "approve") {
+        setApproveLoading(true);
+      } else {
+        setRejectLoading(true);
+      }
+
       await houseService.updateRentalApplicationStatus(
         token,
         selectedApplication.id,
@@ -707,6 +718,9 @@ export default function LandlordDashboard() {
     } catch (err) {
       console.error("Failed to update application status", err);
       alert("Failed to update application status");
+    } finally {
+      setApproveLoading(false);
+      setRejectLoading(false);
     }
   };
 
@@ -1970,22 +1984,31 @@ export default function LandlordDashboard() {
               application?
             </p>
             <div className="flex gap-3 justify-end">
-              <button
-                onClick={closeConfirmModal}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmAction}
-                className={`px-4 py-2 text-white rounded-lg transition-colors ${
-                  modalAction === "approve"
-                    ? "bg-green-600 hover:bg-green-700"
-                    : "bg-red-600 hover:bg-red-700"
-                }`}
-              >
-                {modalAction === "approve" ? "Approve" : "Reject"}
-              </button>
+               <button
+                 onClick={closeConfirmModal}
+                 disabled={approveLoading || rejectLoading}
+                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+               >
+                 Cancel
+               </button>
+               <button
+                 onClick={handleConfirmAction}
+                 disabled={approveLoading || rejectLoading}
+                 className={`px-4 py-2 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${
+                   modalAction === "approve"
+                     ? "bg-green-600 hover:bg-green-700"
+                     : "bg-red-600 hover:bg-red-700"
+                 }`}
+               >
+                 {(approveLoading && modalAction === "approve") || (rejectLoading && modalAction === "reject") ? (
+                   <>
+                     <Loader2 className="w-4 h-4 animate-spin" />
+                     {modalAction === "approve" ? "Approving..." : "Rejecting..."}
+                   </>
+                 ) : (
+                   modalAction === "approve" ? "Approve" : "Reject"
+                 )}
+               </button>
             </div>
           </div>
         </div>
