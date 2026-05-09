@@ -266,7 +266,7 @@ export default function Explore() {
       <Navbar />
 
       {/* Search and Filter Bar */}
-      <div className="sticky top-0 bg-white z-40 border-b">
+      <div className="sticky top-0 bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between gap-4">
             {/* Search Input */}

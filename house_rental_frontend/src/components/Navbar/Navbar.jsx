@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState, useEffect, useCallback } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { useCompare } from "../../context/CompareContext";
@@ -50,22 +50,7 @@ export default function Navbar() {
     }
   }, [mobileMenuOpen]);
 
-  // Fetch notifications for tenant or landlord
-  useEffect(() => {
-    if (user && token) {
-      if (user.role === "tenant") {
-        fetchNotifications();
-        window.addEventListener("rentalApplicationSubmitted", fetchNotifications);
-        return () => {
-          window.removeEventListener("rentalApplicationSubmitted", fetchNotifications);
-        };
-      } else if (user.role === "landlord") {
-        fetchNotifications();
-      }
-    }
-  }, [user, token]);
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       let url;
       if (user?.role === "landlord") {
@@ -86,10 +71,25 @@ export default function Navbar() {
         setNotifications(notifs);
         setUnreadCount(notifs.filter((n) => !n.read_at).length);
       }
-    } catch (error) {
-      console.error("Failed to fetch notifications:", error);
+    } catch (err) {
+      console.error("Failed to fetch notifications:", err);
     }
-  };
+  }, [user?.role, token]);
+
+  useEffect(() => {
+    if (user && token) {
+      if (user.role === "tenant") {
+        fetchNotifications();
+        window.addEventListener("rentalApplicationSubmitted", fetchNotifications);
+        return () => {
+          window.removeEventListener("rentalApplicationSubmitted", fetchNotifications);
+        };
+      } else if (user.role === "landlord") {
+        fetchNotifications();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, token]);
 
   const handleLogout = async () => {
     await logout();
@@ -107,29 +107,23 @@ export default function Navbar() {
     }
   };
 
-  const handleResetPasswordClick = () => {
-    setProfileOpen(false);
-    setMobileMenuOpen(false);
-    navigate("/reset-password");
-  };
-
-  const toggleNotifications = () => {
+  const toggleNotifications = useCallback(() => {
     const newState = !notificationsOpen;
     setNotificationsOpen(newState);
     if (newState) {
       setProfileOpen(false);
       setCompareOpen(false);
     }
-  };
+  }, [notificationsOpen]);
 
-  const toggleCompare = () => {
+  const toggleCompare = useCallback(() => {
     const newState = !compareOpen;
     setCompareOpen(newState);
     if (newState) {
       setProfileOpen(false);
       setNotificationsOpen(false);
     }
-  };
+  }, [compareOpen]);
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
