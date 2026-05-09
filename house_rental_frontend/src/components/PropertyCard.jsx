@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart, Star, Loader2 } from 'lucide-react';
+import { Heart, Star, Loader2, Scale } from 'lucide-react';
 import env from '../environment/environment';
+import { useCompare } from '../context/CompareContext';
 
 export default function PropertyCard({ id, slug, title, location, city, township, street, price, rating, featured, available_from, images = [], house_photos = [] }) {
   const [isLiked, setIsLiked] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
   const navigate = useNavigate();
+  const { addToCompare, isInCompare } = useCompare();
 
   const resolvedImages = (() => {
     const source = house_photos?.length > 0 ? house_photos : images;
@@ -23,6 +26,7 @@ export default function PropertyCard({ id, slug, title, location, city, township
 
   const defaultImage = "bg-gradient-to-br from-purple-500 to-blue-500";
   const cardImages = resolvedImages.length > 0 ? resolvedImages : [null];
+  const inCompare = isInCompare(id);
 
   const handleCardClick = () => {
     setIsNavigating(true);
@@ -34,11 +38,43 @@ export default function PropertyCard({ id, slug, title, location, city, township
     setIsLiked(!isLiked);
   };
 
+  const handleCompareClick = async (e) => {
+    e.stopPropagation();
+    if (inCompare || isAdding) return;
+    
+    setIsAdding(true);
+    try {
+      await addToCompare({ id, title: displayLocation, price });
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
   return (
-    <div onClick={handleCardClick} className="group cursor-pointer bg-white rounded-2xl border-2 border-primary transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:scale-[1.02]">
+    <div onClick={handleCardClick} className="group cursor-pointer bg-white rounded-2xl border-2 border-primary transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:scale-[1.02] relative">
+      {/* Compare Button - Top Right Corner */}
+      <div className="absolute top-3 right-3 z-10">
+        <button
+          onClick={handleCompareClick}
+          disabled={isAdding}
+          title={inCompare ? "Remove from compare" : "Add to compare"}
+          className={`p-2 rounded-full backdrop-blur-sm transition-all duration-200 ${
+            inCompare
+              ? 'bg-primary/90 text-white hover:bg-primary hover:scale-110'
+              : 'bg-white/90 text-gray-700 hover:bg-white hover:scale-110'
+          } ${isAdding ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          {isAdding ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Scale className="w-4 h-4" />
+          )}
+        </button>
+      </div>
+
       <div className={`relative rounded-2xl overflow-hidden aspect-[4/3] mb-2 transition-transform duration-300 ${isNavigating ? 'opacity-50' : ''}`}>
         {isNavigating && (
-          <div className="absolute inset-0 bg-white/90 z-10 flex flex-col items-center justify-center gap-2">
+          <div className="absolute inset-0 bg-white/90 z-20 flex flex-col items-center justify-center gap-2">
             <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
             <span className="text-sm text-gray-600 font-medium">Loading...</span>
           </div>
@@ -59,6 +95,20 @@ export default function PropertyCard({ id, slug, title, location, city, township
         <div>
           <h3 className="font-semibold text-gray-900">{displayLocation}</h3>
           <p className="text-gray-500 text-sm">Available From: {available_from}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {rating != null && (
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <Star className="w-4 h-4 fill-black text-black" />
+              <span className="font-medium text-sm">{rating}</span>
+            </div>
+          )}
+          <button
+            onClick={handleLikeClick}
+            className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <Heart className={`w-4 h-4 ${isLiked ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
+          </button>
         </div>
       </div>
       <p className="my-2 px-4">

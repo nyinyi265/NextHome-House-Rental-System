@@ -1,27 +1,105 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
-import { User, LogOut, ChevronDown, Loader2, Bell } from "lucide-react";
+import { useCompare } from "../../context/CompareContext";
+import {
+  User,
+  LogOut,
+  ChevronDown,
+  Loader2,
+  Bell,
+  Scale,
+  Home,
+  X,
+  Menu,
+  LayoutDashboard,
+  FileText,
+  Building2,
+  Info,
+  Phone,
+} from "lucide-react";
 import env from "../../environment/environment";
-import api from "../../config/api";
-import { useEffect } from "react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/Sheet";
+import { Button } from "../ui/Button";
+import { Avatar, AvatarImage, AvatarFallback } from "../ui/Avatar";
+import { Badge } from "../ui/Badge";
 
 export default function Navbar() {
   const { user, logout, logoutLoading, token } = useContext(AuthContext);
+  const { getCompareCount, compareProperties, removeFromCompare, clearCompare } = useCompare();
   const [profileOpen, setProfileOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [compareOpen, setCompareOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [sseConnected, setSseConnected] = useState(false);
   const navigate = useNavigate();
+
+  const compareCount = getCompareCount();
+
+  // Close mobile menu when navigating
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      const handleEscape = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+          setMobileMenuOpen(false);
+        }
+      };
+      document.addEventListener("keydown", handleEscape);
+      return () => document.removeEventListener("keydown", handleEscape);
+    }
+  }, [mobileMenuOpen]);
+
+  // Fetch notifications for tenant or landlord
+  useEffect(() => {
+    if (user && token) {
+      if (user.role === "tenant") {
+        fetchNotifications();
+        window.addEventListener("rentalApplicationSubmitted", fetchNotifications);
+        return () => {
+          window.removeEventListener("rentalApplicationSubmitted", fetchNotifications);
+        };
+      } else if (user.role === "landlord") {
+        fetchNotifications();
+      }
+    }
+  }, [user, token]);
+
+  const fetchNotifications = async () => {
+    try {
+      let url;
+      if (user?.role === "landlord") {
+        url = "http://127.0.0.1:8000/api/landlord/notifications";
+      } else {
+        url = "http://127.0.0.1:8000/api/tenant/notifications";
+      }
+
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      });
+      if (response.ok) {
+        const result = await response.json();
+        const notifs = result.data || [];
+        setNotifications(notifs);
+        setUnreadCount(notifs.filter((n) => !n.read_at).length);
+      }
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error);
+    }
+  };
 
   const handleLogout = async () => {
     await logout();
     navigate("/login");
+    setMobileMenuOpen(false);
   };
 
   const handleProfileClick = () => {
     setProfileOpen(false);
+    setMobileMenuOpen(false);
     if (user?.role === "landlord") {
       navigate("/landlord/profile");
     } else {
@@ -31,333 +109,318 @@ export default function Navbar() {
 
   const handleResetPasswordClick = () => {
     setProfileOpen(false);
+    setMobileMenuOpen(false);
     navigate("/reset-password");
   };
 
-  // Fetch notifications for tenant or landlord
-  useEffect(() => {
-    if (user && token) {
-      if (user.role === "tenant") {
-        fetchNotifications();
-        window.addEventListener('rentalApplicationSubmitted', fetchNotifications);
-        return () => {
-          window.removeEventListener('rentalApplicationSubmitted', fetchNotifications);
-        };
-      } else if (user.role === "landlord") {
-        fetchNotifications();
-      }
+  const toggleNotifications = () => {
+    const newState = !notificationsOpen;
+    setNotificationsOpen(newState);
+    if (newState) {
+      setProfileOpen(false);
+      setCompareOpen(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, token]);
+  };
+
+  const toggleCompare = () => {
+    const newState = !compareOpen;
+    setCompareOpen(newState);
+    if (newState) {
+      setProfileOpen(false);
+      setNotificationsOpen(false);
+    }
+  };
+
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+  };
+
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false);
+  };
 
   // Close dropdowns when clicking outside
   useEffect(() => {
-    const handleClickOutside = () => {
-      setProfileOpen(false);
-      setNotificationsOpen(false);
+    const handleClickOutside = (event) => {
+      // Only close if click is outside navbar
+      if (event.target.closest('nav') === null) {
+        setProfileOpen(false);
+        setNotificationsOpen(false);
+        setCompareOpen(false);
+      }
     };
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  const fetchNotifications = async () => {
-    try {
-      const response = await fetch(api.tenant.notifications(), {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-        },
-      });
-      if (response.ok) {
-        const result = await response.json();
-        const notifs = result.data || [];
-        setNotifications(notifs);
-        setUnreadCount(notifs.filter(n => !n.read_at).length);
-      }
-    } catch (error) {
-      console.error('Failed to fetch notifications:', error);
-    }
-  };
+  // Navigation items configuration
+  const getNavItems = () => {
+    const items = [
+      { path: "/", label: "Home", icon: Home },
+      { path: "/explore", label: "Explore", icon: Building2 },
+    ];
 
-  const toggleNotifications = async () => {
-    const newState = !notificationsOpen;
-    setNotificationsOpen(newState);
-    if (newState && user && token) {
-      await fetchNotifications();
-    }
-  };
-
-  const markAsRead = async (id, url = null) => {
-    try {
-      await fetch(`${api.tenant.notifications()}/${id}/read`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-        },
-      });
-      setNotifications(prev => 
-        prev.map(n => n.id === id ? { ...n, read_at: new Date().toISOString() } : n)
+    if (user?.role === "tenant") {
+      items.push(
+        { path: "/my-rentals", label: "My Rentals", icon: LayoutDashboard },
+        { path: "/my-applications", label: "My Applications", icon: FileText }
       );
-      setUnreadCount(prev => Math.max(0, prev - 1));
-      
-      if (url) {
-        navigate(url);
-      }
-      setNotificationsOpen(false);
-      setProfileOpen(false);
-    } catch (error) {
-      console.error('Failed to mark notification as read:', error);
     }
+
+    items.push(
+      { path: "/about", label: "About", icon: Info },
+      { path: "/contact", label: "Contact Us", icon: Phone },
+      { path: "/landlord-register", label: "Become a Landlord", icon: Building2 }
+    );
+
+    return items;
   };
 
-  // SSE connection for real-time notifications
-  useEffect(() => {
-    let eventSource = null;
-
-    if (user && token && notificationsOpen) {
-      // Get last notification ID
-      const lastId = notifications.length > 0 ? Math.max(...notifications.map(n => n.id)) : 0;
-      
-      // Determine API endpoint based on user role
-      const baseEndpoint = user.role === "tenant" ? api.tenant.notifications() : api.landlord.notifications();
-      
-      // Use query param for token since EventSource doesn't support custom headers
-      const sseUrl = `${baseEndpoint}/stream?last_id=${lastId}&token=${encodeURIComponent(token)}`;
-      
-      eventSource = new EventSource(sseUrl);
-
-      eventSource.addEventListener('notification', (event) => {
-        const data = JSON.parse(event.data);
-        setNotifications(prev => [data, ...prev]);
-        setUnreadCount(prev => prev + 1);
-      });
-
-      eventSource.addEventListener('error', (err) => {
-        console.error('SSE error:', err);
-        if (eventSource) {
-          eventSource.close();
-          setSseConnected(false);
-        }
-      });
-
-      eventSource.onopen = () => {
-        console.log('SSE connected');
-        setSseConnected(true);
-      };
-    }
-
-    return () => {
-      if (eventSource && eventSource.readyState !== EventSource.CLOSED) {
-        eventSource.close();
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, token, notificationsOpen, notifications]);
-
-  return (
-    <nav className="flex items-center justify-between px-8 py-4 bg-white border-b border-gray-200">
-      <div>
-        <Link to="/" className="no-underline">
-          <img 
-            src="/NextHomeLogo.png" 
-            alt="NextHome" 
-            className="h-[50px] w-auto"
-          />
-        </Link>
-      </div>
-      <ul className="flex gap-x-2 list-none m-0 p-0 items-center">
-        <li>
-          <NavLink
-            to="/"
-            className={({ isActive }) => 
-              `no-underline px-4 py-2 rounded-lg text-base font-medium transition ${isActive 
-                ? "bg-green-100 text-green-700" 
-                : "text-gray-700 hover:bg-green-50 hover:text-green-700"}`
-            }
-          >
-            Home
-          </NavLink>
-        </li>
-        <li>
-          <NavLink
-            to="/explore"
-            className={({ isActive }) => 
-              `no-underline px-4 py-2 rounded-lg text-base font-medium transition ${isActive 
-                ? "bg-green-100 text-green-700" 
-                : "text-gray-700 hover:bg-green-50 hover:text-green-700"}`
-            }
-          >
-            Explore
-          </NavLink>
-        </li>
-        {user && user.role === "tenant" && (
-          <li>
+  const renderDesktopNav = () => (
+    <>
+      {/* Desktop Navigation Links - Hidden on mobile, visible on lg+ */}
+      <ul className="hidden lg:flex gap-x-2 list-none m-0 p-0 items-center">
+        {getNavItems().map((item) => (
+          <li key={item.path}>
             <NavLink
-              to="/my-rentals"
-              className={({ isActive }) => 
-                `no-underline px-4 py-2 rounded-lg text-base font-medium transition ${isActive 
-                  ? "bg-green-100 text-green-700" 
-                  : "text-gray-700 hover:bg-green-50 hover:text-green-700"}`
+              to={item.path}
+              className={({ isActive }) =>
+                `no-underline px-4 py-2 rounded-lg text-base font-medium transition ${
+                  isActive
+                    ? "bg-green-100 text-green-700"
+                    : "text-gray-700 hover:bg-green-50 hover:text-green-700"
+                }`
               }
             >
-              My Rentals
+              {item.label}
             </NavLink>
           </li>
-        )}
-        {user && user.role === "tenant" && (
-          <li>
-            <NavLink
-              to="/my-applications"
-              className={({ isActive }) => 
-                `no-underline px-4 py-2 rounded-lg text-base font-medium transition ${isActive 
-                  ? "bg-green-100 text-green-700" 
-                  : "text-gray-700 hover:bg-green-50 hover:text-green-700"}`
-              }
-            >
-              My Applications
-            </NavLink>
-          </li>
-        )}
-        <li>
-          <NavLink
-            to="/about"
-            className={({ isActive }) => 
-              `no-underline px-4 py-2 rounded-lg text-base font-medium transition ${isActive 
-                ? "bg-green-100 text-green-700" 
-                : "text-gray-700 hover:bg-green-50 hover:text-green-700"}`
-            }
-          >
-            About
-          </NavLink>
-        </li>
-        <li>
-          <NavLink
-            to="/contact"
-            className={({ isActive }) => 
-              `no-underline px-4 py-2 rounded-lg text-base font-medium transition ${isActive 
-                ? "bg-green-100 text-green-700" 
-                : "text-gray-700 hover:bg-green-50 hover:text-green-700"}`
-            }
-          >
-            Contact Us
-          </NavLink>
-        </li>
-        <li>
-          <NavLink
-            to="/landlord-register"
-            className={({ isActive }) => 
-              `no-underline px-4 py-2 rounded-lg text-base font-medium transition ${isActive 
-                ? "bg-green-100 text-green-700" 
-                : "text-gray-700 hover:bg-green-50 hover:text-green-700"}`
-            }
-          >
-            Become a Landlord
-          </NavLink>
-        </li>
+        ))}
       </ul>
-      {user ? (
-        <div className="flex items-center gap-2">
-  {/* Notifications for tenants and landlords */}
-  {(user.role === "tenant" || user.role === "landlord") && (
-    <div className="relative">
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          toggleNotifications();
-        }}
-        className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
-      >
-        <Bell className="w-5 h-5 text-gray-600" />
-        {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-            {unreadCount}
-          </span>
-        )}
-      </button>
 
-      {/* Notifications Dropdown */}
-      {notificationsOpen && (
-        <div 
-          className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border overflow-hidden z-50"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="p-4 border-b">
-            <h3 className="font-semibold text-gray-900">Notifications</h3>
-          </div>
-          <div className="max-h-96 overflow-y-auto">
-            {notifications.length === 0 ? (
-              <div className="p-4 text-center text-gray-500 text-sm">
-                No notifications
-              </div>
-            ) : (
-              notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  // onClick={() => markAsRead(notification.id, notification.url)}
-                  className={`p-4 border-b hover:bg-gray-50 cursor-pointer transition-colors ${
-                    !notification.read_at ? 'bg-blue-50' : ''
-                  }`}
-                >
-                  <p className="text-sm text-gray-900">{notification.message}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {new Date(notification.created_at).toLocaleDateString()}
-                  </p>
+      {/* Desktop Right Section - Notifications, Compare, Profile */}
+      <div className="hidden lg:flex items-center gap-2">
+        {/* Notifications */}
+        {(user?.role === "tenant" || user?.role === "landlord") && (
+          <div className="relative">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleNotifications();
+              }}
+              className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+              aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
+              aria-expanded={notificationsOpen}
+            >
+              <Bell className="w-5 h-5 text-gray-600" />
+              {unreadCount > 0 && (
+                <Badge variant="destructive" className="absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 flex items-center justify-center">
+                  {unreadCount}
+                </Badge>
+              )}
+            </button>
+
+            {/* Notifications Dropdown */}
+            {notificationsOpen && (
+              <div
+                className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border overflow-hidden z-50"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="p-4 border-b">
+                  <h3 className="font-semibold text-gray-900">Notifications</h3>
                 </div>
-              ))
+                <div className="max-h-96 overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <div className="p-4 text-center text-gray-500 text-sm">
+                      No notifications
+                    </div>
+                  ) : (
+                    notifications.map((notification) => (
+                      <div
+                        key={notification.id}
+                        className={`p-4 border-b hover:bg-gray-50 transition-colors ${
+                          !notification.read_at ? "bg-blue-50" : ""
+                        }`}
+                      >
+                        <p className="text-sm text-gray-900">{notification.message}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {new Date(notification.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
             )}
           </div>
-        </div>
-      )}
-    </div>
-  )}
+        )}
 
-          {/* Profile Dropdown */}
+        {/* Compare Dropdown - for tenants only */}
+        {user?.role === "tenant" && (
           <div className="relative">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setProfileOpen(!profileOpen);
-            }}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer bg-transparent border-none"
-          >
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleCompare();
+              }}
+              className="relative flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+              aria-label={`Compare properties${compareCount > 0 ? ` (${compareCount} selected)` : ""}`}
+              aria-expanded={compareOpen}
+            >
+              <Scale className="w-5 h-5 text-gray-600" />
+              <span className="text-gray-700 text-sm hidden sm:inline">Compare</span>
+              {compareCount > 0 && (
+                <Badge variant="default" className="absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 flex items-center justify-center bg-primary text-white">
+                  {compareCount}
+                </Badge>
+              )}
+            </button>
+
+            {/* Compare Dropdown Menu */}
+            {compareOpen && (
+              <div
+                className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-lg border overflow-hidden z-50"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="p-4 border-b flex items-center justify-between">
+                  <h3 className="font-semibold text-gray-900">Compare ({compareCount})</h3>
+                  {compareCount > 0 && (
+                    <Link
+                      to="/compare"
+                      onClick={() => {
+                        setProfileOpen(false);
+                        setNotificationsOpen(false);
+                        setCompareOpen(false);
+                      }}
+                      className="text-sm text-primary hover:underline"
+                    >
+                      View All
+                    </Link>
+                  )}
+                </div>
+                <div className="max-h-96 overflow-y-auto">
+                  {compareProperties.length === 0 ? (
+                    <div className="p-4 text-center text-gray-500 text-sm">
+                      No properties selected
+                    </div>
+                  ) : (
+                    <div className="p-2 space-y-1">
+                      {compareProperties.slice(0, 4).map((property) => (
+                        <div
+                          key={property.id}
+                          className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 group"
+                        >
+                          {/* Property Thumbnail */}
+                          <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                            {property.housePhotos?.[0] ? (
+                              <img
+                                src={env.getImageUrl(property.housePhotos[0].photo_path)}
+                                alt=""
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Home className="w-5 h-5 text-gray-400" />
+                              </div>
+                            )}
+                          </div>
+                          {/* Property Info */}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {property.title || property.location || "Property"}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              ${property.price || property.price_per_month}/mo
+                            </p>
+                          </div>
+                          {/* Remove Button */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeFromCompare(property.id);
+                            }}
+                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                            aria-label="Remove from compare"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {compareProperties.length > 0 && (
+                  <div className="p-3 border-t">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (window.confirm("Clear all properties from comparison?")) {
+                          clearCompare();
+                          setCompareOpen(false);
+                        }
+                      }}
+                      className="w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                )}
+                </div>
+              )}
+           </div>
+         )}
+
+           {/* Profile Dropdown */}
+          <div className="relative">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setProfileOpen(!profileOpen);
+              }}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+              aria-label="User menu"
+              aria-expanded={profileOpen}
+            >
             {/* Profile Picture or Default Avatar */}
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-              {/* <span>{user.profile_path}</span> */}
-              {user.profile_path ? (
-                <img
+              {user?.profile_path ? (
+                <AvatarImage
                   src={env.getProfileUrl(user.profile_path)}
-                  alt={user.name}
+                  alt={user.name || "User"}
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <User className="w-4 h-4 text-primary" />
+                <AvatarFallback>
+                  <User className="w-4 h-4 text-primary" />
+                </AvatarFallback>
               )}
             </div>
             <span className="text-gray-700 text-sm hidden sm:inline">
-              {user.name || "User"}
+              {user?.name || "User"}
             </span>
             <ChevronDown
-              className={`w-4 h-4 text-gray-500 transition-transform ${profileOpen ? "rotate-180" : ""}`}
+              className={`w-4 h-4 text-gray-500 transition-transform hidden sm:block ${
+                profileOpen ? "rotate-180" : ""
+              }`}
             />
           </button>
 
-           {/* Dropdown Menu */}
-           {profileOpen && (
-             <div 
-               className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border overflow-hidden z-50"
-               onClick={(e) => e.stopPropagation()}
-             >
+          {/* Profile Dropdown Menu */}
+          {profileOpen && (
+            <div
+              className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border overflow-hidden z-50"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="p-4 border-b">
                 <p className="font-medium text-gray-900">
-                  {user.name || "User"}
+                  {user?.name || "User"}
                 </p>
-                <p className="text-sm text-gray-500 truncate">{user.email}</p>
+                <p className="text-sm text-gray-500 truncate">{user?.email}</p>
               </div>
               <div className="p-2">
                 <button
                   onClick={handleProfileClick}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer bg-transparent border-none text-left"
+                  className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:bg-gray-100"
                 >
                   <User className="w-4 h-4" />
                   Profile
@@ -365,7 +428,7 @@ export default function Navbar() {
                 <button
                   onClick={handleLogout}
                   disabled={logoutLoading}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer bg-transparent border-none disabled:opacity-50"
+                  className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors focus:outline-none focus:bg-red-50 disabled:opacity-50"
                 >
                   {logoutLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -377,25 +440,285 @@ export default function Navbar() {
               </div>
             </div>
           )}
-          </div>
         </div>
-      ) : (
-        <div className="flex items-center gap-2">
-          <Link
-            to="/login"
-            className="px-4 py-2 bg-primary text-white rounded cursor-pointer text-base no-underline border-none hover:opacity-90"
-          >
-            Login
-          </Link>
+      </div>
+    </>
+  );
 
+  // Mobile menu navigation items
+  const NavItem = ({ item, onClick }) => {
+    const Icon = item.icon;
+    return (
+      <Link
+        to={item.path}
+        onClick={onClick}
+        className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
+      >
+        <Icon className="w-5 h-5 text-gray-500" />
+        <span className="font-medium">{item.label}</span>
+      </Link>
+    );
+  };
+
+  return (
+    <nav className="sticky top-0 z-40 flex items-center justify-between px-4 lg:px-8 py-4 bg-white border-b border-gray-200">
+      {/* Logo */}
+      <Link to="/" className="no-underline flex-shrink-0">
+        <img
+          src="/NextHomeLogo.png"
+          alt="NextHome"
+          className="h-[50px] w-auto"
+        />
+      </Link>
+
+      {/* Desktop Navigation */}
+      {renderDesktopNav()}
+
+      {/* Hamburger Menu Button - Visible only on mobile */}
+      <div className="lg:hidden flex items-center gap-2">
+        {/* Mobile Compare Button with Badge */}
+        {user?.role === "tenant" && (
           <Link
-            to="/register"
-            className="px-4 py-2 bg-primary text-white rounded cursor-pointer text-base no-underline border-none hover:opacity-90"
+            to="/compare"
+            className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            aria-label={`Compare properties${compareCount > 0 ? ` (${compareCount} selected)` : ""}`}
           >
-            Register
+            <Scale className="w-5 h-5 text-gray-600" />
+            {compareCount > 0 && (
+              <Badge variant="default" className="absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 flex items-center justify-center bg-primary text-white">
+                {compareCount}
+              </Badge>
+            )}
           </Link>
-        </div>
-      )}
+        )}
+
+        {/* Hamburger / Close Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleMobileMenu}
+          className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+          aria-expanded={mobileMenuOpen}
+        >
+          {mobileMenuOpen ? (
+            <X className="w-6 h-6 text-gray-600" />
+          ) : (
+            <Menu className="w-6 h-6 text-gray-600" />
+          )}
+        </Button>
+      </div>
+
+          {/* Mobile Sheet/Drawer */}
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetContent side="right" className="p-0 w-80 max-w-[85vw]">
+              <SheetHeader className="p-4 border-b flex items-center justify-between">
+                <SheetTitle className="sr-only">Navigation menu</SheetTitle>
+                <div className="flex items-center gap-3">
+                  {/* User avatar or default */}
+                  <Avatar className="w-10 h-10">
+                    {user?.profile_path ? (
+                      <AvatarImage
+                        src={env.getProfileUrl(user.profile_path)}
+                        alt={user.name || "User"}
+                      />
+                    ) : (
+                      <AvatarFallback>
+                        <User className="w-5 h-5" />
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-gray-900">
+                      {user?.name || "User"}
+                    </span>
+                    <span className="text-xs text-gray-500 capitalize">{user?.role || "Guest"}</span>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={closeMobileMenu}
+                  className="rounded-md p-1 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-ring"
+                  aria-label="Close menu"
+                >
+                  <X className="w-5 h-5" />
+                </Button>
+              </SheetHeader>
+
+          {/* Mobile Navigation Items */}
+          <div className="flex-1 overflow-y-auto py-2">
+            {getNavItems().map((item) => (
+              <NavItem key={item.path} item={item} onClick={closeMobileMenu} />
+            ))}
+
+
+            {/* Compare Section - Mobile */}
+            {user?.role === "tenant" && (
+              <>
+                <div className="px-4 py-3 border-t border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-gray-900">Compare</span>
+                    <Badge variant={compareCount > 0 ? "default" : "secondary"}>
+                      {compareCount} selected
+                    </Badge>
+                  </div>
+                </div>
+                {compareCount > 0 && (
+                  <div className="px-4 py-2 space-y-2">
+                    {compareProperties.slice(0, 4).map((property) => (
+                      <div
+                        key={property.id}
+                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50"
+                      >
+                        <div className="w-10 h-10 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                          {property.housePhotos?.[0] ? (
+                            <img
+                              src={env.getImageUrl(property.housePhotos[0].photo_path)}
+                              alt=""
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Home className="w-4 h-4 text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {property.title || property.location || "Property"}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            ${property.price || property.price_per_month}/mo
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            removeFromCompare(property.id);
+                          }}
+                          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                          aria-label="Remove from compare"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                    <Link
+                      to="/compare"
+                      onClick={closeMobileMenu}
+                      className="block text-center text-sm text-primary hover:underline py-2"
+                    >
+                      View All Properties
+                    </Link>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Notifications Section - Mobile */}
+            {(user?.role === "tenant" || user?.role === "landlord") && (
+              <>
+                <div className="px-4 py-3 border-t border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-gray-900">
+                      Notifications
+                    </span>
+                    {unreadCount > 0 && (
+                      <Badge variant="destructive">{unreadCount} unread</Badge>
+                    )}
+                  </div>
+                </div>
+                <div className="px-4 py-2 max-h-64 overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <p className="text-sm text-gray-500 text-center py-4">
+                      No notifications
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {notifications.slice(0, 5).map((notification) => (
+                        <div
+                          key={notification.id}
+                          className={`p-3 rounded-lg ${
+                            !notification.read_at ? "bg-blue-50" : "bg-gray-50"
+                          }`}
+                        >
+                          <p className="text-sm text-gray-900 line-clamp-2">
+                            {notification.message}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {new Date(notification.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* User Profile Section - Mobile */}
+            <div className="border-t border-gray-200 mt-auto">
+              <div className="px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <Avatar className="w-10 h-10">
+                    {user?.profile_path ? (
+                      <AvatarImage
+                        src={env.getProfileUrl(user.profile_path)}
+                        alt={user.name || "User"}
+                      />
+                    ) : (
+                      <AvatarFallback>
+                        <User className="w-5 h-5" />
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {user?.name || "User"}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="px-2 pb-2 space-y-1">
+                <button
+                  onClick={handleProfileClick}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <User className="w-4 h-4" />
+                  Profile
+                </button>
+                <button
+                  onClick={handleLogout}
+                  disabled={logoutLoading}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {logoutLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <LogOut className="w-4 h-4" />
+                  )}
+                  {logoutLoading ? "Logging out..." : "Logout"}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Compare Quick Actions */}
+          {user?.role === "tenant" && compareCount > 0 && (
+            <div className="p-4 border-t bg-gray-50">
+              <Link
+                to="/compare"
+                onClick={closeMobileMenu}
+                className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium"
+              >
+                <Scale className="w-5 h-5" />
+                Compare Properties ({compareCount})
+              </Link>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </nav>
   );
 }

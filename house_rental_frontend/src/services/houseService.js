@@ -336,6 +336,85 @@ async function getTenantRentalApplications(token) {
   return response.json();
 }
 
+/**
+ * Get compare list
+ * @param {string} token - Authentication token
+ */
+async function getCompare(token) {
+  const headers = { 
+    Accept: 'application/json',
+    Authorization: `Bearer ${token}`
+  };
+  const response = await fetch(api.tenant.compare(), { headers });
+  if (!response.ok) {
+    const err = await response.json();
+    throw err;
+  }
+  return response.json();
+}
+
+/**
+ * Add property to compare list
+ * @param {string} token - Authentication token
+ * @param {number} propertyId - Property ID
+ */
+async function addToCompare(token, propertyId) {
+  const headers = { 
+    Accept: 'application/json',
+    Authorization: `Bearer ${token}`
+  };
+  const response = await fetch(`${api.tenant.compare()}/${propertyId}`, {
+    method: 'POST',
+    headers
+  });
+  if (!response.ok) {
+    const err = await response.json();
+    throw err;
+  }
+  return response.json();
+}
+
+/**
+ * Remove property from compare list
+ * @param {string} token - Authentication token
+ * @param {number} propertyId - Property ID
+ */
+async function removeFromCompare(token, propertyId) {
+  const headers = { 
+    Accept: 'application/json',
+    Authorization: `Bearer ${token}`
+  };
+  const response = await fetch(`${api.tenant.compare()}/${propertyId}`, {
+    method: 'DELETE',
+    headers
+  });
+  if (!response.ok) {
+    const err = await response.json();
+    throw err;
+  }
+  return response.json();
+}
+
+/**
+ * Clear all properties from compare list
+ * @param {string} token - Authentication token
+ */
+async function clearCompare(token) {
+  const headers = { 
+    Accept: 'application/json',
+    Authorization: `Bearer ${token}`
+  };
+  const response = await fetch(api.tenant.compare(), {
+    method: 'DELETE',
+    headers
+  });
+  if (!response.ok) {
+    const err = await response.json();
+    throw err;
+  }
+  return response.json();
+}
+
 
 const houseService = { 
   list, 
@@ -352,6 +431,10 @@ const houseService = {
   updateRentalApplicationStatus,
   updateRentalApplicationDuration,
   getLandlordRentals,
-  getTenantRentalApplications
+  getTenantRentalApplications,
+  getCompare,
+  addToCompare,
+  removeFromCompare,
+  clearCompare,
 };
 export default houseService;

@@ -4,14 +4,17 @@ import Navbar from '../../components/Navbar/Navbar';
 import FilterSidebar from '../../components/FilterSidebar';
 import PropertyCard from '../../components/PropertyCard';
 import { PropertyGridSkeleton } from '../../components/Loading';
-import { Search, MapPin, LayoutGrid, List, Bed, Bath, Maximize, Loader2, Star } from 'lucide-react';
+import { Search, MapPin, LayoutGrid, List, Bed, Bath, Maximize, Loader2, Star, Scale } from 'lucide-react';
 import houseService from '../../services/houseService';
 import { AuthContext } from '../../context/AuthContext';
+import { useCompare } from '../../context/CompareContext';
 import env from '../../environment/environment';
 
 function PropertyListItem({ property }) {
   const navigate = useNavigate();
   const [isNavigating, setIsNavigating] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+  const { addToCompare, isInCompare } = useCompare();
 
   const photos = property.house_photos || property.images || [];
   const resolvedImage =
@@ -32,10 +35,22 @@ function PropertyListItem({ property }) {
     navigate(`/houses/${property.slug || property.id}`);
   };
 
+  const handleCompareClick = async (e) => {
+    e.stopPropagation();
+    if (isAdding || isInCompare(property.id)) return;
+    
+    setIsAdding(true);
+    try {
+      await addToCompare({ id: property.id, title: displayLocation, price: property.price });
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
   return (
     <div
       onClick={handleClick}
-      className="group cursor-pointer bg-white rounded-xl border overflow-hidden hover:shadow-md transition-all duration-300"
+      className="group cursor-pointer bg-white rounded-xl border overflow-hidden hover:shadow-md transition-all duration-300 relative"
     >
       {/* Loading Overlay */}
       {isNavigating && (
@@ -44,6 +59,26 @@ function PropertyListItem({ property }) {
           <span className="text-sm text-gray-600 font-medium">Loading...</span>
         </div>
       )}
+
+      {/* Compare Button */}
+      <div className="absolute top-3 right-3 z-20">
+        <button
+          onClick={handleCompareClick}
+          disabled={isAdding}
+          title={isInCompare(property.id) ? "Remove from compare" : "Add to compare"}
+          className={`p-2 rounded-full backdrop-blur-sm transition-all duration-200 ${
+            isInCompare(property.id)
+              ? 'bg-primary/90 text-white hover:bg-primary hover:scale-110'
+              : 'bg-white/90 text-gray-700 hover:bg-white hover:scale-110'
+          } ${isAdding ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          {isAdding ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Scale className="w-4 h-4" />
+          )}
+        </button>
+      </div>
 
       <div className="flex flex-col sm:flex-row">
         {/* Image - Left Side */}
@@ -70,7 +105,7 @@ function PropertyListItem({ property }) {
           {/* Status Badge */}
           {property.is_available != null && (
             <span
-              className={`absolute top-3 left-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium backdrop-blur-sm ${
+              className={`absolute top-14 left-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium backdrop-blur-sm ${
                 property.is_available
                   ? 'bg-green-100/90 text-green-800'
                   : 'bg-gray-100/90 text-gray-800'

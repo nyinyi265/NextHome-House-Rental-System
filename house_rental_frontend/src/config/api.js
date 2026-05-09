@@ -19,11 +19,12 @@ const base = (path) => `${API_BASE_URL}${path}`;
     rentals: () => base('/landlord/rentals'),
     notifications: () => base('/landlord/notifications'),
   },
-  tenant: {
-    rentalApplications: () => base('/tenant/rental-applications'),
-    rentals: () => base('/tenant/rentals'),
-    notifications: () => base('/tenant/notifications'),
-  },
+   tenant: {
+     rentalApplications: () => base('/tenant/rental-applications'),
+     rentals: () => base('/tenant/rentals'),
+     notifications: () => base('/tenant/notifications'),
+     compare: () => base('/tenant/compare'),
+   },
   furnitures: () => base('/amenties'),
   auth: {
     login: () => base('/auth/login'),

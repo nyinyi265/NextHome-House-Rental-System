@@ -15,6 +15,7 @@ import ResetPassword from '../pages/auth/ResetPassword';
 import ForgotPassword from '../pages/auth/ForgotPassword';
 import MyRentals from '../pages/tenant/MyRentals';
 import MyRentalApplications from '../pages/tenant/MyRentalApplications';
+import Compare from '../pages/tenant/Compare';
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { useContext } from 'react';
@@ -145,6 +146,14 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute requiredRole="tenant">
             <MyRentalApplications />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/compare" 
+        element={
+          <ProtectedRoute requiredRole="tenant">
+            <Compare />
           </ProtectedRoute>
         } 
       />
