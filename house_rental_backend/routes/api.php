@@ -12,6 +12,11 @@ use App\Http\Controllers\API\Tenant\HouseController as TenantHouseController;
 use App\Http\Controllers\API\Tenant\RentalApplicationController as TenantRentalApplicationController;
 use App\Http\Controllers\API\Tenant\RentalController as TenantRentalController;
 use App\Http\Controllers\API\Landlord\RentalController as LandlordRentalController;
+use App\Http\Controllers\API\Tenant\NotificationController as TenantNotificationController;
+use App\Http\Controllers\API\Tenant\NotificationSSEController as TenantNotificationSSEController;
+use App\Http\Controllers\API\Landlord\NotificationController as LandlordNotificationController;
+use App\Http\Controllers\API\Landlord\NotificationSSEController as LandlordNotificationSSEController;
+use App\Http\Controllers\API\Tenant\CompareController;
 use App\Http\Controllers\MessageController;
 use Illuminate\Support\Facades\Storage;
 
@@ -72,10 +77,16 @@ Route::prefix('tenant')->middleware(['auth:sanctum', 'role:tenant'])->group(func
         ->only(['index', 'show']);
     
     // Notifications
-    Route::get('notifications', [App\Http\Controllers\API\Tenant\NotificationController::class, 'index']);
-    Route::post('notifications/{id}/read', [App\Http\Controllers\API\Tenant\NotificationController::class, 'markAsRead']);
-    Route::post('notifications/read-all', [App\Http\Controllers\API\Tenant\NotificationController::class, 'markAllAsRead']);
-    Route::get('notifications/stream', [App\Http\Controllers\API\Tenant\NotificationSSEController::class, 'stream']);
+    Route::get('notifications', [TenantNotificationController::class, 'index']);
+    Route::post('notifications/{id}/read', [TenantNotificationController::class, 'markAsRead']);
+    Route::post('notifications/read-all', [TenantNotificationController::class, 'markAllAsRead']);
+    Route::get('notifications/stream', [TenantNotificationSSEController::class, 'stream']);
+    
+    // Compare Properties
+    Route::get('compare', [CompareController::class, 'index']);
+    Route::post('compare/{propertyId}', [CompareController::class, 'store']);
+    Route::delete('compare/{propertyId}', [CompareController::class, 'destroy']);
+    Route::delete('compare', [CompareController::class, 'clear']);
 });
 
 // landlord house and application routes
