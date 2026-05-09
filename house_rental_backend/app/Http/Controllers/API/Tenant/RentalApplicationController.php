@@ -12,6 +12,7 @@ use App\Traits\HttpResponse;
 use App\Http\Responses\RentalApplicationResponse;
 use App\Models\RentalApplication;
 use App\Models\Rental;
+use App\Models\Notification;
 
 class RentalApplicationController extends Controller
 {
@@ -57,6 +58,45 @@ class RentalApplicationController extends Controller
         }
 
         $app = $this->service->create($data, $tenantProfileId);
+        
+        // Create notification for landlord
+        $house = $app->house;
+        $landlord = $house->landlordProfile?->user;
+        
+        if ($landlord) {
+            $tenantName = $app->tenantProfile?->user?->name ?? 'A tenant';
+            $houseTitle = $house->title ?? 'your property';
+            
+            Notification::create([
+                'user_id' => $landlord->id,
+                'type' => 'rental_application',
+                'message' => "New rental application from {$tenantName} for '{$houseTitle}'",
+                'url' => "/landlord/rental-applications/{$app->id}",
+                'data' => [
+                    'application_id' => $app->id,
+                    'house_id' => $houseId,
+                    'tenant_name' => $tenantName,
+                ],
+            ]);
+        }
+        
+        // Create notification for tenant confirming their application
+        $tenantUser = $request->user();
+        if ($tenantUser) {
+            $houseTitle = $house->title ?? 'the property';
+            Notification::create([
+                'user_id' => $tenantUser->id,
+                'type' => 'rental_application_submitted',
+                'message' => "Your rental application for '{$houseTitle}' has been submitted successfully.",
+                'url' => "/tenant/my-applications/{$app->id}",
+                'data' => [
+                    'application_id' => $app->id,
+                    'house_id' => $houseId,
+                    'status' => 'pending',
+                ],
+            ]);
+        }
+        
         return $this->success(true, RentalApplicationResponse::created($app), 'Application submitted', 201);
     }
 
@@ -72,13 +112,69 @@ class RentalApplicationController extends Controller
         $tenantProfileId = $request->user()->tenantProfile->id;
         $data = $request->validated();
         $app = $this->service->updateByTenant($id, $data, $tenantProfileId);
+        
+        // Notify tenant that their application was updated (e.g., message changed)
+        $tenantUser = $request->user();
+        $house = $app->house;
+        
+        if ($tenantUser && $house) {
+            Notification::create([
+                'user_id' => $tenantUser->id,
+                'type' => 'rental_application_updated',
+                'message' => "Your rental application for '{$house->title}' has been updated.",
+                'url' => "/tenant/my-applications/{$app->id}",
+                'data' => [
+                    'application_id' => $app->id,
+                    'house_id' => $house->id,
+                ],
+            ]);
+        }
+        
         return $this->success(true, RentalApplicationResponse::updated($app), 'Application updated', 200);
     }
 
     public function destroy(Request $request, $id): JsonResponse
     {
         $tenantProfileId = $request->user()->tenantProfile->id;
+        $app = $this->service->findForTenant($id, $tenantProfileId);
         $this->service->deleteForTenant($id, $tenantProfileId);
+        
+        // Notify landlord that application was cancelled
+        $landlord = $app->landlordProfile?->user;
+        $house = $app->house;
+        
+        if ($landlord) {
+            $tenantName = $app->tenantProfile?->user?->name ?? 'A tenant';
+            $houseTitle = $house?->title ?? 'your property';
+            
+            Notification::create([
+                'user_id' => $landlord->id,
+                'type' => 'rental_application_cancelled',
+                'message' => "Rental application from {$tenantName} for '{$houseTitle}' has been cancelled",
+                'url' => "/landlord/rental-applications/{$app->id}",
+                'data' => [
+                    'application_id' => $app->id,
+                    'house_id' => $house?->id,
+                ],
+            ]);
+        }
+        
+        // Notify tenant that their application was cancelled
+        $tenantUser = $request->user();
+        if ($tenantUser) {
+            $houseTitle = $house?->title ?? 'the property';
+            Notification::create([
+                'user_id' => $tenantUser->id,
+                'type' => 'rental_application_cancelled_self',
+                'message' => "Your rental application for '{$houseTitle}' has been cancelled",
+                'url' => "/tenant/my-applications",
+                'data' => [
+                    'application_id' => $app->id,
+                    'house_id' => $house?->id,
+                ],
+            ]);
+        }
+        
         return $this->success(true, RentalApplicationResponse::deleted(), 'Application cancelled', 200);
     }
 }

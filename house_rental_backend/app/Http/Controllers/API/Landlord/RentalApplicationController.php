@@ -9,6 +9,7 @@ use App\Services\RentalApplicationService;
 use App\Http\Requests\Landlord\UpdateRentalApplicationRequest;
 use App\Traits\HttpResponse;
 use App\Http\Responses\RentalApplicationResponse;
+use App\Models\Notification;
 
 class RentalApplicationController extends Controller
 {
@@ -40,6 +41,35 @@ class RentalApplicationController extends Controller
         $landlordProfileId = $request->user()->landlordProfile->id;
         $data = $request->validated();
         $app = $this->service->updateStatus($id, $data, $landlordProfileId);
+        
+        // Create notification for tenant when application status changes
+        $tenant = $app->tenantProfile?->user;
+        $house = $app->house;
+        
+        if ($tenant) {
+            $status = $app->status;
+            $houseTitle = $house?->title ?? 'the property';
+            $tenantName = $tenant->name;
+            
+            $message = match($status) {
+                'approved' => "Your rental application for '{$houseTitle}' has been approved!",
+                'rejected' => "Your rental application for '{$houseTitle}' has been rejected.",
+                default => "Your rental application for '{$houseTitle}' has been updated to {$status}."
+            };
+            
+            Notification::create([
+                'user_id' => $tenant->id,
+                'type' => 'rental_application_status',
+                'message' => $message,
+                'url' => "/tenant/my-applications",
+                'data' => [
+                    'application_id' => $app->id,
+                    'house_id' => $house?->id,
+                    'status' => $status,
+                ],
+            ]);
+        }
+        
         return $this->success(true, RentalApplicationResponse::updated($app), 'Application updated', 200);
     }
 

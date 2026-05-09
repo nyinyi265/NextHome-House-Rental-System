@@ -10,6 +10,7 @@ use App\Http\Requests\Landlord\StoreRentalRequest;
 use App\Http\Requests\Landlord\UpdateRentalRequest;
 use App\Traits\HttpResponse;
 use App\Http\Responses\RentalResponse;
+use App\Models\Notification;
 
 class RentalController extends Controller
 {
@@ -33,6 +34,28 @@ class RentalController extends Controller
     {
         $data = $request->validated();
         $rental = $this->service->create($data);
+        
+        // Create notification for tenant when rental is created
+        $tenant = $rental->tenantProfile?->user;
+        $house = $rental->house;
+        
+        if ($tenant) {
+            $landlordName = $rental->landlordProfile?->user?->name ?? 'Your landlord';
+            $houseTitle = $house?->title ?? 'the property';
+            
+            Notification::create([
+                'user_id' => $tenant->id,
+                'type' => 'rental_created',
+                'message' => "Your rental for '{$houseTitle}' has been created by {$landlordName}. Welcome home!",
+                'url' => "/tenant/rentals/{$rental->id}",
+                'data' => [
+                    'rental_id' => $rental->id,
+                    'house_id' => $house?->id,
+                    'monthly_rent' => $rental->monthly_rent,
+                ],
+            ]);
+        }
+        
         return $this->success(true, RentalResponse::created($rental), 'Rental created', 201);
     }
 

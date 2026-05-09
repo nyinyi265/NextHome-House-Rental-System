@@ -70,6 +70,12 @@ Route::prefix('tenant')->middleware(['auth:sanctum', 'role:tenant'])->group(func
         ->only(['index', 'show']);
     Route::apiResource('houses', TenantHouseController::class)
         ->only(['index', 'show']);
+    
+    // Notifications
+    Route::get('notifications', [App\Http\Controllers\API\Tenant\NotificationController::class, 'index']);
+    Route::post('notifications/{id}/read', [App\Http\Controllers\API\Tenant\NotificationController::class, 'markAsRead']);
+    Route::post('notifications/read-all', [App\Http\Controllers\API\Tenant\NotificationController::class, 'markAllAsRead']);
+    Route::get('notifications/stream', [App\Http\Controllers\API\Tenant\NotificationSSEController::class, 'stream']);
 });
 
 // landlord house and application routes
@@ -95,6 +101,12 @@ Route::prefix('landlord')->middleware(['auth:sanctum', 'landlord.approved'])->gr
 
     Route::apiResource('rentals', LandlordRentalController::class)
         ->only(['index', 'store', 'show', 'update', 'destroy']);
+
+    // Notifications
+    Route::get('notifications', [App\Http\Controllers\API\Landlord\NotificationController::class, 'index']);
+    Route::post('notifications/{id}/read', [App\Http\Controllers\API\Landlord\NotificationController::class, 'markAsRead']);
+    Route::post('notifications/read-all', [App\Http\Controllers\API\Landlord\NotificationController::class, 'markAllAsRead']);
+    Route::get('notifications/stream', [App\Http\Controllers\API\Landlord\NotificationSSEController::class, 'stream']);
 });
 
 // Admin routes for landlord approval

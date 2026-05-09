@@ -19,6 +19,9 @@ class LandlordRequestsResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(function ($query) {
+                $query->with(['user']);
+            })
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('user.name')
                     ->label('Name')
@@ -54,7 +57,8 @@ class LandlordRequestsResource extends Resource
                         ]);
                     })
                     ->visible(fn ($record) => $record->status === 'pending')
-                    ->color('success'),
+                    ->color('success')
+                    ->requiresConfirmation(),
                 Action::make('reject')
                     ->label('Reject')
                     ->action(function ($record) {
@@ -63,7 +67,8 @@ class LandlordRequestsResource extends Resource
                         ]);
                     })
                     ->visible(fn ($record) => $record->status === 'pending')
-                    ->color('danger'),
+                    ->color('danger')
+                    ->requiresConfirmation(),
             ])
             ->filters([
                 //
