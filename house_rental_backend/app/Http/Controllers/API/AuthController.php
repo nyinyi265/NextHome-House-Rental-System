@@ -5,7 +5,6 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Services\AuthService;
 use App\Http\Requests\Auth\RegisterTenantRequest;
-use App\Http\Requests\Auth\RegisterLandlordRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Responses\Auth\AuthResponse;
 use Illuminate\Http\Request;
@@ -42,44 +41,6 @@ class AuthController extends Controller
 
         $result = $this->service->registerTenant($data);
         return $this->success(true, AuthResponse::register($result['user'], $result['token']), 'Tenant registered successfully', 201);
-    }
-
-    /**
-     * Register landlord endpoint
-     * If user is logged in, upgrade their account to landlord instead of creating new user
-     */
-    public function registerLandlord(RegisterLandlordRequest $request): JsonResponse
-    {
-        $profilePath = null;
-        if ($request->hasFile('profile_path')) {
-            $file = $request->file('profile_path');
-            $profilePath = $file->store('profiles', 'public');
-        }
-
-        $documentPath = null;
-        if ($request->hasFile('document_path')) {
-            $file = $request->file('document_path');
-            $documentPath = $file->store('landlord_documents', 'public');
-        }
-
-        $data = $request->validated();
-        $data['profile_path'] = $profilePath;
-        $data['document_path'] = $documentPath;
-
-        // If user is logged in, use their ID
-        if ($request->user()) {
-            $data['user_id'] = $request->user()->id;
-        }
-
-        $result = $this->service->registerLandlord($data);
-        $response = AuthResponse::register($result['user'], $result['token']);
-
-        return $this->success(
-            true,
-            $response,
-            'Landlord registered successfully',
-            201
-        );
     }
 
     /**
