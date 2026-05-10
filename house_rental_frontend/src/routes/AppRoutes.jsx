@@ -17,6 +17,7 @@ import MyRentalApplications from '../pages/tenant/MyRentalApplications';
 import Compare from '../pages/tenant/Compare';
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import ProtectedRoute from '../components/ProtectedRoute';
+import LandlordRedirect from '../components/LandlordRedirect';
 import { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 
@@ -46,7 +47,7 @@ function PublicOnlyRoute({ children }) {
 export default function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
+      <Route path="/" element={<LandlordRedirect><Home /></LandlordRedirect>} />
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<ContactUs />} />
       <Route 
