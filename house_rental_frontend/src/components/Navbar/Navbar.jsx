@@ -163,8 +163,7 @@ export default function Navbar() {
 
     items.push(
       { path: "/about", label: "About", icon: Info },
-      { path: "/contact", label: "Contact Us", icon: Phone },
-      { path: "/landlord-register", label: "Become a Landlord", icon: Building2 }
+      { path: "/contact", label: "Contact Us", icon: Phone }
     );
 
     return items;

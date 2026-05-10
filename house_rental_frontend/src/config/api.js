@@ -26,17 +26,16 @@ const base = (path) => `${API_BASE_URL}${path}`;
      compare: () => base('/tenant/compare'),
    },
   furnitures: () => base('/amenties'),
-  auth: {
-    login: () => base('/auth/login'),
-    register: () => base('/auth/register'),
-    registerLandlord: () => base('/auth/landlord-register'),
-    me: () => base('/auth/me'),
-    logout: () => base('/auth/logout'),
-    updateProfile: () => base('/auth/profile'),
-    changePassword: () => base('/auth/change-password'),
-    forgotPassword: () => base('/auth/forgot-password'),
-    resetPassword: () => base('/auth/reset-password'),
-  },
+   auth: {
+     login: () => base('/auth/login'),
+     register: () => base('/auth/register'),
+     me: () => base('/auth/me'),
+     logout: () => base('/auth/logout'),
+     updateProfile: () => base('/auth/profile'),
+     changePassword: () => base('/auth/change-password'),
+     forgotPassword: () => base('/auth/forgot-password'),
+     resetPassword: () => base('/auth/reset-password'),
+   },
   // add other endpoints as needed
 };
 

@@ -6,7 +6,6 @@ import ContactUs from '../pages/public/ContactUs';
 import Explore from '../pages/tenant/Explore';
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
-import LandlordRegister from '../pages/auth/LandlordRegister';
 import HouseDetail from '../pages/tenant/HouseDetail';
 import LandlordDashboard from '../pages/landlord/LandlordDashboard';
 import LandlordRentals from '../pages/landlord/LandlordRentals';
@@ -73,8 +72,7 @@ export default function AppRoutes() {
             <Register />
           </PublicOnlyRoute>
         } 
-      />
-      <Route path="/landlord-register" element={<LandlordRegister />} />
+        />
       <Route 
         path="/houses/:slug" 
         element={

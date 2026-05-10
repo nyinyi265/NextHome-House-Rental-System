@@ -161,13 +161,6 @@ export default function Login() {
               Create one
             </Link>
           </p>
-
-          <p className="mt-4 text-center text-sm text-gray-600">
-            Want to list your property?{' '}
-            <Link to="/landlord-register" className="text-primary hover:underline font-medium">
-              Become a Landlord
-            </Link>
-          </p>
         </div>
       </div>
     </div>
