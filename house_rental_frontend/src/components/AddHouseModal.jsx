@@ -431,7 +431,7 @@ export default function AddHouseModal({ isOpen, onClose, onSuccess, token }) {
 
             {/* Photos */}
             <div>
-              <h3 className="text-lg font-semibold mb-4">Photos</h3>
+              <h3 className="text-lg font-semibold mb-4">Photos <span className="text-red-400 text-sm">(add 360-degree or panorama photo for House Virtual Tour)</span></h3>
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                 <input
                   type="file"

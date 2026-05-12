@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart, Star, Loader2, Scale } from 'lucide-react';
+import { Star, Loader2, Scale } from 'lucide-react';
 import env from '../environment/environment';
 import { useCompare } from '../context/CompareContext';
 
 export default function PropertyCard({ id, slug, title, location, city, township, street, price, rating, featured, available_from, images = [], house_photos = [] }) {
-  const [isLiked, setIsLiked] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const navigate = useNavigate();
@@ -31,11 +30,6 @@ export default function PropertyCard({ id, slug, title, location, city, township
   const handleCardClick = () => {
     setIsNavigating(true);
     navigate(`/houses/${slug || id}`);
-  };
-
-  const handleLikeClick = (e) => {
-    e.stopPropagation();
-    setIsLiked(!isLiked);
   };
 
   const handleCompareClick = async (e) => {
@@ -103,12 +97,6 @@ export default function PropertyCard({ id, slug, title, location, city, township
               <span className="font-medium text-sm">{rating}</span>
             </div>
           )}
-          <button
-            onClick={handleLikeClick}
-            className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <Heart className={`w-4 h-4 ${isLiked ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
-          </button>
         </div>
       </div>
       <p className="my-2 px-4">

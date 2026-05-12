@@ -45,6 +45,8 @@ import houseService from "../../services/houseService";
 import AddHouseModal from "../../components/AddHouseModal";
 import EditHouseModal from "../../components/EditHouseModal";
 import PanoramaViewer from "../../components/PanoramaViewer";
+import { Dialog, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../../components/ui/Dialog";
+import { Button } from "../../components/ui/Button";
 import env from "../../environment/environment";
 
 // Settings Content Component
@@ -524,7 +526,12 @@ export default function LandlordDashboard() {
       try {
         const response = await houseService.list(token, "landlord");
         const housesData = response.data?.houses || response.houses || [];
-        setHouses(housesData);
+        const sortedHouses = [...housesData].sort((a, b) => {
+          const dateA = new Date(a.created_at || a.createdAt || 0);
+          const dateB = new Date(b.created_at || b.createdAt || 0);
+          return dateB - dateA;
+        });
+        setHouses(sortedHouses);
       } catch (err) {
         console.error("Failed to fetch houses", err);
       } finally {
@@ -617,6 +624,13 @@ export default function LandlordDashboard() {
         const housesData =
           housesResponse.data?.houses || housesResponse.houses || [];
 
+        // Sort houses by created_at descending (newest first)
+        const sortedHouses = [...housesData].sort((a, b) => {
+          const dateA = new Date(a.created_at || a.createdAt || 0);
+          const dateB = new Date(b.created_at || b.createdAt || 0);
+          return dateB - dateA;
+        });
+
         // Fetch rentals
         const rentalsResponse = await houseService.getLandlordRentals(token);
         const rentalsData =
@@ -648,7 +662,7 @@ export default function LandlordDashboard() {
         setRecentApplications(sortedApps.slice(0, 5));
 
         setDashboardStats({
-          totalProperties: housesData.length,
+          totalProperties: sortedHouses.length,
           totalRentals: rentalsData.length,
           totalRevenue: totalRevenue,
           pendingApplications: pendingApplications,
@@ -1910,171 +1924,117 @@ export default function LandlordDashboard() {
 
       {/* Delete Property Confirmation Modal */}
       {deletingHouse && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div 
-            className="absolute inset-0 bg-black/50" 
-            onClick={() => setDeletingHouse(null)}
-          />
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
-              Delete Property
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to delete this property?
-            </p>
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={() => setDeletingHouse(null)}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={async () => {
-                  try {
-                    setIsDeleting(true);
-                    await houseService.deleteHouse(token, deletingHouse.id);
-                    setDeletingHouse(null);
-                    handleHouseDeleted();
-                  } catch (err) {
-                    console.error('Failed to delete property', err);
-                    alert(err.message || 'Failed to delete property');
-                  } finally {
-                    setIsDeleting(false);
-                  }
-                }}
-                disabled={isDeleting}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
-              >
-                {isDeleting ? (
-                  <>
-                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Deleting...
-                  </>
-                ) : (
-                  'Delete'
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
+        <Dialog open={!!deletingHouse} onOpenChange={() => !isDeleting && setDeletingHouse(null)}>
+          <DialogHeader>
+            <DialogTitle>Delete Property</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this property? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeletingHouse(null)} disabled={isDeleting}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={async () => {
+              try {
+                setIsDeleting(true);
+                await houseService.deleteHouse(token, deletingHouse.id);
+                setDeletingHouse(null);
+                handleHouseDeleted();
+              } catch (err) {
+                console.error('Failed to delete property', err);
+              } finally {
+                setIsDeleting(false);
+              }
+            }} disabled={isDeleting}>
+              {isDeleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete'
+              )}
+            </Button>
+          </DialogFooter>
+        </Dialog>
       )}
 
-      {/* Confirmation Modal */}
+{/* Confirmation Modal */}
       {showConfirmModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-800">
-                Confirm {modalAction === "approve" ? "Approval" : "Rejection"}
-              </h3>
-              <button
-                onClick={closeConfirmModal}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to{" "}
-              {modalAction === "approve" ? "approve" : "reject"} this rental
-              application?
-            </p>
-            <div className="flex gap-3 justify-end">
-               <button
-                 onClick={closeConfirmModal}
-                 disabled={approveLoading || rejectLoading}
-                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-               >
-                 Cancel
-               </button>
-               <button
-                 onClick={handleConfirmAction}
-                 disabled={approveLoading || rejectLoading}
-                 className={`px-4 py-2 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${
-                   modalAction === "approve"
-                     ? "bg-green-600 hover:bg-green-700"
-                     : "bg-red-600 hover:bg-red-700"
-                 }`}
-               >
-                 {(approveLoading && modalAction === "approve") || (rejectLoading && modalAction === "reject") ? (
-                   <>
-                     <Loader2 className="w-4 h-4 animate-spin" />
-                     {modalAction === "approve" ? "Approving..." : "Rejecting..."}
-                   </>
-                 ) : (
-                   modalAction === "approve" ? "Approve" : "Reject"
-                 )}
-               </button>
-            </div>
-          </div>
-        </div>
+        <Dialog open={showConfirmModal} onOpenChange={closeConfirmModal}>
+          <DialogHeader>
+            <DialogTitle>Confirm {modalAction === "approve" ? "Approval" : "Rejection"}</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to {modalAction === "approve" ? "approve" : "reject"} this rental application?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={closeConfirmModal} disabled={approveLoading || rejectLoading}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmAction}
+              disabled={approveLoading || rejectLoading}
+              variant={modalAction === "approve" ? "default" : "destructive"}
+              className={modalAction === "approve" ? "bg-green-600 hover:bg-green-700" : ""}
+            >
+              {(approveLoading && modalAction === "approve") || (rejectLoading && modalAction === "reject") ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  {modalAction === "approve" ? "Approving..." : "Rejecting..."}
+                </>
+              ) : (
+                modalAction === "approve" ? "Approve" : "Reject"
+              )}
+            </Button>
+          </DialogFooter>
+        </Dialog>
       )}
 
       {/* Edit Duration Modal */}
       {showEditDurationModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-800">
-                Edit Rental Duration
-              </h3>
-              <button
-                onClick={closeEditDurationModal}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <p className="text-gray-600 mb-4">
+        <Dialog open={showEditDurationModal} onOpenChange={closeEditDurationModal}>
+          <DialogHeader>
+            <DialogTitle>Edit Rental Duration</DialogTitle>
+            <DialogDescription>
               Update the rental duration for this application.
-            </p>
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Duration (months)
-              </label>
-              <select
-                value={editDuration}
-                onChange={(e) => setEditDuration(parseInt(e.target.value))}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-              >
-                <option value={1}>1 month</option>
-                <option value={2}>2 months</option>
-                <option value={3}>3 months</option>
-                <option value={6}>6 months</option>
-                <option value={12}>12 months</option>
-                <option value={18}>18 months</option>
-                <option value={24}>24 months</option>
-              </select>
-            </div>
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={closeEditDurationModal}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                disabled={editDurationLoading}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleUpdateDuration}
-                disabled={editDurationLoading}
-                className="px-4 py-2 bg-primary text-white rounded-lg hover:opacity-90 transition-colors disabled:opacity-50 flex items-center gap-2"
-              >
-                {editDurationLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Updating...
-                  </>
-                ) : (
-                  "Update"
-                )}
-              </button>
-            </div>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Duration (months)
+            </label>
+            <select
+              value={editDuration}
+              onChange={(e) => setEditDuration(parseInt(e.target.value))}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            >
+              <option value={1}>1 month</option>
+              <option value={2}>2 months</option>
+              <option value={3}>3 months</option>
+              <option value={6}>6 months</option>
+              <option value={12}>12 months</option>
+              <option value={18}>18 months</option>
+              <option value={24}>24 months</option>
+            </select>
           </div>
-        </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={closeEditDurationModal} disabled={editDurationLoading}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateDuration} disabled={editDurationLoading}>
+              {editDurationLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Update"
+              )}
+            </Button>
+          </DialogFooter>
+        </Dialog>
       )}
     </div>
   );

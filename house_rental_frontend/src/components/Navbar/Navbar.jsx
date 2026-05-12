@@ -23,6 +23,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/Sheet";
 import { Button } from "../ui/Button";
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/Avatar";
 import { Badge } from "../ui/Badge";
+import { Dialog, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../ui/Dialog";
 
 export default function Navbar() {
   const { user, logout, logoutLoading, token } = useContext(AuthContext);
@@ -33,9 +34,19 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [showClearDialog, setShowClearDialog] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
   const navigate = useNavigate();
 
   const compareCount = getCompareCount();
+
+  const handleClearAll = async () => {
+    setIsClearing(true);
+    await clearCompare();
+    setIsClearing(false);
+    setShowClearDialog(false);
+    setCompareOpen(false);
+  };
 
   // Close mobile menu when navigating
   useEffect(() => {
@@ -347,10 +358,7 @@ export default function Navbar() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (window.confirm("Clear all properties from comparison?")) {
-                          clearCompare();
-                          setCompareOpen(false);
-                        }
+                        setShowClearDialog(true);
                       }}
                       className="w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     >
@@ -358,12 +366,39 @@ export default function Navbar() {
                     </button>
                   </div>
                 )}
-                </div>
-              )}
+              </div>
+            )}
            </div>
-         )}
+        )}
 
-           {/* Profile Dropdown */}
+           {/* Clear All Confirmation Dialog for Desktop */}
+           <Dialog open={showClearDialog && !mobileMenuOpen} onOpenChange={(open) => {
+              if (!open) setShowClearDialog(false);
+            }}>
+             <DialogHeader>
+               <DialogTitle>Clear All Properties</DialogTitle>
+               <DialogDescription>
+                 Are you sure you want to remove all properties from the comparison list? This action cannot be undone.
+               </DialogDescription>
+             </DialogHeader>
+             <DialogFooter>
+               <Button variant="outline" onClick={() => setShowClearDialog(false)} disabled={isClearing}>
+                 Cancel
+               </Button>
+               <Button variant="destructive" onClick={handleClearAll} disabled={isClearing}>
+                 {isClearing ? (
+                   <>
+                     <Loader2 className="w-4 h-4 animate-spin" />
+                     Clearing...
+                   </>
+                 ) : (
+                   'Clear All'
+                 )}
+               </Button>
+             </DialogFooter>
+           </Dialog>
+
+            {/* Profile Dropdown */}
           <div className="relative">
             <button
               onClick={(e) => {
@@ -711,6 +746,33 @@ export default function Navbar() {
             </div>
           )}
         </SheetContent>
+
+        {/* Clear All Confirmation Dialog for Mobile */}
+        <Dialog open={showClearDialog && mobileMenuOpen} onOpenChange={(open) => {
+          if (!open) setShowClearDialog(false);
+        }}>
+          <DialogHeader>
+            <DialogTitle>Clear All Properties</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to remove all properties from the comparison list? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowClearDialog(false)} disabled={isClearing}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleClearAll} disabled={isClearing}>
+              {isClearing ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Clearing...
+                </>
+              ) : (
+                'Clear All'
+              )}
+            </Button>
+          </DialogFooter>
+        </Dialog>
       </Sheet>
     </nav>
   );

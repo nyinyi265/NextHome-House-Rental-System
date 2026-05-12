@@ -1,26 +1,68 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../../components/Navbar/Navbar';
-import { Scale, X, Star, Bed, Bath, Maximize, Wifi, Car, Snowflake, Sofa, PawPrint, MapPin, Home, Building2, Loader2, Info, Filter } from 'lucide-react';
+import { Scale, X, Star, Bed, Bath, Maximize, Wifi, Car, Snowflake, Sofa, PawPrint, MapPin, Home, Building2, Loader2, Info, Check, Dumbbell, Shield, TreeDeciduous, Waves, Sun, WashingMachine, Square } from 'lucide-react';
 import { useCompare } from '../../context/CompareContext';
+import { Dialog, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../components/ui/Dialog';
+import { Button } from '../../components/ui/Button';
 import env from '../../environment/environment';
 
 export default function Compare() {
-  const [showDifferencesOnly, setShowDifferencesOnly] = useState(false);
+  const [showClearDialog, setShowClearDialog] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
   const { compareProperties: properties, loading, removeFromCompare, clearCompare } = useCompare();
 
   // Helper to get amenity names as lowercase strings
   const getAmenityNames = (property) => {
-    const list = property.amenities || property.amenties || [];
+    const list = property.house_amenties || property.houseAmenities || property.amenities || property.amenties || [];
     return list.map(item => {
       if (typeof item === 'string') return item.toLowerCase();
       return (item.name || item).toLowerCase();
     });
   };
 
+  // Helper to normalize amenity name for comparison
+  const normalizeAmenity = (name) => {
+    return name.toLowerCase().replace(/[_-]/g, ' ').trim();
+  };
+
+  // Helper to get amenity icon based on normalized name (for common amenities)
+  const getAmenityIcon = (amenityName) => {
+    const normalized = normalizeAmenity(amenityName);
+    if (normalized.includes('wifi')) return Wifi;
+    if (normalized.includes('parking') || normalized.includes('car')) return Car;
+    if (normalized.includes('air') && normalized.includes('condition')) return Snowflake;
+    if (normalized.includes('furniture') || normalized.includes('furnished')) return Sofa;
+    if (normalized.includes('pet')) return PawPrint;
+    return null;
+  };
+
+  // Common amenities that appear in the main amenities section
+  const commonAmenities = ['wifi', 'parking', 'air conditioning', 'furnished', 'pet allowed'];
+
+  // Helper to get special amenities (excluding common ones)
+  const getSpecialAmenities = (property) => {
+    const all = getAmenityNames(property);
+    return all.filter(a => !commonAmenities.includes(a));
+  };
+
+  // Helper to get icon for special amenity
+  const getSpecialAmenityIcon = (amenityName) => {
+    const normalized = normalizeAmenity(amenityName);
+    if (normalized.includes('balcony')) return Square;
+    if (normalized.includes('swimming') && normalized.includes('pool')) return Waves;
+    if (normalized.includes('garden') || normalized.includes('yard')) return TreeDeciduous;
+    if (normalized.includes('gym') || normalized.includes('fitness')) return Dumbbell;
+    if (normalized.includes('rooftop') || normalized.includes('roof')) return Sun;
+    if (normalized.includes('security') || normalized.includes('cctv') || normalized.includes('guard')) return Shield;
+    if (normalized.includes('laundry')) return WashingMachine;
+    // if (normalized.includes('elevator') || normalized.includes('lift')) return Elevator;
+    return Check;
+  };
+
   // Helper to get furniture names
   const getFurnitureNames = (property) => {
-    const list = property.furnitures || [];
+    const list = property.house_furnitures || property.houseFurnitures || property.furnitures || [];
     return list.map(item => {
       if (typeof item === 'string') return item.toLowerCase();
       return (item.name || item).toLowerCase();
@@ -32,13 +74,14 @@ export default function Compare() {
   };
 
   const handleClearAll = async () => {
-    if (window.confirm('Are you sure you want to clear all properties from comparison?')) {
-      await clearCompare();
-    }
+    setIsClearing(true);
+    await clearCompare();
+    setIsClearing(false);
+    setShowClearDialog(false);
   };
 
-  const getResolvedImage = (property) => {
-    const photos = property.housePhotos || property.images || [];
+const getResolvedImage = (property) => {
+    const photos = property.house_photos || property.housePhotos || property.images || [];
     if (photos.length > 0) {
       const img = photos[0];
       if (typeof img === 'string') return img;
@@ -66,14 +109,14 @@ export default function Compare() {
   const cityValues = properties.map(p => p.city);
   const addressValues = properties.map(p => [p.apartment_number, p.street, p.township].filter(Boolean).join(', '));
 
+
+
+
+
   // Render a cell value with highlight if differences exist
   const renderCell = (propertyIndex, value, allValues) => {
     const hasDifferentValues = allValues.length > 1;
     const isDifferent = hasDifferentValues && value !== allValues[0];
-    
-    if (showDifferencesOnly && hasDifferentValues && !isDifferent) {
-      return <span className="text-gray-300">—</span>;
-    }
 
     return (
       <div className={`text-sm ${isDifferent ? 'text-red-600 font-medium bg-red-50 px-2 py-1 rounded' : 'text-gray-700'}`}>
@@ -133,18 +176,7 @@ export default function Compare() {
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setShowDifferencesOnly(!showDifferencesOnly)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
-                showDifferencesOnly
-                  ? 'bg-primary/10 border-primary text-primary'
-                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <Filter className="w-4 h-4" />
-              {showDifferencesOnly ? 'Show All' : 'Show Differences Only'}
-            </button>
-            <button
-              onClick={handleClearAll}
+              onClick={() => setShowClearDialog(true)}
               className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
             >
               Clear All
@@ -322,67 +354,70 @@ export default function Compare() {
             </div>
           </div>
 
-          {/* Amenities Section */}
+          {/* Amenities Section - Provided Amenities */}
           <div className="border-b">
             <div className="bg-gray-50 px-4 py-3 font-medium text-gray-900 border-b">
               <div className="flex items-center gap-2">
                 <Wifi className="w-4 h-4" />
-                Amenities
+                Provided Amenities
               </div>
             </div>
-            <div className="flex">
-              <div className="w-64 min-w-[16rem] p-4 bg-gray-100 border-r space-y-3 sticky left-0 z-10">
-                <div className="text-sm text-gray-600">Wifi</div>
-                <div className="text-sm text-gray-600">Parking</div>
-                <div className="text-sm text-gray-600">Air Conditioning</div>
-                <div className="text-sm text-gray-600">Furnished</div>
-                <div className="text-sm text-gray-600">Pet Allowed</div>
-              </div>
-
-              <div className="flex-1 flex">
-                {properties.map((property) => (
-                  <div key={property.id} className="flex-1 min-w-[200px] p-4 space-y-3 border-r last:border-r-0 text-center">
-                    <div className="flex items-center justify-center gap-1">
-                      {getAmenityNames(property).includes('wifi') ? (
-                        <Wifi className="w-4 h-4 text-green-600" />
-                      ) : (
-                        <span className="text-gray-300">—</span>
-                      )}
+            {(() => {
+              const propertyAmenities = properties.map(p => getAmenityNames(p));
+              const maxAmenities = Math.max(...propertyAmenities.map(a => a.length), 0);
+              
+              if (maxAmenities === 0) {
+                return (
+                  <div className="flex">
+                    <div className="w-64 min-w-[16rem] p-4 bg-gray-100 border-r sticky left-0 z-10"></div>
+                    <div className="flex-1 flex">
+                      {properties.map((property) => (
+                        <div key={property.id} className="flex-1 min-w-[200px] p-4 border-r last:border-r-0 text-center text-sm text-gray-500">
+                          No amenities available
+                        </div>
+                      ))}
                     </div>
-                    <div className="flex items-center justify-center gap-1">
-                      {getAmenityNames(property).includes('parking') ? (
-                        <Car className="w-4 h-4 text-green-600" />
-                      ) : (
-                        <span className="text-gray-300">—</span>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-center gap-1">
-                      {getAmenityNames(property).includes('air conditioning') || getAmenityNames(property).includes('air_conditioning') ? (
-                        <Snowflake className="w-4 h-4 text-green-600" />
-                      ) : (
-                        <span className="text-gray-300">—</span>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-center gap-1">
-                      {getAmenityNames(property).includes('furnished') ? (
-                        <Sofa className="w-4 h-4 text-green-600" />
-                      ) : (
-                        <span className="text-gray-300">—</span>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-center gap-1">
-                      {getAmenityNames(property).includes('pet allowed') || getAmenityNames(property).includes('pet_allowed') ? (
-                        <PawPrint className="w-4 h-4 text-green-600" />
-                      ) : (
-                        <span className="text-gray-300">—</span>
-                      )}
-                    </div>
-
                   </div>
-                ))}
-              </div>
-            </div>
+                );
+              }
+
+              return (
+                <div className="flex">
+                  <div className="w-64 min-w-[16rem] bg-gray-100 border-r sticky left-0 z-10">
+                    {Array.from({ length: maxAmenities }).map((_, idx) => (
+                      <div key={idx} className="h-12"></div>
+                    ))}
+                  </div>
+                  <div className="flex-1 flex">
+                    {properties.map((property, propIdx) => {
+                      const amenities = propertyAmenities[propIdx] || [];
+                      return (
+                        <div key={property.id} className="flex-1 min-w-[200px] border-r last:border-r-0">
+                          {Array.from({ length: maxAmenities }).map((_, amenityIdx) => {
+                            const amenityName = amenities[amenityIdx];
+                            const IconComponent = amenityName ? getSpecialAmenityIcon(amenityName) : null;
+                            return (
+                              <div key={amenityIdx} className="h-12 flex items-center justify-center px-2">
+                                {amenityName ? (
+                                  <span className="text-sm text-gray-700 capitalize flex items-center gap-1.5">
+                                    {IconComponent && <IconComponent className="w-3.5 h-3.5 text-primary flex-shrink-0" />}
+                                    {amenityName}
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-300">—</span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
+
 
           {/* Property Type & Additional Info */}
           <div>
@@ -429,6 +464,31 @@ export default function Compare() {
             Explore More Properties
           </Link>
         </div>
+
+        {/* Clear Confirmation Dialog */}
+        <Dialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+          <DialogHeader>
+            <DialogTitle>Clear All Properties</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to remove all properties from the comparison list? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowClearDialog(false)} disabled={isClearing}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleClearAll} disabled={isClearing}>
+              {isClearing ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Clearing...
+                </>
+              ) : (
+                'Clear All'
+              )}
+            </Button>
+          </DialogFooter>
+        </Dialog>
       </div>
     </div>
   );

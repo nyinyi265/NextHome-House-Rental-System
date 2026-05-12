@@ -10,6 +10,7 @@ function destroyViewer(viewerRef) {
 }
 
 export default function PanoramaViewer({ image }) {
+  console.log("image", image)
   const containerRef = useRef(null);
   const viewerRef = useRef(null);
   const [status, setStatus] = useState("loading");
