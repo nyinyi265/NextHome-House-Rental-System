@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
 import Navbar from '../../components/Navbar/Navbar';
-import SearchBar from '../../components/SearchBar';
 import PropertyTags from '../../components/PropertyTags';
 import PropertyCard from '../../components/PropertyCard';
 import { PropertyGridSkeleton } from '../../components/Loading';
@@ -195,9 +194,6 @@ export default function Home() {
           <p className="text-xl text-white/90 mb-8 max-w-2xl">
             Discover unique homes and experiences around the world
           </p>
-          <div className="w-full max-w-4xl">
-            <SearchBar />
-          </div>
         </div>
       </div>
 
