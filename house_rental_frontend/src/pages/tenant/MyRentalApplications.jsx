@@ -38,6 +38,16 @@ export default function MyRentalApplications() {
     }
 
     fetchApplications();
+
+    const handleStatusChange = () => {
+      fetchApplications();
+    };
+
+    window.addEventListener('rentalStatusChanged', handleStatusChange);
+
+    return () => {
+      window.removeEventListener('rentalStatusChanged', handleStatusChange);
+    };
   }, []);
 
   function formatDate(dateString) {

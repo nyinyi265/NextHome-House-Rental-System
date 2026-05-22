@@ -4,7 +4,7 @@ import Navbar from '../../components/Navbar/Navbar';
 import FilterSidebar from '../../components/FilterSidebar';
 import PropertyCard from '../../components/PropertyCard';
 import { PropertyGridSkeleton } from '../../components/Loading';
-import { Search, MapPin, LayoutGrid, List, Bed, Bath, Maximize, Loader2, Star, Scale } from 'lucide-react';
+import { Search, MapPin, LayoutGrid, List, Bed, Bath, Maximize, Loader2, Star, Scale, Filter, X, CheckCircle } from 'lucide-react';
 import houseService from '../../services/houseService';
 import { AuthContext } from '../../context/AuthContext';
 import { useCompare } from '../../context/CompareContext';
@@ -103,17 +103,18 @@ function PropertyListItem({ property }) {
             </span>
           )}
           {/* Status Badge */}
-          {property.is_available != null && (
+          <div className="absolute top-3 left-3">
             <span
-              className={`absolute top-14 left-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium backdrop-blur-sm ${
+              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium backdrop-blur-sm ${
                 property.is_available
                   ? 'bg-green-100/90 text-green-800'
-                  : 'bg-gray-100/90 text-gray-800'
+                  : 'bg-red-100/90 text-red-800'
               }`}
             >
+              <CheckCircle className="w-3 h-3" />
               {property.is_available ? 'Available' : 'Unavailable'}
             </span>
-          )}
+          </div>
         </div>
 
         {/* Details - Right Side */}
@@ -199,6 +200,7 @@ export default function Explore() {
   const [filters, setFilters] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
   const [layout, setLayout] = useState('grid');
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -266,7 +268,7 @@ export default function Explore() {
       <Navbar />
 
       {/* Search and Filter Bar */}
-      <div className="sticky top-0 bg-white border-b">
+      <div className="sticky top-0 bg-white border-b z-30">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between gap-4">
             {/* Search Input */}
@@ -289,6 +291,14 @@ export default function Explore() {
                 <Search className="w-4 h-4" />
               </button>
             </form>
+
+            {/* Mobile Filter Toggle */}
+            <button
+              onClick={() => setMobileFilterOpen(true)}
+              className="lg:hidden flex items-center gap-2 px-4 py-2.5 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
+            >
+              <Filter className="w-5 h-5 text-gray-600" />
+            </button>
           </div>
         </div>
       </div>
@@ -325,6 +335,31 @@ export default function Explore() {
               </button>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Mobile Filter Overlay */}
+      {mobileFilterOpen && (
+        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setMobileFilterOpen(false)} />
+      )}
+
+      {/* Mobile Filter Drawer */}
+      <div
+        className={`fixed top-0 left-0 bottom-0 w-80 max-w-[85vw] bg-white z-50 transform transition-transform duration-300 ease-in-out lg:hidden ${
+          mobileFilterOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="flex items-center justify-between p-4 border-b">
+          <h2 className="text-lg font-semibold">Filters</h2>
+          <button
+            onClick={() => setMobileFilterOpen(false)}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="overflow-y-auto h-[calc(100%-65px)] p-4">
+          <FilterSidebar filters={filters} onFilterChange={setFilters} />
         </div>
       </div>
 

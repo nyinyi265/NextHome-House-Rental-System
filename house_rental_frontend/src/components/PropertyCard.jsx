@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Star, Loader2, Scale } from 'lucide-react';
+import { Star, Loader2, Scale, CheckCircle } from 'lucide-react';
 import env from '../environment/environment';
 import { useCompare } from '../context/CompareContext';
 
-export default function PropertyCard({ id, slug, title, location, city, township, street, price, rating, featured, available_from, images = [], house_photos = [] }) {
+export default function PropertyCard({ id, slug, title, location, city, township, street, price, rating, featured, available_from, is_available, images = [], house_photos = [] }) {
   const [isNavigating, setIsNavigating] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const navigate = useNavigate();
@@ -83,11 +83,25 @@ export default function PropertyCard({ id, slug, title, location, city, township
             />
           )}
         </div>
+
+        {/* Available Badge */}
+        <div className="absolute top-3 left-3">
+          <span
+            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium backdrop-blur-sm ${
+              is_available
+                ? 'bg-green-100/90 text-green-800'
+                : 'bg-red-100/90 text-red-800'
+            }`}
+          >
+            <CheckCircle className="w-3 h-3" />
+            {is_available ? 'Available' : 'Unavailable'}
+          </span>
+        </div>
       </div>
       
       <div className="flex justify-between items-start px-4 transition-colors duration-300 group-hover:bg-gray-50">
         <div>
-          <h3 className="font-semibold text-gray-900">{displayLocation}</h3>
+          <h3 className="font-semibold text-gray-900">{title || displayLocation}</h3>
           <p className="text-gray-500 text-sm">Available From: {available_from}</p>
         </div>
         <div className="flex items-center gap-2">

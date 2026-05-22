@@ -87,9 +87,6 @@ export default function HouseDetail() {
         rentalDuration,
       );
       setReservationSuccess(true);
-      
-      // Notify navbar to refresh notifications
-      window.dispatchEvent(new Event('rentalApplicationSubmitted'));
 
       // Close modal after showing success
       setTimeout(() => {

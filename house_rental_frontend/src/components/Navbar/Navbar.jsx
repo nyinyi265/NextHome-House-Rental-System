@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect, useCallback } from "react";
+import React, { useContext, useState, useEffect, useCallback, useRef } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { useCompare } from "../../context/CompareContext";
@@ -19,6 +19,7 @@ import {
   Phone,
 } from "lucide-react";
 import env from "../../environment/environment";
+import api from "../../config/api";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/Sheet";
 import { Button } from "../ui/Button";
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/Avatar";
@@ -39,6 +40,7 @@ export default function Navbar() {
   const navigate = useNavigate();
 
   const compareCount = getCompareCount();
+  const eventSourceRef = useRef(null);
 
   const handleClearAll = async () => {
     setIsClearing(true);
@@ -65,9 +67,9 @@ export default function Navbar() {
     try {
       let url;
       if (user?.role === "landlord") {
-        url = "http://127.0.0.1:8000/api/landlord/notifications";
+        url = api.landlord.notifications();
       } else {
-        url = "http://127.0.0.1:8000/api/tenant/notifications";
+        url = api.tenant.notifications();
       }
 
       const response = await fetch(url, {
@@ -87,20 +89,62 @@ export default function Navbar() {
     }
   }, [user?.role, token]);
 
-  useEffect(() => {
-    if (user && token) {
-      if (user.role === "tenant") {
-        fetchNotifications();
-        window.addEventListener("rentalApplicationSubmitted", fetchNotifications);
-        return () => {
-          window.removeEventListener("rentalApplicationSubmitted", fetchNotifications);
-        };
-      } else if (user.role === "landlord") {
-        fetchNotifications();
+  const setupSSE = useCallback(() => {
+    if (!user || !token || !user.role) return;
+
+    const streamUrl = user.role === "landlord"
+      ? api.landlord.notificationsStream()
+      : api.tenant.notificationsStream();
+
+    const eventSourceUrl = `${streamUrl}?token=${token}`;
+    const eventSource = new EventSource(eventSourceUrl);
+    eventSourceRef.current = eventSource;
+
+    eventSource.addEventListener("notification", (event) => {
+      const newNotification = JSON.parse(event.data);
+      console.log("SSE notification received:", newNotification);
+      setNotifications((prev) => [newNotification, ...prev]);
+      if (!newNotification.read_at) {
+        setUnreadCount((prev) => prev + 1);
       }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, token]);
+
+      if (
+        ["rental_application_status", "rental_application_submitted", "rental_application_updated"].includes(newNotification.type)
+      ) {
+        console.log("Dispatching rentalStatusChanged event");
+        window.dispatchEvent(new CustomEvent("rentalStatusChanged", {
+          detail: newNotification,
+        }));
+      }
+    });
+
+    eventSource.onerror = (error) => {
+      console.error("SSE connection error:", error);
+      eventSource.close();
+      eventSourceRef.current = null;
+
+      setTimeout(() => {
+        if (user && token && !eventSourceRef.current) {
+          fetchNotifications();
+          setupSSE();
+        }
+      }, 3000);
+    };
+  }, [user, token, fetchNotifications]);
+
+  useEffect(() => {
+    if (!user || !token || !user.role) return;
+
+    fetchNotifications();
+    setupSSE();
+
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+    };
+  }, [user, token, setupSSE]);
 
   const handleLogout = async () => {
     await logout();
@@ -183,13 +227,13 @@ export default function Navbar() {
   const renderDesktopNav = () => (
     <>
       {/* Desktop Navigation Links - Hidden on mobile, visible on lg+ */}
-      <ul className="hidden lg:flex gap-x-2 list-none m-0 p-0 items-center">
+      <ul className="hidden lg:flex gap-1 xl:gap-2 list-none m-0 p-0 items-center">
         {getNavItems().map((item) => (
           <li key={item.path}>
             <NavLink
               to={item.path}
               className={({ isActive }) =>
-                `no-underline px-4 py-2 rounded-lg text-base font-medium transition ${
+                `no-underline px-3 xl:px-4 py-2 rounded-lg text-sm xl:text-base font-medium transition ${
                   isActive
                     ? "bg-green-100 text-green-700"
                     : "text-gray-700 hover:bg-green-50 hover:text-green-700"
@@ -203,7 +247,7 @@ export default function Navbar() {
       </ul>
 
       {/* Desktop Right Section - Notifications, Compare, Profile */}
-      <div className="hidden lg:flex items-center gap-2">
+      <div className="hidden lg:flex items-center gap-1 xl:gap-2">
         {/* Notifications */}
         {(user?.role === "tenant" || user?.role === "landlord") && (
           <div className="relative">
@@ -489,55 +533,59 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-40 flex items-center justify-between px-4 lg:px-8 py-4 bg-white border-b border-gray-200">
-      {/* Logo */}
-      <Link to="/" className="no-underline flex-shrink-0">
-        <img
-          src="/NextHomeLogo.png"
-          alt="NextHome"
-          className="h-[50px] w-auto"
-        />
-      </Link>
-
-      {/* Desktop Navigation */}
-      {renderDesktopNav()}
-
-      {/* Hamburger Menu Button - Visible only on mobile */}
-      <div className="lg:hidden flex items-center gap-2">
-        {/* Mobile Compare Button with Badge */}
-        {user?.role === "tenant" && (
-          <Link
-            to="/compare"
-            className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
-            aria-label={`Compare properties${compareCount > 0 ? ` (${compareCount} selected)` : ""}`}
-          >
-            <Scale className="w-5 h-5 text-gray-600" />
-            {compareCount > 0 && (
-              <Badge variant="default" className="absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 flex items-center justify-center bg-primary text-white">
-                {compareCount}
-              </Badge>
-            )}
+    <nav className="sticky top-0 z-40 bg-white border-b border-gray-200">
+      <div className="max-w-7xl mx-auto px-4 lg:px-6">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <Link to="/" className="no-underline flex-shrink-0">
+            <img
+              src="/NextHomeLogo.png"
+              alt="NextHome"
+              className="h-10 w-auto"
+            />
           </Link>
-        )}
 
-        {/* Hamburger / Close Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleMobileMenu}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-          aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-          aria-expanded={mobileMenuOpen}
-        >
-          {mobileMenuOpen ? (
-            <X className="w-6 h-6 text-gray-600" />
-          ) : (
-            <Menu className="w-6 h-6 text-gray-600" />
-          )}
-        </Button>
+          {/* Desktop Navigation */}
+          {renderDesktopNav()}
+
+          {/* Hamburger Menu Button - Visible only on mobile/tablet */}
+          <div className="lg:hidden flex items-center gap-2">
+            {/* Mobile Compare Button with Badge */}
+            {user?.role === "tenant" && (
+              <Link
+                to="/compare"
+                className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                aria-label={`Compare properties${compareCount > 0 ? ` (${compareCount} selected)` : ""}`}
+              >
+                <Scale className="w-5 h-5 text-gray-600" />
+                {compareCount > 0 && (
+                  <Badge variant="default" className="absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 flex items-center justify-center bg-primary text-white">
+                    {compareCount}
+                  </Badge>
+                )}
+              </Link>
+            )}
+
+            {/* Hamburger / Close Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleMobileMenu}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileMenuOpen}
+            >
+              {mobileMenuOpen ? (
+                <X className="w-6 h-6 text-gray-600" />
+              ) : (
+                <Menu className="w-6 h-6 text-gray-600" />
+              )}
+            </Button>
+          </div>
+        </div>
       </div>
 
-          {/* Mobile Sheet/Drawer */}
+      {/* Mobile Sheet/Drawer */}
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetContent side="right" className="p-0 w-80 max-w-[85vw]">
               <SheetHeader className="p-4 border-b flex items-center justify-between">

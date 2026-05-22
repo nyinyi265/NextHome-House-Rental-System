@@ -1,4 +1,10 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, {
+  useState,
+  useContext,
+  useEffect,
+  useRef,
+  useCallback,
+} from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -38,6 +44,7 @@ import {
   Layers,
   Check,
   Heart,
+  Bell,
 } from "lucide-react";
 import { AuthContext } from "../../context/AuthContext";
 import authService from "../../services/authService";
@@ -45,9 +52,17 @@ import houseService from "../../services/houseService";
 import AddHouseModal from "../../components/AddHouseModal";
 import EditHouseModal from "../../components/EditHouseModal";
 import PanoramaViewer from "../../components/PanoramaViewer";
-import { Dialog, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../../components/ui/Dialog";
+import {
+  Dialog,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "../../components/ui/Dialog";
 import { Button } from "../../components/ui/Button";
+import { Badge } from "../../components/ui/Badge";
 import env from "../../environment/environment";
+import api from "../../config/api";
 
 // Settings Content Component
 function SettingsContent({ user, token }) {
@@ -519,6 +534,109 @@ export default function LandlordDashboard() {
   const { user, token, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
+  // Notification state
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const notificationsRef = useRef(null);
+  const eventSourceRef = useRef(null);
+
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const url = api.landlord.notifications();
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      });
+      if (response.ok) {
+        const result = await response.json();
+        const notifs = result.data || [];
+        setNotifications(notifs);
+        setUnreadCount(notifs.filter((n) => !n.read_at).length);
+      } else if (response.status !== 403) {
+        console.error("Failed to fetch notifications:", response.statusText);
+      }
+    } catch (err) {
+      console.error("Failed to fetch notifications:", err);
+    }
+  }, [token]);
+
+  const setupSSE = useCallback(() => {
+    if (!token) return;
+
+    const streamUrl = api.landlord.notificationsStream();
+    const eventSourceUrl = `${streamUrl}?token=${token}`;
+    const eventSource = new EventSource(eventSourceUrl);
+    eventSourceRef.current = eventSource;
+
+    eventSource.addEventListener("notification", (event) => {
+      const newNotification = JSON.parse(event.data);
+      console.log("Landlord SSE notification received:", newNotification);
+      setNotifications((prev) => [newNotification, ...prev]);
+      if (!newNotification.read_at) {
+        setUnreadCount((prev) => prev + 1);
+      }
+
+      if (
+        [
+          "rental_application_submitted",
+          "rental_application_status",
+          "rental_application_updated",
+          "rental_application",
+        ].includes(newNotification.type)
+      ) {
+        console.log("Refetching rental applications...");
+        setRentalAppsRefetch((prev) => prev + 1);
+      }
+    });
+
+    eventSource.onerror = (error) => {
+      console.error("Landlord SSE connection error:", error);
+      eventSource.close();
+      eventSourceRef.current = null;
+
+      setTimeout(() => {
+        if (token && !eventSourceRef.current) {
+          fetchNotifications();
+          setupSSE();
+        }
+      }, 3000);
+    };
+  }, [token, fetchNotifications]);
+
+  useEffect(() => {
+    if (!token) return;
+
+    fetchNotifications();
+    setupSSE();
+
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+    };
+  }, [token, setupSSE]);
+
+  const toggleNotifications = useCallback(() => {
+    setNotificationsOpen((prev) => !prev);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        notificationsRef.current &&
+        !notificationsRef.current.contains(event.target)
+      ) {
+        setNotificationsOpen(false);
+      }
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
+
   // Fetch houses when properties tab is active
   useEffect(() => {
     const fetchHouses = async () => {
@@ -577,8 +695,8 @@ export default function LandlordDashboard() {
           response.data?.rental_applications ||
           response.rental_applications ||
           [];
-        
-          console.log("Rental applications data:", appsData);
+
+        console.log("Rental applications data:", appsData);
         setRentalApplications(appsData);
       } catch (err) {
         console.error("Failed to fetch rental applications", err);
@@ -933,7 +1051,104 @@ export default function LandlordDashboard() {
                 "Dashboard"}
             </h2>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-500">
+              {/* Notifications */}
+              <div className="relative" ref={notificationsRef}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleNotifications();
+                  }}
+                  className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none"
+                  aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
+                  aria-expanded={notificationsOpen}
+                >
+                  <Bell className="w-5 h-5 text-gray-600" />
+                  {unreadCount > 0 && (
+                    <Badge
+                      variant="destructive"
+                      className="absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 flex items-center justify-center"
+                    >
+                      {unreadCount}
+                    </Badge>
+                  )}
+                </button>
+
+                {/* Notifications Dropdown */}
+                {notificationsOpen && (
+                  <div
+                    className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border overflow-hidden z-50"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="p-4 border-b">
+                      <h3 className="font-semibold text-gray-900">
+                        Notifications
+                      </h3>
+                    </div>
+                    <div className="max-h-96 overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <div className="p-4 text-center text-gray-500 text-sm">
+                          No notifications
+                        </div>
+                      ) : (
+                        notifications.slice(0, 20).map((notification) => (
+                          <div
+                            key={notification.id}
+                            className={`p-4 border-b hover:bg-gray-50 transition-colors cursor-pointer ${
+                              !notification.read_at ? "bg-blue-50" : ""
+                            }`}
+                            onClick={async () => {
+                              try {
+                                await fetch(
+                                  `${api.landlord.notifications()}/${notification.id}/read`,
+                                  {
+                                    method: "POST",
+                                    headers: {
+                                      Authorization: `Bearer ${token}`,
+                                      Accept: "application/json",
+                                      "Content-Type": "application/json",
+                                    },
+                                  },
+                                );
+                                setNotifications((prev) =>
+                                  prev.map((n) =>
+                                    n.id === notification.id
+                                      ? {
+                                          ...n,
+                                          read_at:
+                                            n.read_at ||
+                                            new Date().toISOString(),
+                                        }
+                                      : n,
+                                  ),
+                                );
+                                setUnreadCount((prev) => Math.max(0, prev - 1));
+                                if (notification.url) {
+                                  navigate(notification.url);
+                                }
+                              } catch (err) {
+                                console.error(
+                                  "Failed to mark notification as read:",
+                                  err,
+                                );
+                              }
+                            }}
+                          >
+                            <p className="text-sm text-gray-900">
+                              {notification.message}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {new Date(
+                                notification.created_at,
+                              ).toLocaleDateString()}
+                            </p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <span className="text-sm text-gray-500 hidden sm:inline">
                 {new Date().toLocaleDateString("en-US", {
                   weekday: "long",
                   year: "numeric",
@@ -1060,11 +1275,21 @@ export default function LandlordDashboard() {
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {recentApplications.map((app) => (
-                          <div key={app.id} className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                          <div
+                            key={app.id}
+                            className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow"
+                          >
                             <div className="flex items-start gap-3">
                               <div className="w-16 h-16 rounded-lg bg-gray-200 overflow-hidden flex-shrink-0">
-                                {app.house?.house_photos && app.house.house_photos.length > 0 ? (
-                                  <img src={env.getImageUrl(app.house.house_photos[0].photo_path)} alt={app.house?.title} className="w-full h-full object-cover" />
+                                {app.house?.house_photos &&
+                                app.house.house_photos.length > 0 ? (
+                                  <img
+                                    src={env.getImageUrl(
+                                      app.house.house_photos[0].photo_path,
+                                    )}
+                                    alt={app.house?.title}
+                                    className="w-full h-full object-cover"
+                                  />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center">
                                     <Building2 className="w-6 h-6 text-gray-400" />
@@ -1072,21 +1297,42 @@ export default function LandlordDashboard() {
                                 )}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="font-medium text-gray-900 truncate">{app.house?.title || "-"}</p>
-                                <p className="text-sm text-gray-500 truncate">{app.tenantProfile?.user?.name || "-"}</p>
+                                <p className="font-medium text-gray-900 truncate">
+                                  {app.house?.title || "-"}
+                                </p>
+                                <p className="text-sm text-gray-500 truncate">
+                                  {app.tenantProfile?.user?.name || "-"}
+                                </p>
                                 <div className="flex items-center gap-2 mt-1">
-                                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                    app.status === "approved" ? "bg-green-100 text-green-800" : app.status === "rejected" ? "bg-red-100 text-red-800" : app.status === "pending" ? "bg-yellow-100 text-yellow-800" : "bg-gray-100 text-gray-800"
-                                  }`}>
+                                  <span
+                                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                      app.status === "approved"
+                                        ? "bg-green-100 text-green-800"
+                                        : app.status === "rejected"
+                                          ? "bg-red-100 text-red-800"
+                                          : app.status === "pending"
+                                            ? "bg-yellow-100 text-yellow-800"
+                                            : "bg-gray-100 text-gray-800"
+                                    }`}
+                                  >
                                     {app.status || "pending"}
                                   </span>
                                   <span className="text-xs text-gray-500">
-                                    {app.created_at ? new Date(app.created_at).toLocaleDateString() : "-"}
+                                    {app.created_at
+                                      ? new Date(
+                                          app.created_at,
+                                        ).toLocaleDateString()
+                                      : "-"}
                                   </span>
                                 </div>
                               </div>
                               <div className="text-right">
-                                <p className="font-semibold text-gray-900">${app.house?.price_per_month || app.house?.price || "-"}</p>
+                                <p className="font-semibold text-gray-900">
+                                  $
+                                  {app.house?.price_per_month ||
+                                    app.house?.price ||
+                                    "-"}
+                                </p>
                                 <p className="text-xs text-gray-500">/month</p>
                               </div>
                             </div>
@@ -1139,7 +1385,8 @@ export default function LandlordDashboard() {
                 const getPhotoUrl = (photo) => {
                   if (!photo) return null;
                   if (photo.photo_url) return photo.photo_url;
-                  if (photo.photo_path) return env.getImageUrl(photo.photo_path);
+                  if (photo.photo_path)
+                    return env.getImageUrl(photo.photo_path);
                   return null;
                 };
                 const mainPhoto =
@@ -1350,8 +1597,7 @@ export default function LandlordDashboard() {
                       About this place
                     </h2>
                     <p className="text-gray-700 leading-relaxed">
-                      {selectedHouse.description ||
-                        "No description available."}
+                      {selectedHouse.description || "No description available."}
                     </p>
                   </div>
 
@@ -1437,9 +1683,7 @@ export default function LandlordDashboard() {
                       </div>
                       {selectedHouse.available_from && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-500">
-                            Available From
-                          </span>
+                          <span className="text-gray-500">Available From</span>
                           <span className="font-medium text-gray-900">
                             {new Date(
                               selectedHouse.available_from,
@@ -1520,8 +1764,7 @@ export default function LandlordDashboard() {
                     >
                       {/* Property Image */}
                       <div className="relative h-48 bg-gray-200">
-                        {house.house_photos &&
-                        house.house_photos.length > 0 ? (
+                        {house.house_photos && house.house_photos.length > 0 ? (
                           <img
                             src={env.getImageUrl(
                               house.house_photos[0].photo_path,
@@ -1569,9 +1812,7 @@ export default function LandlordDashboard() {
                               {house.type}
                             </span>
                           )}
-                          {house.bedrooms && (
-                            <span>{house.bedrooms} bed</span>
-                          )}
+                          {house.bedrooms && <span>{house.bedrooms} bed</span>}
                           {house.bathrooms && (
                             <span>{house.bathrooms} bath</span>
                           )}
@@ -1582,7 +1823,8 @@ export default function LandlordDashboard() {
                           <p className="font-bold text-gray-900">
                             ${house.price || house.price_per_month}
                             <span className="text-sm font-normal text-gray-500">
-                              {" "}/ month
+                              {" "}
+                              / month
                             </span>
                           </p>
                           <div className="flex items-center gap-1">
@@ -1651,9 +1893,12 @@ export default function LandlordDashboard() {
                     >
                       {/* Property Image */}
                       <div className="relative h-40 bg-gray-200">
-                        {app.house?.house_photos && app.house.house_photos.length > 0 ? (
+                        {app.house?.house_photos &&
+                        app.house.house_photos.length > 0 ? (
                           <img
-                            src={env.getImageUrl(app.house.house_photos[0].photo_path)}
+                            src={env.getImageUrl(
+                              app.house.house_photos[0].photo_path,
+                            )}
                             alt={app.house?.title}
                             className="w-full h-full object-cover"
                           />
@@ -1681,16 +1926,23 @@ export default function LandlordDashboard() {
                         {/* Tenant Info */}
                         <div className="flex items-center gap-3 mb-3">
                           <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
-                            {app.tenant_profile?.user?.profile_path && app.tenant_profile.user.profile_path.length > 0 ? (
+                            {app.tenant_profile?.user?.profile_path &&
+                            app.tenant_profile.user.profile_path.length > 0 ? (
                               <img
-                                src={env.getProfileUrl(app.tenant_profile.user.profile_path)}
-                                alt={app.tenant_profile?.user?.name?.charAt(0) || "T"}
+                                src={env.getProfileUrl(
+                                  app.tenant_profile.user.profile_path,
+                                )}
+                                alt={
+                                  app.tenant_profile?.user?.name?.charAt(0) ||
+                                  "T"
+                                }
                                 className="w-full h-full object-cover"
                               />
                             ) : (
                               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                                 <span className="text-primary font-semibold">
-                                  {app.tenant_profile?.user?.name?.charAt(0) || "T"}
+                                  {app.tenant_profile?.user?.name?.charAt(0) ||
+                                    "T"}
                                 </span>
                               </div>
                             )}
@@ -1720,13 +1972,17 @@ export default function LandlordDashboard() {
                           <div>
                             <p className="text-gray-500">Duration</p>
                             <p className="font-medium text-gray-900">
-                              {app.rental_duration ? `${app.rental_duration} months` : "-"}
+                              {app.rental_duration
+                                ? `${app.rental_duration} months`
+                                : "-"}
                             </p>
                           </div>
                           <div>
                             <p className="text-gray-500">Applied</p>
                             <p className="font-medium text-gray-900">
-                              {app.created_at ? new Date(app.created_at).toLocaleDateString() : "-"}
+                              {app.created_at
+                                ? new Date(app.created_at).toLocaleDateString()
+                                : "-"}
                             </p>
                           </div>
                         </div>
@@ -1735,7 +1991,9 @@ export default function LandlordDashboard() {
                         {app.message && (
                           <div className="mb-3 p-2 bg-gray-50 rounded-lg">
                             <p className="text-xs text-gray-500">Message</p>
-                            <p className="text-sm text-gray-700 line-clamp-2">{app.message}</p>
+                            <p className="text-sm text-gray-700 line-clamp-2">
+                              {app.message}
+                            </p>
                           </div>
                         )}
 
@@ -1766,7 +2024,9 @@ export default function LandlordDashboard() {
                         {app.status !== "pending" && (
                           <div className="pt-3 border-t text-center">
                             <span className="text-sm text-gray-400">
-                              {app.status === "approved" ? "Application Approved" : "Application Denied"}
+                              {app.status === "approved"
+                                ? "Application Approved"
+                                : "Application Denied"}
                             </span>
                           </div>
                         )}
@@ -1801,9 +2061,7 @@ export default function LandlordDashboard() {
           {activeTab === "rentals" && (
             <div className="space-y-6">
               <div className="bg-white rounded-xl shadow-sm border p-6 ">
-                <h3 className="text-lg font-semibold text-gray-800">
-                  Rentals
-                </h3>
+                <h3 className="text-lg font-semibold text-gray-800">Rentals</h3>
                 <p className="text-sm text-gray-500 mt-1">
                   View all your active and past rentals
                 </p>
@@ -1825,26 +2083,46 @@ export default function LandlordDashboard() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {rentals.map((rental) => (
-                    <div key={rental.id} className="bg-white rounded-xl border-2 border-primary overflow-hidden hover:shadow-md transition-shadow">
+                    <div
+                      key={rental.id}
+                      className="bg-white rounded-xl border-2 border-primary overflow-hidden hover:shadow-md transition-shadow"
+                    >
                       <div className="relative h-32 bg-gray-200">
-                        {rental.house?.house_photos && rental.house.house_photos.length > 0 ? (
-                          <img src={`${env.STORAGE_URL}/${rental.house.house_photos[0].photo_path}`} alt={rental.house?.title} className="w-full h-full object-cover" />
+                        {rental.house?.house_photos &&
+                        rental.house.house_photos.length > 0 ? (
+                          <img
+                            src={`${env.STORAGE_URL}/${rental.house.house_photos[0].photo_path}`}
+                            alt={rental.house?.title}
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <Building2 className="w-8 h-8 text-gray-400" />
                           </div>
                         )}
-                        <span className={`absolute top-2 right-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${rental.status === "active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
+                        <span
+                          className={`absolute top-2 right-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${rental.status === "active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}
+                        >
                           {rental.status || "inactive"}
                         </span>
                       </div>
                       <div className="p-4">
-                        <p className="font-semibold text-gray-900 truncate">{rental.house?.title || "Property"}</p>
-                        <p className="text-sm text-gray-500 truncate">{rental.house?.city}, {rental.house?.township}</p>
+                        <p className="font-semibold text-gray-900 truncate">
+                          {rental.house?.title || "Property"}
+                        </p>
+                        <p className="text-sm text-gray-500 truncate">
+                          {rental.house?.city}, {rental.house?.township}
+                        </p>
                         <div className="mt-3 flex items-center gap-2">
                           <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden">
                             {rental.tenant_profile?.user?.profile_path ? (
-                              <img src={env.getProfileUrl(rental.tenant_profile.user.profile_path)} alt={rental.tenant_profile?.user?.name} className="w-full h-full object-cover" />
+                              <img
+                                src={env.getProfileUrl(
+                                  rental.tenant_profile.user.profile_path,
+                                )}
+                                alt={rental.tenant_profile?.user?.name}
+                                className="w-full h-full object-cover"
+                              />
                             ) : (
                               <div className="w-full h-full bg-primary/10 flex items-center justify-center">
                                 <User className="w-4 h-4 text-primary" />
@@ -1852,26 +2130,48 @@ export default function LandlordDashboard() {
                             )}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-gray-900 truncate">{rental.tenant_profile?.user?.name || "-"}</p>
-                            <p className="text-xs text-gray-500 truncate">{rental.tenant_profile?.user?.email || "-"}</p>
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {rental.tenant_profile?.user?.name || "-"}
+                            </p>
+                            <p className="text-xs text-gray-500 truncate">
+                              {rental.tenant_profile?.user?.email || "-"}
+                            </p>
                           </div>
                         </div>
                         <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
                           <div>
                             <p className="text-gray-500">Duration</p>
-                            <p className="font-medium text-gray-900">{rental.rental_duration ? `${rental.rental_duration} mo` : "-"}</p>
+                            <p className="font-medium text-gray-900">
+                              {rental.rental_duration
+                                ? `${rental.rental_duration} mo`
+                                : "-"}
+                            </p>
                           </div>
                           <div>
                             <p className="text-gray-500">Rent</p>
-                            <p className="font-medium text-gray-900">${rental.monthly_rent?.toLocaleString() || "0"}/mo</p>
+                            <p className="font-medium text-gray-900">
+                              ${rental.monthly_rent?.toLocaleString() || "0"}/mo
+                            </p>
                           </div>
                           <div>
                             <p className="text-gray-500">Start</p>
-                            <p className="font-medium text-gray-900">{rental.rental_start_date ? new Date(rental.rental_start_date).toLocaleDateString() : "-"}</p>
+                            <p className="font-medium text-gray-900">
+                              {rental.rental_start_date
+                                ? new Date(
+                                    rental.rental_start_date,
+                                  ).toLocaleDateString()
+                                : "-"}
+                            </p>
                           </div>
                           <div>
                             <p className="text-gray-500">End</p>
-                            <p className="font-medium text-gray-900">{rental.rental_end_date ? new Date(rental.rental_end_date).toLocaleDateString() : "-"}</p>
+                            <p className="font-medium text-gray-900">
+                              {rental.rental_end_date
+                                ? new Date(
+                                    rental.rental_end_date,
+                                  ).toLocaleDateString()
+                                : "-"}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -1924,68 +2224,95 @@ export default function LandlordDashboard() {
 
       {/* Delete Property Confirmation Modal */}
       {deletingHouse && (
-        <Dialog open={!!deletingHouse} onOpenChange={() => !isDeleting && setDeletingHouse(null)}>
+        <Dialog
+          open={!!deletingHouse}
+          onOpenChange={() => !isDeleting && setDeletingHouse(null)}
+        >
           <DialogHeader>
             <DialogTitle>Delete Property</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this property? This action cannot be undone.
+              Are you sure you want to delete this property? This action cannot
+              be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeletingHouse(null)} disabled={isDeleting}>
+            <Button
+              variant="outline"
+              onClick={() => setDeletingHouse(null)}
+              disabled={isDeleting}
+            >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={async () => {
-              try {
-                setIsDeleting(true);
-                await houseService.deleteHouse(token, deletingHouse.id);
-                setDeletingHouse(null);
-                handleHouseDeleted();
-              } catch (err) {
-                console.error('Failed to delete property', err);
-              } finally {
-                setIsDeleting(false);
-              }
-            }} disabled={isDeleting}>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                try {
+                  setIsDeleting(true);
+                  await houseService.deleteHouse(token, deletingHouse.id);
+                  setDeletingHouse(null);
+                  handleHouseDeleted();
+                } catch (err) {
+                  console.error("Failed to delete property", err);
+                } finally {
+                  setIsDeleting(false);
+                }
+              }}
+              disabled={isDeleting}
+            >
               {isDeleting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Deleting...
                 </>
               ) : (
-                'Delete'
+                "Delete"
               )}
             </Button>
           </DialogFooter>
         </Dialog>
       )}
 
-{/* Confirmation Modal */}
+      {/* Confirmation Modal */}
       {showConfirmModal && (
         <Dialog open={showConfirmModal} onOpenChange={closeConfirmModal}>
           <DialogHeader>
-            <DialogTitle>Confirm {modalAction === "approve" ? "Approval" : "Rejection"}</DialogTitle>
+            <DialogTitle>
+              Confirm {modalAction === "approve" ? "Approval" : "Rejection"}
+            </DialogTitle>
             <DialogDescription>
-              Are you sure you want to {modalAction === "approve" ? "approve" : "reject"} this rental application?
+              Are you sure you want to{" "}
+              {modalAction === "approve" ? "approve" : "reject"} this rental
+              application?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={closeConfirmModal} disabled={approveLoading || rejectLoading}>
+            <Button
+              variant="outline"
+              onClick={closeConfirmModal}
+              disabled={approveLoading || rejectLoading}
+            >
               Cancel
             </Button>
             <Button
               onClick={handleConfirmAction}
               disabled={approveLoading || rejectLoading}
               variant={modalAction === "approve" ? "default" : "destructive"}
-              className={modalAction === "approve" ? "bg-green-600 hover:bg-green-700" : ""}
+              className={
+                modalAction === "approve"
+                  ? "bg-green-600 hover:bg-green-700"
+                  : ""
+              }
             >
-              {(approveLoading && modalAction === "approve") || (rejectLoading && modalAction === "reject") ? (
+              {(approveLoading && modalAction === "approve") ||
+              (rejectLoading && modalAction === "reject") ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
                   {modalAction === "approve" ? "Approving..." : "Rejecting..."}
                 </>
+              ) : modalAction === "approve" ? (
+                "Approve"
               ) : (
-                modalAction === "approve" ? "Approve" : "Reject"
+                "Reject"
               )}
             </Button>
           </DialogFooter>
@@ -1994,7 +2321,10 @@ export default function LandlordDashboard() {
 
       {/* Edit Duration Modal */}
       {showEditDurationModal && (
-        <Dialog open={showEditDurationModal} onOpenChange={closeEditDurationModal}>
+        <Dialog
+          open={showEditDurationModal}
+          onOpenChange={closeEditDurationModal}
+        >
           <DialogHeader>
             <DialogTitle>Edit Rental Duration</DialogTitle>
             <DialogDescription>
@@ -2020,10 +2350,17 @@ export default function LandlordDashboard() {
             </select>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={closeEditDurationModal} disabled={editDurationLoading}>
+            <Button
+              variant="outline"
+              onClick={closeEditDurationModal}
+              disabled={editDurationLoading}
+            >
               Cancel
             </Button>
-            <Button onClick={handleUpdateDuration} disabled={editDurationLoading}>
+            <Button
+              onClick={handleUpdateDuration}
+              disabled={editDurationLoading}
+            >
               {editDurationLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
