@@ -574,10 +574,15 @@ export default function LandlordDashboard() {
     eventSource.addEventListener("notification", (event) => {
       const newNotification = JSON.parse(event.data);
       console.log("Landlord SSE notification received:", newNotification);
-      setNotifications((prev) => [newNotification, ...prev]);
-      if (!newNotification.read_at) {
-        setUnreadCount((prev) => prev + 1);
-      }
+      
+      setNotifications((prev) => {
+        const exists = prev.some(n => n.id === newNotification.id);
+        if (exists) return prev;
+        if (!newNotification.read_at) {
+          setUnreadCount(c => c + 1);
+        }
+        return [newNotification, ...prev];
+      });
 
       if (
         [
@@ -1079,10 +1084,44 @@ export default function LandlordDashboard() {
                     className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border overflow-hidden z-50"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="p-4 border-b">
+                    <div className="p-4 border-b flex items-center justify-between">
                       <h3 className="font-semibold text-gray-900">
                         Notifications
                       </h3>
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={async () => {
+                            try {
+                              await fetch(
+                                api.landlord.notifications() + '/read-all',
+                                {
+                                  method: "POST",
+                                  headers: {
+                                    Authorization: `Bearer ${token}`,
+                                    Accept: "application/json",
+                                    "Content-Type": "application/json",
+                                  },
+                                },
+                              );
+                              setNotifications((prev) =>
+                                prev.map((n) => ({
+                                  ...n,
+                                  read_at: n.read_at || new Date().toISOString(),
+                                }))
+                              );
+                              setUnreadCount(0);
+                            } catch (err) {
+                              console.error(
+                                "Failed to mark all as read:",
+                                err,
+                              );
+                            }
+                          }}
+                          className="text-sm text-primary hover:underline"
+                        >
+                          Read All
+                        </button>
+                      )}
                     </div>
                     <div className="max-h-96 overflow-y-auto">
                       {notifications.length === 0 ? (
@@ -1121,9 +1160,8 @@ export default function LandlordDashboard() {
                                       : n,
                                   ),
                                 );
-                                setUnreadCount((prev) => Math.max(0, prev - 1));
-                                if (notification.url) {
-                                  navigate(notification.url);
+                                if (!notification.read_at) {
+                                  setUnreadCount((prev) => Math.max(0, prev - 1));
                                 }
                               } catch (err) {
                                 console.error(

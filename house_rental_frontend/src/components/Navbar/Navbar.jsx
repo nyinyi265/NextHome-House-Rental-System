@@ -103,10 +103,15 @@ export default function Navbar() {
     eventSource.addEventListener("notification", (event) => {
       const newNotification = JSON.parse(event.data);
       console.log("SSE notification received:", newNotification);
-      setNotifications((prev) => [newNotification, ...prev]);
-      if (!newNotification.read_at) {
-        setUnreadCount((prev) => prev + 1);
-      }
+      
+      setNotifications((prev) => {
+        const exists = prev.some(n => n.id === newNotification.id);
+        if (exists) return prev;
+        if (!newNotification.read_at) {
+          setUnreadCount(c => c + 1);
+        }
+        return [newNotification, ...prev];
+      });
 
       if (
         ["rental_application_status", "rental_application_submitted", "rental_application_updated"].includes(newNotification.type)
@@ -274,8 +279,33 @@ export default function Navbar() {
                 className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border overflow-hidden z-50"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="p-4 border-b">
+                <div className="p-4 border-b flex items-center justify-between">
                   <h3 className="font-semibold text-gray-900">Notifications</h3>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={async () => {
+                        try {
+                          await fetch(api.tenant.notifications() + '/read-all', {
+                            method: 'POST',
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                              Accept: "application/json",
+                              'Content-Type': 'application/json',
+                            },
+                          });
+                          setNotifications(prev =>
+                            prev.map(n => ({ ...n, read_at: n.read_at || new Date().toISOString() }))
+                          );
+                          setUnreadCount(0);
+                        } catch (err) {
+                          console.error("Failed to mark all as read:", err);
+                        }
+                      }}
+                      className="text-sm text-primary hover:underline"
+                    >
+                      Read All
+                    </button>
+                  )}
                 </div>
                 <div className="max-h-96 overflow-y-auto">
                   {notifications.length === 0 ? (
@@ -286,9 +316,31 @@ export default function Navbar() {
                     notifications.map((notification) => (
                       <div
                         key={notification.id}
-                        className={`p-4 border-b hover:bg-gray-50 transition-colors ${
+                        className={`p-4 border-b hover:bg-gray-50 transition-colors cursor-pointer ${
                           !notification.read_at ? "bg-blue-50" : ""
                         }`}
+                        onClick={async () => {
+                          try {
+                            await fetch(api.tenant.notifications() + `/${notification.id}/read`, {
+                              method: 'POST',
+                              headers: {
+                                Authorization: `Bearer ${token}`,
+                                Accept: "application/json",
+                                'Content-Type': 'application/json',
+                              },
+                            });
+                            setNotifications(prev =>
+                              prev.map(n =>
+                                n.id === notification.id ? { ...n, read_at: n.read_at || new Date().toISOString() } : n
+                              )
+                            );
+                            if (!notification.read_at) {
+                              setUnreadCount(prev => Math.max(0, prev - 1));
+                            }
+                          } catch (err) {
+                            console.error("Failed to mark notification as read:", err);
+                          }
+                        }}
                       >
                         <p className="text-sm text-gray-900">{notification.message}</p>
                         <p className="text-xs text-gray-500 mt-1">
