@@ -26,6 +26,9 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            ->brandLogo(asset('favicon.ico'))
+            ->brandLogoHeight('4rem')
+            ->brandName(fn () => 'NextHome')
             ->login()
             ->colors([
                 'primary' => Color::Cyan,

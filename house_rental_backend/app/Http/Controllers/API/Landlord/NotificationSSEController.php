@@ -49,12 +49,18 @@ class NotificationSSEController extends Controller
             // Send initial comment to keep connection alive
             echo ": connected\n\n";
 
-            // Keep connection open and check for new notifications every 2 seconds
+            // Keep connection open and check for new notifications every 1 second
             while (true) {
                 // Check if client disconnected
                 if (connection_aborted()) {
                     break;
                 }
+
+                // Send keep-alive comment every iteration
+                echo ": ping " . time() . "\n\n";
+
+                // Small delay to ensure DB transactions are committed
+                usleep(100000); // 100ms
 
                 $newNotifications = Notification::where('user_id', $userId)
                     ->where('id', '>', $lastId)
@@ -73,12 +79,13 @@ class NotificationSSEController extends Controller
                             'created_at' => $notification->created_at,
                         ];
                         echo "event: notification\n";
+                        echo "id: " . $notification->id . "\n";
                         echo "data: " . json_encode($data) . "\n\n";
                     }
                     flush();
                 }
 
-                sleep(2);
+                sleep(1);
             }
         };
 

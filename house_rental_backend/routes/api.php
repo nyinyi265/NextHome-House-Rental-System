@@ -79,7 +79,6 @@ Route::prefix('tenant')->middleware(['auth:sanctum', 'role:tenant'])->group(func
     Route::get('notifications', [TenantNotificationController::class, 'index']);
     Route::post('notifications/{id}/read', [TenantNotificationController::class, 'markAsRead']);
     Route::post('notifications/read-all', [TenantNotificationController::class, 'markAllAsRead']);
-    Route::get('notifications/stream', [TenantNotificationSSEController::class, 'stream']);
     
     // Compare Properties
     Route::get('compare', [CompareController::class, 'index']);
@@ -87,6 +86,9 @@ Route::prefix('tenant')->middleware(['auth:sanctum', 'role:tenant'])->group(func
     Route::delete('compare/{propertyId}', [CompareController::class, 'destroy']);
     Route::delete('compare', [CompareController::class, 'clear']);
 });
+
+// Tenant SSE notification stream (auth handled in controller via query param)
+Route::get('tenant/notifications/stream', [TenantNotificationSSEController::class, 'stream']);
 
 // landlord house and application routes
 Route::prefix('landlord')->middleware(['auth:sanctum', 'landlord.approved'])->group(function () {
@@ -116,8 +118,10 @@ Route::prefix('landlord')->middleware(['auth:sanctum', 'landlord.approved'])->gr
     Route::get('notifications', [App\Http\Controllers\API\Landlord\NotificationController::class, 'index']);
     Route::post('notifications/{id}/read', [App\Http\Controllers\API\Landlord\NotificationController::class, 'markAsRead']);
     Route::post('notifications/read-all', [App\Http\Controllers\API\Landlord\NotificationController::class, 'markAllAsRead']);
-    Route::get('notifications/stream', [App\Http\Controllers\API\Landlord\NotificationSSEController::class, 'stream']);
 });
+
+// Landlord SSE notification stream (auth handled in controller via query param)
+Route::get('landlord/notifications/stream', [App\Http\Controllers\API\Landlord\NotificationSSEController::class, 'stream']);
 
 // Admin routes for landlord approval
 Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
