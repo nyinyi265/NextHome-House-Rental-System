@@ -28,9 +28,4 @@ class LandlordProfile extends Model
     {
         return $this->hasMany(RentalApplication::class, 'landlord_profile_id');
     }
-
-    public function documents()
-    {
-        return $this->hasMany(LandlordDocument::class);
-    }
 }
